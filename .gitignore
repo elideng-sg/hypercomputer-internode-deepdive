@@ -1,0 +1,6 @@
+# local scratch / captured intermediates that shouldn't be committed raw
+*.tmp
+__pycache__/
+*.pyc
+.venv/
+scratch/
