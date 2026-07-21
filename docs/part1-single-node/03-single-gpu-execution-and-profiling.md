@@ -15,7 +15,7 @@ This guide covers the **CUDA execution model** — how GPU kernels are launched,
 
 **Hands-on practice:** [lab-03: Single-GPU Benchmark & Profile](../../labs/lab-03-single-gpu-benchmark-profile/)
 
-**Prerequisites:** Basic understanding of GPU architecture (see [doc-01](01-gpu-architecture.md)) and driver/CUDA stack (see [doc-02](02-driver-cuda-health.md)).
+**Prerequisites:** Basic understanding of GPU architecture (see [doc-01](01-gpu-microarchitecture.md)) and driver/CUDA stack (see [doc-02](02-drivers-cuda-install-troubleshooting.md)).
 
 ---
 
@@ -353,7 +353,7 @@ When viewing the Nsight Systems timeline (`.nsys-rep` in the GUI):
    - **Nsight Compute (`ncu`):** Per-kernel metrics, requires CAP_SYS_ADMIN on GKE COS (use offline or in privileged pods)
 
 **Next steps:**
-- [doc-04: Multi-GPU and NVLink](04-multi-gpu-nvlink.md) — scaling to multiple GPUs on a single node
+- doc-04: Multi-GPU and NVLink — scaling to multiple GPUs on a single node (coming soon)
 - [Toolkit: T3 — Profiling and Tracing](../../docs/toolkit/T3-profiling-tracing.md) — deep dive into `nsys`, `ncu`, NVTX, PyTorch profiler
 - [Toolkit: T4 — Benchmarking](../../docs/toolkit/T4-benchmarking.md) — methodology, tools (nvbandwidth, nccl-tests), bus bandwidth vs. algorithm bandwidth
 
