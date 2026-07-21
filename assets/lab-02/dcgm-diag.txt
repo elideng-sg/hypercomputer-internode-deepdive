@@ -1,0 +1,27 @@
+Successfully ran diagnostic for group.
++---------------------------+------------------------------------------------+
+| Diagnostic                | Result                                         |
++===========================+================================================+
+|-----  Metadata  ----------+------------------------------------------------|
+| DCGM Version              | 3.3.8                                          |
+| Driver Version Detected   | 535.309.01                                     |
+| GPU Device IDs Detected   | 2330                                           |
+|-----  Deployment  --------+------------------------------------------------|
+| Denylist                  | Pass                                           |
+| NVML Library              | Pass                                           |
+| CUDA Main Library         | Pass                                           |
+| Permissions and OS Blocks | Pass                                           |
+| Persistence Mode          | Pass                                           |
+| Info                      | Persistence mode for GPU 0 is disabled. Enabl  |
+|                           | e persistence mode by running "nvidia-smi -i   |
+|                           | <gpuId> -pm 1 " as root.                       |
+| Environment Variables     | Pass                                           |
+| Page Retirement/Row Remap | Pass                                           |
+| Graphics Processes        | Pass                                           |
+| Inforom                   | Pass                                           |
++-----  Integration  -------+------------------------------------------------+
+| PCIe                      | Pass - All                                     |
++-----  Hardware  ----------+------------------------------------------------+
+| GPU Memory                | Pass - All                                     |
++-----  Stress  ------------+------------------------------------------------+
++---------------------------+------------------------------------------------+

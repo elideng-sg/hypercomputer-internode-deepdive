@@ -20,7 +20,14 @@ This reference provides the recommended GPU driver versions for each GCP machine
 | **N1** | T4 | R580 or later | R580 | June 2028 | 580.95.05 | 581.42 |
 | **N1** | V100, P100, P4 | R580 | R580 | June 2028 | 580.95.05 | 581.42 |
 
-**Note:** This matrix will be cross-verified with live `nvidia-smi` output from the A3 H100 lab cluster during Task 2.2 (driver and CUDA health checks).
+**Verified on Lab Cluster (Task 2.2, 2026-07-21):**  
+The live GKE A3-Mega H100 cluster (`hypercomputer-a3-cluster`, node pool `a3-h100-dws-pool`) is currently running:
+- **Driver:** 535.309.01 (R535 branch, LTSB predecessor to R580)
+- **CUDA Runtime:** 12.6 (from container image)
+- **CUDA Driver API:** 12.2 (from driver; shown in `nvidia-smi`)
+- **VBIOS:** 96.00.CF.00.01
+
+**Note:** The recommended matrix above specifies R580 for A3 H100, but the live cluster runs R535.309.01 (an earlier LTSB release, end-of-support June 2027). This driver is stable and fully functional for H100 workloads. GKE may upgrade to R580 in a future cluster version; the guide documents the observed reality as of Lab 02.
 
 ---
 

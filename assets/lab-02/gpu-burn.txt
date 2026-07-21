@@ -1,0 +1,8 @@
+# cmd: kubectl logs job/gpu-burn-test
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-cd96915b-9acb-ad84-aaa4-d61ddd4984d2)
+Burning for 60 seconds.
+
+Killing processes.. done
+
+Tested 1 GPUs:
+	GPU 0: OK

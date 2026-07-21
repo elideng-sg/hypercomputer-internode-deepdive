@@ -1,0 +1,4 @@
+Creating debugging pod node-debugger-gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6-mqzfq with container debugger on node gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6.
+Warning: metadata.name: this is used in the Pod's hostname, which can result in surprising behavior; a DNS label is recommended: [must be no more than 63 characters]
+Warning: BCID failed open: BCID suppressed until 2026-07-21 12:46:44.391097519 +0000 UTC m=+184556.240434800
+dmesg: read kernel buffer failed: Operation not permitted
