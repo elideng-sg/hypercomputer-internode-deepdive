@@ -14,8 +14,9 @@ cap_run() { # cap_run <label> <outfile> -- <cmd...>
   local label="$1" outfile="$2"; shift 2; [ "$1" = "--" ] && shift
   mkdir -p "$ASSETS/$label"
   local path="$ASSETS/$label/$outfile"
-  echo "# cmd: $*" | tee "$path"
+  { printf '# cmd:'; printf ' %q' "$@"; printf '\n'; } | tee "$path"
   "$@" 2>&1 | tee -a "$path"
+  return "${PIPESTATUS[0]}"
 }
 
 cap_gpu_exec() { # cap_gpu_exec <pod> -- <cmd...>
