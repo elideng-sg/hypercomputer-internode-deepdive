@@ -1,45 +1,56 @@
 # hypercomputer-internode-deepdive
 
-A **standalone, hands-on guide** that walks you from a **single GPU** to a **multi-node GPU cluster** on **Google Cloud AI Hypercomputer** — teaching both the **mechanism** (why it works) and the **practice** (how to run it) at every layer.
+A **standalone, hands-on guide** to the **NVIDIA GPU + AI-infrastructure stack** — how a GPU is built, how it executes work, how GPUs communicate within and across nodes, and how distributed workloads are scheduled, run, **monitored, profiled, benchmarked, and debugged** — taught with the **standard NVIDIA toolchain**.
 
-The journey is one continuous bottom-up story:
+One continuous, bottom-up journey:
 
 **single node → inter-node communication → clustering & distributed execution**
 
-Every mechanism is paired with a **lab run live on a real 2-node A3 H100 cluster** (16 × H100 80GB), capturing **actual measured data** — architecture specs, roofline numbers, NVLink & inter-node bandwidth curves, topology dumps, NCCL traces, and failure signatures — not generic expected values.
+…with a **NVIDIA tooling layer** cutting across all of it (nvidia-smi, DCGM, Nsight Systems/Compute, nvbandwidth, nccl-tests, perftest, dcgm-exporter + Grafana, and more).
 
-The guide is **fully self-contained**: GPU microarchitecture and driver/CUDA troubleshooting are taught here in depth, so you can go from understanding one H100 to debugging a 16-GPU distributed job without leaving the repo.
+Every mechanism and tool is paired with a **lab run live on a real 2-node A3 H100 cluster** (16 × H100 80GB), capturing **actual measured data** — architecture specs, roofline + profiler timelines, NVLink & inter-node bandwidth curves, topology dumps, NCCL traces, fleet dashboards, and failure signatures — not generic expected values.
+
+> **Not limited to GCP.** The lab runs on Google Cloud A3 H100, but the mechanisms and tools are **platform-agnostic** — they transfer to on-prem/DGX, other clouds, bare metal, Slurm or Kubernetes. GCP-specific steps (DWS, GKE device plugin) are **flagged** with their generic equivalents (NVIDIA GPU Operator, `k8s-device-plugin`, Slurm `gres`).
 
 > **Status: 🚧 planning.** The design spec is committed and under review. Implementation (docs + live labs) has not started yet.
 
 ---
 
+## The NVIDIA tooling layer (cross-cutting)
+
+Taught in the layer where each tool naturally appears, and consolidated in `docs/toolkit/`:
+
+| Category | Tools |
+| :--- | :--- |
+| Monitoring & inventory | `nvidia-smi` (+ `dmon`/`pmon`), NVML, **DCGM** (`dcgmi`), dcgm-exporter, nvtop, Prometheus/Grafana |
+| Health & diagnostics | DCGM diagnostics (`dcgmi diag`), `nvidia-smi -q`, **XID** decode, `nvidia-bug-report.sh`, `gpu-burn`, ECC/RAS, throttle reasons |
+| Profiling & tracing | **Nsight Systems** (`nsys`), **Nsight Compute** (`ncu`), CUPTI/NVTX, PyTorch profiler/Kineto, Holistic Trace Analysis |
+| Benchmarking | `nvbandwidth`, `bandwidthTest`, **nccl-tests**, cuBLAS/cuDNN microbench, `gpu-burn`; methodology (warmup/repeats, bus vs algo bandwidth) |
+| Networking / fabric | NCCL debug/topology, GPUDirect verification, `perftest` (`ib_write_bw`), `ethtool` + RoCE/ECN counters, `ibstat`/`mlxlink` |
+
 ## What this guide will cover
 
-Each layer gets a mechanism deep-dive **and** a hands-on lab.
-
 ### Part I — Single Node
-| # | Layer | Lab (run live) |
-| :-- | :--- | :--- |
-| 0 | Overview & the cluster | Enumerate the real cluster: nodes, GPUs, NICs, DaemonSets |
-| 1 | GPU microarchitecture (SM, SIMT, memory hierarchy, Tensor Cores, Hopper) | `nvidia-smi` / `deviceQuery` — SMs, clocks, Tensor Core support on a real H100 |
-| 2 | Drivers, CUDA & troubleshooting (branches, GKE install, XID, thermal) | Verify driver/CUDA, read `dmesg`/XID + DCGM diagnostics, interpret a fault |
-| 3 | Single-GPU execution (CUDA model, streams, occupancy, roofline) | Single-GPU GEMM/FP8 + memory-bandwidth microbench → measured TFLOPs & GB/s |
-| 4 | Intra-node: NVLink / NVSwitch | `nvidia-smi topo -m`; single-node 8-GPU all-reduce; per-link NVLink bandwidth |
+| # | Layer | Key tools | Lab (run live) |
+| :-- | :--- | :--- | :--- |
+| 1 | GPU microarchitecture (SM, SIMT, memory hierarchy, Tensor Cores, Hopper) | nvidia-smi, NVML, deviceQuery | Inspect SMs/clocks/Tensor Cores + full `nvidia-smi -q` on a real H100 |
+| 2 | Drivers, CUDA & troubleshooting (branches, install, XID, thermal) | DCGM diag, XID decode, nvidia-bug-report, gpu-burn | Verify driver/CUDA, run DCGM diagnostics, stress + read XID/throttle |
+| 3 | Single-GPU execution & profiling (CUDA model, occupancy, roofline) | Nsight Systems/Compute, nvbandwidth | GEMM/FP8 + nvbandwidth; profile a kernel with nsys/ncu → roofline |
+| 4 | Intra-node: NVLink / NVSwitch | nvidia-smi topo, nvbandwidth P2P, nccl-tests | Topology matrix; P2P + single-node 8-GPU all-reduce bandwidth |
 
 ### Part II — Inter-node Communication
-| # | Layer | Lab (run live) |
-| :-- | :--- | :--- |
-| 5 | NICs, RDMA, GPUDirect (gVNIC, TCPX/TCPXO/RoCE, plugin model) | Identify the actual data path; enable/compare Fast Socket / TCPX |
-| 6 | NCCL collectives (ring vs tree, bus vs algo bandwidth) | `nccl-tests` all-reduce/all-gather sweeps across 2 nodes → plotted GB/s curves |
+| # | Layer | Key tools | Lab (run live) |
+| :-- | :--- | :--- | :--- |
+| 5 | NICs, RDMA, GPUDirect (gVNIC, TCPX/TCPXO/RoCE, plugin model) | perftest, ethtool/RoCE counters, ibstat | Inspect NICs & path; measure raw fabric BW; enable/compare Fast Socket/TCPX |
+| 6 | NCCL collectives (ring vs tree, bus vs algo bandwidth) | nccl-tests, NCCL_DEBUG, topo export | 2-node all-reduce/all-gather sweeps → plotted GB/s curves |
 
 ### Part III — Clustering & Distributed Execution
-| # | Layer | Lab (run live) |
-| :-- | :--- | :--- |
-| 7 | GKE scheduling & topology (device plugin, gang, DWS) | Schedule a 16-GPU gang across both nodes |
-| 8 | Job frameworks (JobSet / Kueue, rendezvous) | Multi-node JobSet across 16 GPUs |
-| 9 | Distributed training (DDP / FSDP, step → collectives) | 2-node PyTorch job with NCCL tracing; DDP vs FSDP |
-| 10 | Observability & debugging (DCGM, NCCL_DEBUG, XID, NIC counters) | Inject faults; read the signatures (hangs, saturation, mismatch) |
+| # | Layer | Key tools | Lab (run live) |
+| :-- | :--- | :--- | :--- |
+| 7 | GKE scheduling & topology (device plugin, gang, DWS; generic: GPU Operator/Slurm) | kubectl GPU inspection, DCGM DaemonSet | Schedule a 16-GPU gang across both nodes |
+| 8 | Job frameworks (JobSet / Kueue, rendezvous) | JobSet/Kueue, kubectl | Multi-node JobSet across 16 GPUs |
+| 9 | Distributed training & profiling (DDP / FSDP) | PyTorch profiler, nsys multi-rank, HTA | 2-node PyTorch job; DDP vs FSDP; multi-rank traces analyzed |
+| 10 | Observability & debugging (fleet) | dcgm-exporter + Prometheus/Grafana, NCCL_DEBUG | Stand up dashboards; inject faults; read the signatures |
 
 ## The lab environment
 
@@ -58,13 +69,15 @@ The full design is in
 
 ```
 docs/
-  part1-single-node/          GPU arch, drivers/CUDA, single-GPU exec, NVLink
-  part2-inter-node/           NICs/RDMA/GPUDirect, NCCL collectives
-  part3-clustering-execution/ GKE scheduling, JobSet/Kueue, DDP/FSDP, observability
+  00-guide-overview.md            Journey, cluster, portability (GCP lab vs generic)
+  toolkit/                        Cross-cutting NVIDIA tooling deep-dives (T1–T6)
+  part1-single-node/              GPU arch, drivers/CUDA, single-GPU exec+profiling, NVLink
+  part2-inter-node/               NICs/RDMA/GPUDirect, NCCL collectives
+  part3-clustering-execution/     GKE scheduling, JobSet/Kueue, DDP/FSDP+profiling, fleet observability
 labs/        Step-by-step practice; one dir per lab, with real captured output
-manifests/   Reusable, verified Kubernetes YAML
+manifests/   Reusable, verified Kubernetes YAML (incl. dcgm-exporter)
 scripts/     Runner + capture/parse scripts
-assets/      Captured real outputs: logs, CSVs, plots, diagrams
-reference/   Env-var cheat sheets, XID table, NCCL tunables, driver matrix, glossary
+assets/      Captured real outputs: logs, CSVs, plots, profiler timelines, diagrams
+reference/   Env-var cheat sheets, XID table, NCCL tunables, driver matrix, tool cheat-sheets, glossary
 VERIFICATION.md   Provenance log of every live run and artifact
 ```
