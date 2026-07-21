@@ -1,8 +1,8 @@
 # Design Spec: `hypercomputer-internode-deepdive`
 
-**Date:** 2026-07-21 (rev 4)
+**Date:** 2026-07-21 (rev 5)
 **Author:** elideng-sg (with Claude Code)
-**Status:** Draft — awaiting user review
+**Status:** Approved — proceeding to implementation plan
 
 ---
 
@@ -19,11 +19,30 @@ The guide walks one continuous, bottom-up journey:
 
 Cutting **across all parts** is a **NVIDIA tooling layer** — monitoring, health/diagnostic, profiling, benchmarking, and fabric tools (nvidia-smi, DCGM, Nsight Systems/Compute, nvbandwidth, nccl-tests, perftest, dcgm-exporter, and more) — taught in context and consolidated in a cross-cutting reference.
 
-### Platform scope — not limited to GCP
-The **concrete lab** runs on a Google Cloud A3 H100 GKE cluster, but the **mechanisms and tools are platform-agnostic** and transfer to any NVIDIA GPU environment — on-prem / DGX / SuperPOD, other clouds, bare metal, Slurm or Kubernetes. Where a step is GCP-specific (e.g. DWS provisioning, GKE device-plugin DaemonSets), it is **explicitly flagged** and the **generic equivalent** noted (NVIDIA GPU Operator, `k8s-device-plugin`, Slurm `gres`, Base Command Manager). Part IV makes the cloud-vs-purpose-built-platform contrast explicit.
+### Platform scope — the full GCP AI Hypercomputer GPU portfolio (and beyond)
+The **concrete lab** runs on a Google Cloud **A3 High (`a3-highgpu-8g`, H100)** GKE cluster, but the **scope is not limited to that one node type**. The guide covers the **full GCP AI Hypercomputer GPU landscape** and **matches each concept to the specific product/family it applies to**, so a reader knows exactly which mechanism belongs to which machine type:
+
+| GCP machine family | GPU | Inter-node GPU networking | Where it appears in the guide |
+| :--- | :--- | :--- | :--- |
+| A3 High (`a3-highgpu-8g`) — **the lab** | H100 80GB | GPUDirect-**TCPX** (gVNIC) | Parts I–III, measured live |
+| A3 Mega (`a3-megagpu-8g`) | H100 80GB | GPUDirect-**TCPXO** | Part II/III contrast |
+| A3 Ultra (`a3-ultragpu-8g`) | H200 141GB | **RoCE / GPUDirect-RDMA** (CX-7) | Part II + Part IV fabric contrast |
+| A4 (`a4-highgpu-8g`) | Blackwell B200 | RoCE / GPUDirect-RDMA | Part I arch + Part IV |
+| A4X (`a4x-highgpu-4g`) | GB200 (Grace-Blackwell) | RoCE + **NVLink domain** | Part IV (NVLink Switch System / NVL72) |
+
+Beyond GCP, the **mechanisms and tools are platform-agnostic** and transfer to on-prem / DGX / SuperPOD, other clouds, bare metal, Slurm or Kubernetes. Every GCP-specific step is **flagged** with its **generic and cross-product equivalent** so the knowledge is correctly attributed:
+
+**GCP ↔ NVIDIA-platform product mapping (used throughout, esp. Part IV):**
+- **Host/network offload:** GCP **Titanium** offload & custom fabric  ↔  NVIDIA **BlueField DPU / SuperNIC** (§12).
+- **Inter-node GPU fabric:** GCP **GPUDirect-TCPX/TCPXO** (A3) and **GPUDirect-RDMA/RoCE** (A3 Ultra/A4)  ↔  NVIDIA **Spectrum-X Ethernet** and **Quantum InfiniBand** (§13).
+- **NVLink scale-up domains:** A4X **GB200 NVL** domains  ↔  NVIDIA **NVLink Switch System / GB200 NVL72** (§14).
+- **Cluster orchestration & scheduling:** **GKE + JobSet + Kueue + DWS**  ↔  **Base Command Manager / Run:ai / Slurm** on DGX SuperPOD (§7–8, §14).
+- **Managed drivers:** GKE **device-plugin DaemonSets**  ↔  **NVIDIA GPU Operator** / DGX OS driver stack (§2).
+
+Part IV makes the cloud-vs-purpose-built-platform contrast explicit and always attributes a capability to the correct product on both sides.
 
 ### Reality check on Part IV (honesty principle)
-DGX/HGX **system software**, **BlueField DPUs**, and **Spectrum-X** switches are **not present** on the GCP A3 cluster (GCP fronts its own host-offload/"Titanium" and network fabric; A3 nodes ride an **HGX H100 baseboard** but without DGX OS / NVSM / Fabric Manager exposed to the tenant). Part IV is therefore **knowledge-first / reference-architecture**, with **observe-and-compare** exercises limited to what the A3 lab can actually reveal (e.g. mapping `nvidia-smi topo` to the HGX baseboard, detecting the presence/absence of DPUs, SuperNICs, and a tenant-visible Fabric Manager). Each Part IV section states clearly **what is runnable here vs. read-only**, and for hands-on BlueField/DOCA work **points to the dedicated NVIDIA DOCA skills** rather than duplicating them.
+DGX/HGX **system software**, **BlueField DPUs**, and **Spectrum-X** switches are **not present** on the GCP A3 cluster (GCP fronts its own host-offload/"Titanium" and network fabric; A3 nodes ride an **HGX H100 baseboard** but without DGX OS / NVSM / Fabric Manager exposed to the tenant). Part IV is therefore **knowledge-first / reference-architecture** — each capability is **attributed to the correct product on both the NVIDIA and GCP sides** (see the product-mapping table in §1) — with **observe-and-compare** exercises limited to what the live GCP lab can actually reveal (e.g. mapping `nvidia-smi topo` to the HGX baseboard, detecting the presence/absence of DPUs, SuperNICs, and a tenant-visible Fabric Manager). Each Part IV section states clearly **what is runnable here vs. read-only**, and for hands-on BlueField/DOCA work **points to the dedicated NVIDIA DOCA skills** rather than duplicating them.
 
 ### Target reader
 An engineer or data scientist who can use `kubectl` and Python and wants **deep, first-principles knowledge** of how GPU workloads are built, communicate, execute, and are operated — and how the underlying NVIDIA platforms (DGX/HGX/SuperPOD, BlueField, Spectrum-X) are architected — enough to **design, implement, troubleshoot, benchmark, and debug** them from a single card to a SuperPOD-class fabric, on GCP or elsewhere. Depth target matches the existing `gcp-ai-infra-study` notes (textbook rigor + practitioner detail).

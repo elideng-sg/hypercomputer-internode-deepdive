@@ -10,7 +10,7 @@ One continuous, bottom-up journey:
 
 Every mechanism and tool is paired with a lab capturing **actual measured data** — architecture specs, roofline + profiler timelines, NVLink & inter-node bandwidth curves, topology dumps, NCCL traces, fleet dashboards, and failure signatures — not generic expected values.
 
-> **Not limited to GCP.** The lab runs on Google Cloud A3 H100, but the mechanisms and tools are **platform-agnostic** — they transfer to on-prem/DGX/SuperPOD, other clouds, bare metal, Slurm or Kubernetes. GCP-specific steps (DWS, GKE device plugin) are **flagged** with generic equivalents (NVIDIA GPU Operator, `k8s-device-plugin`, Slurm `gres`, Base Command Manager).
+> **Scope: the full GCP AI Hypercomputer GPU portfolio — not just A3.** The lab runs live on A3 High (H100), but the guide covers and **attributes each concept to the right GCP product/family** — A3 High (TCPX), A3 Mega (TCPXO), A3 Ultra (H200, RoCE/GPUDirect-RDMA), A4 (B200), A4X (GB200 + NVLink domains) — and maps them to their NVIDIA-platform equivalents: GCP **Titanium** ↔ **BlueField DPU**, GPUDirect-TCPX/RDMA ↔ **Spectrum-X / InfiniBand**, GKE+JobSet+Kueue ↔ **Base Command Manager / Run:ai / Slurm**. Concepts and tools are otherwise **platform-agnostic** (on-prem/DGX/SuperPOD, other clouds, bare metal).
 
 > **Honesty note on Part IV.** DGX/HGX *system software*, BlueField DPUs, and Spectrum-X are **not present** on the GCP A3 cluster (each A3 node rides an **HGX H100 baseboard**, but DGX OS / Fabric Manager / DPUs / Spectrum-X are not tenant-visible). Part IV is therefore **knowledge-first / reference-architecture**, with *observe-and-compare* exercises against what the A3 lab can actually show. It never claims that DGX/BlueField/Spectrum-X hardware was run here.
 
