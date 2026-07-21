@@ -1,16 +1,18 @@
 # hypercomputer-internode-deepdive
 
-A **standalone, hands-on guide** to the **NVIDIA GPU + AI-infrastructure stack** — how a GPU is built, how it executes work, how GPUs communicate within and across nodes, and how distributed workloads are scheduled, run, **monitored, profiled, benchmarked, and debugged** — taught with the **standard NVIDIA toolchain**.
+A **standalone, hands-on guide** to the **NVIDIA GPU + AI-infrastructure stack** — from a single GPU's silicon, up through node and cluster communication, to the **purpose-built AI-factory platforms** NVIDIA ships (DGX/HGX, BlueField, Spectrum-X, DGX SuperPOD) — taught with the **standard NVIDIA toolchain** and backed by **labs run live on a real 2-node A3 H100 cluster** (16 × H100 80GB).
 
 One continuous, bottom-up journey:
 
-**single node → inter-node communication → clustering & distributed execution**
+**single node → inter-node communication → clustering & distributed execution → platform & reference architectures**
 
 …with a **NVIDIA tooling layer** cutting across all of it (nvidia-smi, DCGM, Nsight Systems/Compute, nvbandwidth, nccl-tests, perftest, dcgm-exporter + Grafana, and more).
 
-Every mechanism and tool is paired with a **lab run live on a real 2-node A3 H100 cluster** (16 × H100 80GB), capturing **actual measured data** — architecture specs, roofline + profiler timelines, NVLink & inter-node bandwidth curves, topology dumps, NCCL traces, fleet dashboards, and failure signatures — not generic expected values.
+Every mechanism and tool is paired with a lab capturing **actual measured data** — architecture specs, roofline + profiler timelines, NVLink & inter-node bandwidth curves, topology dumps, NCCL traces, fleet dashboards, and failure signatures — not generic expected values.
 
-> **Not limited to GCP.** The lab runs on Google Cloud A3 H100, but the mechanisms and tools are **platform-agnostic** — they transfer to on-prem/DGX, other clouds, bare metal, Slurm or Kubernetes. GCP-specific steps (DWS, GKE device plugin) are **flagged** with their generic equivalents (NVIDIA GPU Operator, `k8s-device-plugin`, Slurm `gres`).
+> **Not limited to GCP.** The lab runs on Google Cloud A3 H100, but the mechanisms and tools are **platform-agnostic** — they transfer to on-prem/DGX/SuperPOD, other clouds, bare metal, Slurm or Kubernetes. GCP-specific steps (DWS, GKE device plugin) are **flagged** with generic equivalents (NVIDIA GPU Operator, `k8s-device-plugin`, Slurm `gres`, Base Command Manager).
+
+> **Honesty note on Part IV.** DGX/HGX *system software*, BlueField DPUs, and Spectrum-X are **not present** on the GCP A3 cluster (each A3 node rides an **HGX H100 baseboard**, but DGX OS / Fabric Manager / DPUs / Spectrum-X are not tenant-visible). Part IV is therefore **knowledge-first / reference-architecture**, with *observe-and-compare* exercises against what the A3 lab can actually show. It never claims that DGX/BlueField/Spectrum-X hardware was run here.
 
 > **Status: 🚧 planning.** The design spec is committed and under review. Implementation (docs + live labs) has not started yet.
 
@@ -18,7 +20,7 @@ Every mechanism and tool is paired with a **lab run live on a real 2-node A3 H10
 
 ## The NVIDIA tooling layer (cross-cutting)
 
-Taught in the layer where each tool naturally appears, and consolidated in `docs/toolkit/`:
+Taught in the layer where each tool appears, consolidated in `docs/toolkit/`:
 
 | Category | Tools |
 | :--- | :--- |
@@ -33,16 +35,16 @@ Taught in the layer where each tool naturally appears, and consolidated in `docs
 ### Part I — Single Node
 | # | Layer | Key tools | Lab (run live) |
 | :-- | :--- | :--- | :--- |
-| 1 | GPU microarchitecture (SM, SIMT, memory hierarchy, Tensor Cores, Hopper) | nvidia-smi, NVML, deviceQuery | Inspect SMs/clocks/Tensor Cores + full `nvidia-smi -q` on a real H100 |
-| 2 | Drivers, CUDA & troubleshooting (branches, install, XID, thermal) | DCGM diag, XID decode, nvidia-bug-report, gpu-burn | Verify driver/CUDA, run DCGM diagnostics, stress + read XID/throttle |
-| 3 | Single-GPU execution & profiling (CUDA model, occupancy, roofline) | Nsight Systems/Compute, nvbandwidth | GEMM/FP8 + nvbandwidth; profile a kernel with nsys/ncu → roofline |
-| 4 | Intra-node: NVLink / NVSwitch | nvidia-smi topo, nvbandwidth P2P, nccl-tests | Topology matrix; P2P + single-node 8-GPU all-reduce bandwidth |
+| 1 | GPU microarchitecture (SM, SIMT, memory hierarchy, Tensor Cores, Hopper) | nvidia-smi, NVML, deviceQuery | Inspect SMs/clocks/Tensor Cores + full `nvidia-smi -q` |
+| 2 | Drivers, CUDA & troubleshooting (branches, install, XID, thermal) | DCGM diag, XID decode, nvidia-bug-report, gpu-burn | Verify driver/CUDA, DCGM diag, stress + read XID/throttle |
+| 3 | Single-GPU execution & profiling (CUDA model, occupancy, roofline) | Nsight Systems/Compute, nvbandwidth | GEMM/FP8 + nvbandwidth; profile a kernel → roofline |
+| 4 | Intra-node: NVLink / NVSwitch — **the node as an HGX H100 baseboard** | nvidia-smi topo, nvbandwidth P2P, nccl-tests | Topology matrix mapped to HGX; P2P + 8-GPU all-reduce BW |
 
 ### Part II — Inter-node Communication
 | # | Layer | Key tools | Lab (run live) |
 | :-- | :--- | :--- | :--- |
-| 5 | NICs, RDMA, GPUDirect (gVNIC, TCPX/TCPXO/RoCE, plugin model) | perftest, ethtool/RoCE counters, ibstat | Inspect NICs & path; measure raw fabric BW; enable/compare Fast Socket/TCPX |
-| 6 | NCCL collectives (ring vs tree, bus vs algo bandwidth) | nccl-tests, NCCL_DEBUG, topo export | 2-node all-reduce/all-gather sweeps → plotted GB/s curves |
+| 5 | NICs, RDMA, GPUDirect (gVNIC, TCPX/TCPXO/RoCE, plugin model) | perftest, ethtool/RoCE counters, ibstat | Inspect NICs & path; raw fabric BW; enable/compare Fast Socket/TCPX |
+| 6 | NCCL collectives (ring vs tree, bus vs algo bandwidth) | nccl-tests, NCCL_DEBUG, topo export | 2-node sweeps → plotted GB/s curves |
 
 ### Part III — Clustering & Distributed Execution
 | # | Layer | Key tools | Lab (run live) |
@@ -52,13 +54,23 @@ Taught in the layer where each tool naturally appears, and consolidated in `docs
 | 9 | Distributed training & profiling (DDP / FSDP) | PyTorch profiler, nsys multi-rank, HTA | 2-node PyTorch job; DDP vs FSDP; multi-rank traces analyzed |
 | 10 | Observability & debugging (fleet) | dcgm-exporter + Prometheus/Grafana, NCCL_DEBUG | Stand up dashboards; inject faults; read the signatures |
 
+### Part IV — Platform & Reference Architectures  *(knowledge-first; observe-and-compare)*
+| # | Layer | Covers | Runnable here? |
+| :-- | :--- | :--- | :--- |
+| 11 | **DGX / HGX systems & troubleshooting** | HGX baseboard vs DGX system; DGX OS, NVSM, GPU Fabric Manager, Base Command Manager; system-level troubleshooting | Partial — map node to HGX; note DGX-only parts absent |
+| 12 | **BlueField DPUs & DOCA** | DPU offload (net/storage/security), DOCA, BlueField-3; contrast w/ GCP Titanium | Read-only — links to NVIDIA DOCA skills |
+| 13 | **Spectrum-X & AI fabrics** | Spectrum-X Ethernet vs Quantum InfiniBand (rail-optimized, SHARP) vs cloud fabric/TCPX | Read-only + compare to lab-06 curves |
+| 14 | **DGX SuperPOD** | Scalable unit, compute/storage/mgmt fabrics, NVLink Switch System / GB200 NVL72, BCM/Run:ai, validation | Read-only — contrast with A3 scaling |
+
+**Capstone `lab-11`:** map the A3 node to the HGX H100 baseboard, probe for (and document the absence of) Fabric Manager / BlueField / Spectrum-X, and build an "A3 tenant vs DGX SuperPOD" comparison from real output.
+
 ## The lab environment
 
 | | |
 | :--- | :--- |
 | Cluster | `hypercomputer-a3-cluster` (GKE v1.33), `us-central1` |
-| GPU pool | 2 × `a3-highgpu-8g` = **16 × H100 80GB** (DWS) |
-| Journey | Single GPU → single node (8×NVLink) → 2 nodes → 16-GPU distributed jobs |
+| GPU pool | 2 × `a3-highgpu-8g` = **16 × H100 80GB** (each node = an HGX H100 baseboard) |
+| Journey | Single GPU → single node (8×NVLink/HGX) → 2 nodes → 16-GPU jobs → platform reference architectures |
 
 ## Design spec
 
@@ -71,13 +83,14 @@ The full design is in
 docs/
   00-guide-overview.md            Journey, cluster, portability (GCP lab vs generic)
   toolkit/                        Cross-cutting NVIDIA tooling deep-dives (T1–T6)
-  part1-single-node/              GPU arch, drivers/CUDA, single-GPU exec+profiling, NVLink
+  part1-single-node/              GPU arch, drivers/CUDA, single-GPU exec+profiling, NVLink/HGX
   part2-inter-node/               NICs/RDMA/GPUDirect, NCCL collectives
   part3-clustering-execution/     GKE scheduling, JobSet/Kueue, DDP/FSDP+profiling, fleet observability
+  part4-platform-reference-arch/  DGX/HGX, BlueField/DOCA, Spectrum-X, DGX SuperPOD
 labs/        Step-by-step practice; one dir per lab, with real captured output
 manifests/   Reusable, verified Kubernetes YAML (incl. dcgm-exporter)
 scripts/     Runner + capture/parse scripts
 assets/      Captured real outputs: logs, CSVs, plots, profiler timelines, diagrams
-reference/   Env-var cheat sheets, XID table, NCCL tunables, driver matrix, tool cheat-sheets, glossary
+reference/   Cheat sheets: XID table, NCCL tunables, driver matrix, tools, reference-arch, glossary
 VERIFICATION.md   Provenance log of every live run and artifact
 ```
