@@ -26,6 +26,8 @@ This glossary defines key terms used throughout the guide. Terms are listed alph
 
 **NVSwitch:** A high-speed switch fabric chip that connects multiple GPUs via NVLink in a fully connected topology, enabling all-to-all GPU communication at full NVLink bandwidth (used in HGX and DGX systems).
 
+**NVL72:** A 72-GPU NVLink scale-up domain (as in GB200 NVL72 / Grace-Blackwell), where all 72 GPUs are linked through NVLink Switch trays into one coherent, all-to-all NVLink-bandwidth domain.
+
 **Rail-optimized:** A network topology design (common in NVIDIA SuperPOD and Quantum InfiniBand fabrics) that segregates traffic into multiple independent "rails" or paths to maximize bisection bandwidth and avoid congestion.
 
 **RDMA (Remote Direct Memory Access):** A networking protocol that allows direct memory access from one host to another without involving the operating system or CPU, minimizing latency and CPU overhead.
