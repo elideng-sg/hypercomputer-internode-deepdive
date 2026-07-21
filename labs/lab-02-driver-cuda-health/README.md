@@ -2,7 +2,7 @@
 
 ## Overview
 
-This lab validates the NVIDIA driver and CUDA stack on a live GKE A3-Mega H100 cluster, and demonstrates the health diagnostics workflow:
+This lab validates the NVIDIA driver and CUDA stack on a live GKE **A3 High** (`a3-highgpu-8g`) H100 cluster, and demonstrates the health diagnostics workflow:
 - Driver and CUDA version capture
 - GPU detailed state query (ECC, performance, temperature, power)
 - DCGM Level 2 diagnostics
@@ -15,7 +15,7 @@ This lab validates the NVIDIA driver and CUDA stack on a live GKE A3-Mega H100 c
 
 ## Prerequisites
 
-- GKE cluster with GPU node pool (A3-Mega H100 used in this lab)
+- GKE cluster with GPU node pool (A3 High / `a3-highgpu-8g` H100 used in this lab)
 - `kubectl` authenticated to the cluster
 - Node with at least 1 free GPU (this lab uses 1-GPU footprint)
 

@@ -9,7 +9,7 @@ This document covers the NVIDIA GPU driver and CUDA stack on GCP, focusing on:
 - **Health diagnostics workflow**: `nvidia-smi` → DCGM → `gpu-burn` → `nvidia-bug-report.sh`
 - **XID error taxonomy** and troubleshooting
 
-All examples are validated against live diagnostics from a GKE A3-Mega H100 cluster (Lab 02).
+All examples are validated against live diagnostics from a GKE **A3 High** (`a3-highgpu-8g`) H100 cluster (Lab 02).
 
 ---
 
@@ -42,7 +42,7 @@ The table below (from GCP documentation) shows the recommended driver versions f
 | **N1** | T4, V100, P100, P4 | R580 | 580.95.05 |
 
 **Verified on live cluster (Lab 02, 2026-07-21):**  
-The GKE A3-Mega H100 cluster used in this guide is running:
+The GKE **A3 High** (`a3-highgpu-8g`) H100 cluster used in this guide is running:
 - **Driver:** 535.309.01 (R535 LTSB, predecessor to R580)
 - **CUDA Driver API:** 12.2
 - **CUDA Runtime** (from container): 12.6
@@ -247,7 +247,7 @@ GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-cd96915b-9acb-ad84-aaa4-d61ddd4984d2)
 
 **What to check:**
 - Driver version matches expected (or is compatible)
-- All GPUs are listed (8 for A3-Mega)
+- All GPUs are listed (8 for A3 High)
 - No XIDs or ECC errors in the output
 - Temperature and power are within normal range
 
