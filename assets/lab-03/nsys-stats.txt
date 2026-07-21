@@ -1,0 +1,120 @@
+Generating SQLite file /work/gemm.sqlite from /work/gemm.nsys-rep
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/nvtx_sum.py]... 
+
+ ** NVTX Range Summary (nvtx_sum):
+
+ Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)   Style             Range           
+ --------  ---------------  ---------  --------  --------  --------  --------  -----------  -------  --------------------------
+     13.0           375916          1  375916.0  375916.0    375916    375916          0.0  PushPop  :GEMM_torch.float16_16384 
+     13.0           374536          1  374536.0  374536.0    374536    374536          0.0  PushPop  :GEMM_torch.bfloat16_16384
+     12.7           367291          1  367291.0  367291.0    367291    367291          0.0  PushPop  :GEMM_torch.bfloat16_4096 
+     12.4           357750          1  357750.0  357750.0    357750    357750          0.0  PushPop  :GEMM_torch.bfloat16_8192 
+     12.4           357720          1  357720.0  357720.0    357720    357720          0.0  PushPop  :GEMM_torch.bfloat16_2048 
+     12.3           354897          1  354897.0  354897.0    354897    354897          0.0  PushPop  :GEMM_torch.float16_2048  
+     12.2           352410          1  352410.0  352410.0    352410    352410          0.0  PushPop  :GEMM_torch.float16_8192  
+     11.9           342661          1  342661.0  342661.0    342661    342661          0.0  PushPop  :GEMM_torch.float16_4096  
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/osrt_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain OS Runtime trace data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/cuda_api_sum.py]... 
+
+ ** CUDA API Summary (cuda_api_sum):
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)   Med (ns)   Min (ns)  Max (ns)   StdDev (ns)                        Name                      
+ --------  ---------------  ---------  ----------  ---------  --------  ---------  -----------  ------------------------------------------------
+     91.8        728712264         16  45544516.5  5197611.5      7065  269522495   87104574.4  cudaDeviceSynchronize                           
+      6.4         50804318         30   1693477.3  1200866.5     14450    4321636    1477030.5  cuLibraryLoadData                               
+      1.0          7669996         17    451176.2     9095.0      4666    6195266    1513395.1  cudaLaunchKernel                                
+      0.3          2762830         19    145412.1   133801.0      2197     317813      74515.6  cudaMalloc                                      
+      0.2          1819982          1   1819982.0  1819982.0   1819982    1819982          0.0  cudaFree                                        
+      0.2          1297655        200      6488.3     4036.5      2780      86082      12145.0  cuLaunchKernelEx                                
+      0.0           337650        150      2251.0     1858.5      1402      10053       1522.3  cudaMemsetAsync                                 
+      0.0           160376        810       198.0      140.0        80        990        127.9  cuGetProcAddress_v2                             
+      0.0            45300         16      2831.3     2368.0      1636       6694       1308.7  cudaEventRecord                                 
+      0.0            38112         34      1120.9      894.5       208       3558       1014.9  cudaEventCreateWithFlags                        
+      0.0            35900         48       747.9      311.5       198      11047       1579.7  cudaStreamIsCapturing_v10000                    
+      0.0            32458        400        81.1       68.0        56        618         53.5  cuKernelGetAttribute                            
+      0.0            16471         30       549.0      524.0       336        984        159.8  cuLibraryGetKernel                              
+      0.0            13955         16       872.2      627.5       276       3177        761.1  cudaEventDestroy                                
+      0.0            13687         12      1140.6      706.5       214       6641       1773.1  cuKernelSetAttribute                            
+      0.0             7764          1      7764.0     7764.0      7764       7764          0.0  cudaOccupancyAvailableDynamicSMemPerBlock_v10200
+      0.0             7243         18       402.4      274.0       261       2194        452.9  cudaOccupancyMaxActiveClusters_v11070           
+      0.0             3279          3      1093.0     1006.0       946       1327        204.9  cuInit                                          
+      0.0             1762          3       587.3      173.0       136       1453        749.9  cuModuleGetLoadingMode                          
+      0.0             1059          2       529.5      529.5       320        739        296.3  cudaGetDriverEntryPoint_v11030                  
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/cuda_gpu_kern_sum.py]... 
+
+ ** CUDA GPU Kernel Summary (cuda_gpu_kern_sum):
+
+ Time (%)  Total Time (ns)  Instances   Avg (ns)    Med (ns)   Min (ns)  Max (ns)  StdDev (ns)                                                  Name                                                
+ --------  ---------------  ---------  ----------  ----------  --------  --------  -----------  ----------------------------------------------------------------------------------------------------
+     45.2        332713843         25  13308553.7  13513282.0  12509220  13519617     380063.0  nvjet_hsh_192x192_64x3_2x1_v_bz_coopB_NNN                                                           
+     42.9        315558002         25  12622320.1  12753669.0  11699687  12757764     347061.7  nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN                                                           
+      5.1         37391791         25   1495671.6   1472829.0   1466684   1625053      55703.6  nvjet_hsh_320x128_64x3_1x2_h_bz_coopB_NNT                                                           
+      4.9         36154355         25   1446174.2   1420829.0   1417277   1520701      43238.9  nvjet_tst_320x128_64x3_1x2_h_bz_coopB_NNT                                                           
+      0.7          5170356         50    103407.1    101488.0     24576    185599      79235.1  nvjet_hsh_256x128_64x4_1x2_h_bz_coopA_NNT                                                           
+      0.7          5101176         50    102023.5    101887.5     26944    187680      75296.7  nvjet_tst_256x128_64x4_1x2_h_bz_coopA_NNT                                                           
+      0.3          1910461          8    238807.6     94464.0     12512    752318     321598.1  void at::native::<unnamed>::distribution_elementwise_grid_stride_kernel<float, (int)4, void at::nat…
+      0.3          1856284          8    232035.5    100671.5     17376    709822     299768.5  void at::native::<unnamed>::distribution_elementwise_grid_stride_kernel<float, (int)4, void at::nat…
+      0.0             1760          1      1760.0      1760.0      1760      1760          0.0  void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<c10::Float8_e4m3fn>,…
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/cuda_gpu_mem_time_sum.py]... 
+
+ ** CUDA GPU MemOps Summary (by Time) (cuda_gpu_mem_time_sum):
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)    Operation  
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  -------------
+    100.0           131324    150     875.5     736.0       703      1632        231.2  [CUDA memset]
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/cuda_gpu_mem_size_sum.py]... 
+
+ ** CUDA GPU MemOps Summary (by Size) (cuda_gpu_mem_size_sum):
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)    Operation  
+ ----------  -----  --------  --------  --------  --------  -----------  -------------
+      0.001    150     0.000     0.000     0.000     0.000        0.000  [CUDA memset]
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/openmp_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain OpenMP event data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/opengl_khr_range_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain KHR Extension (KHR_DEBUG) data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/opengl_khr_gpu_range_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain GPU KHR Extension (KHR_DEBUG) data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/vulkan_marker_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain Vulkan Debug Extension (Vulkan Debug Util) data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/vulkan_gpu_marker_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain GPU Vulkan Debug Extension (GPU Vulkan Debug markers) data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/dx11_pix_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain DX11 CPU debug markers.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/dx12_gpu_marker_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain DX12 GPU debug markers.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/dx12_pix_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain DX12 CPU debug markers.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/wddm_queue_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain WDDM context data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/um_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain CUDA memory transfers data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/um_total_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain CUDA memory transfers data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/um_cpu_page_faults_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain CUDA Unified Memory CPU page faults data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/openacc_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain OpenACC event data.
+
+Processing [/work/gemm.sqlite] with [/usr/local/cuda-12.6/NsightSystems-cli-2024.6.1/target-linux-x64/reports/syscall_sum.py]... 
+SKIPPED: /work/gemm.sqlite does not contain syscall data.
+

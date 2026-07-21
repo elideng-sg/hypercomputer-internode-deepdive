@@ -1,0 +1,14 @@
+==PROF== Connected to process 617 (/usr/bin/python3.10)
+==ERROR== ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters on the target device 0. For instructions on enabling permissions and to get more information see https://developer.nvidia.com/ERR_NVGPUCTRPERM
+# FP8 not supported, skipping
+dtype,size,tflops
+fp16,2048,94.74
+fp16,4096,692.41
+fp16,8192,739.08
+fp16,16384,667.43
+bf16,2048,89.28
+bf16,4096,688.82
+bf16,8192,768.14
+bf16,16384,680.11
+==PROF== Disconnected from process 617
+ncu failed (expected on GKE COS without CAP_SYS_ADMIN)

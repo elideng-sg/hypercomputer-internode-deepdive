@@ -1,0 +1,2 @@
+bash: line 1: cd: /usr/local/cuda/samples/1_Utilities/bandwidthTest: No such file or directory
+command terminated with exit code 1
