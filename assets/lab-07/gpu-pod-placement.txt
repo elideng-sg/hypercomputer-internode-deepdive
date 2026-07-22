@@ -1,0 +1,6 @@
+# cmd: bash -c $'kubectl get pods -A -o wide | awk \'NR==1\' ; kubectl get pods -A -o json | python3 -c \'import json,sys\nfor p in json.load(sys.stdin)["items"]:\n    g=sum(int(c.get("resources",{}).get("limits",{}).get("nvidia.com/gpu",0)) for c in p["spec"]["containers"])\n    if g: print(f"  {p["metadata"]["namespace"]}/{p["metadata"]["name"]}  gpu={g}  node={p["spec"].get("nodeName","-")}  phase={p["status"]["phase"]}")\''
+NAMESPACE            NAME                                                                      READY   STATUS      RESTARTS       AGE     IP            NODE                                                  NOMINATED NODE   READINESS GATES
+  default/a3-holder-zone-a2-54ff6c9d44-6hcfn  gpu=8  node=gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m  phase=Running
+  default/a3-holder-zone-b-6548bcb65-4rdbj  gpu=8  node=-  phase=Pending
+  default/a3-holder-zone-c-574d484d8d-2jhx7  gpu=8  node=-  phase=Pending
+  inference/qwen3-vllm-b76697d85-krs4j  gpu=2  node=gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6  phase=Running

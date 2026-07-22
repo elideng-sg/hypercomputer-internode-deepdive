@@ -1,0 +1,12 @@
+# cmd: bash -c $'kubectl get provisioningrequests -A; echo; echo \'### conditions:\'; kubectl get provisioningrequests -A -o json | python3 -c \'import json,sys\nfor p in json.load(sys.stdin)["items"]:\n    n=p["metadata"]["name"]; conds=[(c["type"],c["status"]) for c in p.get("status",{}).get("conditions",[])]\n    print(f"  {n}: {conds}")\''
+NAMESPACE   NAME                  ACCEPTED   PROVISIONED   FAILED   AGE
+default     a3-h100-req-zone-a    True       True                   5d17h
+default     a3-h100-req-zone-a2   True       True                   2d5h
+default     a3-h100-req-zone-b    True       False                  5d17h
+default     a3-h100-req-zone-c    True       False                  5d17h
+
+### conditions:
+  a3-h100-req-zone-a: [('Accepted', 'True'), ('Provisioned', 'True'), ('BookingExpired', 'True')]
+  a3-h100-req-zone-a2: [('Accepted', 'True'), ('Provisioned', 'True'), ('BookingExpired', 'True')]
+  a3-h100-req-zone-b: [('Accepted', 'True'), ('Provisioned', 'False')]
+  a3-h100-req-zone-c: [('Accepted', 'True'), ('Provisioned', 'False')]
