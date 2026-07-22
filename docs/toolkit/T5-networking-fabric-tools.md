@@ -4,7 +4,30 @@
 
 This reference covers the **networking and fabric diagnostic tools** used to characterize, verify, and debug **inter-node GPU communication paths** — from transport-layer verification (NCCL debug logs, topology export) to physical-fabric measurements (RDMA microbenchmarks, NIC counters, RoCE/ECN statistics).
 
-**Critical product context:** The GCP AI Hypercomputer GPU portfolio uses **different inter-node networking technologies** depending on machine family. Tools must be matched to the right family:
+**Critical product context:** The GCP AI Hypercomputer GPU portfolio uses **different inter-node networking technologies** depending on machine family. Tools must be matched to the right family — reaching for an RDMA tool on a gVNIC node has no hardware to talk to.
+
+*Figure: machine-family to tool-applicability tree — RDMA tools apply only on CX-7/RoCE families.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  fam{"Machine<br/>family?"}:::accent
+  gvnic["A3 High/Mega<br/>gVNIC + TCPX"]:::meas
+  rdma["A3 Ultra / A4<br/>CX-7 + RoCE"]:::meas
+  common["NCCL logs + ethtool -S<br/>all families"]:::good
+  rtools["perftest / ibstat / mlxlink<br/>RDMA only"]:::good
+  bad["RDMA tool on gVNIC<br/>no such hardware"]:::crit
+  fam --"A3 High/Mega"--> gvnic
+  fam --"A3 Ultra/A4"--> rdma
+  gvnic --> common
+  rdma --> common
+  rdma --> rtools
+  gvnic --"do NOT"--> bad
+  linkStyle 5 stroke:#c5221f,stroke-width:3px;
+```
 
 | GCP machine family | GPU | Inter-node GPU networking | Fabric tools applicability |
 | :--- | :--- | :--- | :--- |
@@ -613,6 +636,28 @@ diff /tmp/mlxlink-before.txt /tmp/mlxlink-after.txt | grep -E 'error|downed|unco
 3. Compare bus bandwidth (`nccl-tests` busbw output) with and without TCPX to quantify speedup.
 
 ### 8.3 Debugging Workflow (When Bandwidth Is Low or NCCL Stalls)
+
+The golden rule is start high and drill down: confirm the transport with NCCL logs first, then descend to the fabric layer only if needed.
+
+*Figure: fabric-debug drill-down — start at NCCL logs, descend to perftest, ethtool, mlxlink.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  sym{"Symptom<br/>low BW / stall / ECN"}:::accent
+  logs["1. NCCL logs<br/>confirm transport"]:::good
+  pf["2. perftest<br/>fabric BW floor"]:::meas
+  eth["3. ethtool -S<br/>drops / pause / ECN"]:::meas
+  mlx["4. mlxlink<br/>FEC / symbol errors"]:::meas
+  root["Root cause<br/>transport / congestion / cable"]:::crit
+  sym --> logs
+  logs --"wrong transport"--> root
+  logs --"transport OK"--> pf
+  pf --> eth --> mlx --> root
+```
 
 | Symptom | Root cause candidates | Tools to use |
 | :--- | :--- | :--- |

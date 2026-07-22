@@ -21,6 +21,30 @@ Parts I–II built the picture of the fabric; this is where a real workload runs
 
 Both DDP and FSDP process different data on each rank and keep the model mathematically synchronized. They differ in **what lives on each GPU**:
 
+*Figure: DDP keeps a full model replica on every rank; FSDP keeps a 1/N shard — trading memory for communication.*
+
+```mermaid
+flowchart TD
+  subgraph DDP["DDP: full replica per rank"]
+    d0["Rank 0<br/>params + grads + optim<br/>100%"]
+    d1["Rank 1<br/>params + grads + optim<br/>100%"]
+    d0 -.->|"all-reduce grads"| d1
+  end
+  subgraph FSDP["FSDP: 1/N shard per rank"]
+    f0["Rank 0<br/>1/N params + grads + optim"]
+    f1["Rank 1<br/>1/N params + grads + optim"]
+    f0 -.->|"all-gather to use"| f1
+  end
+  DDP --> trade["Trade: memory for communication"]
+  FSDP --> trade
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class d0,d1 crit
+  class f0,f1 good
+  class trade accent
+```
+
 | | **DDP** (DistributedDataParallel) | **FSDP** (FullyShardedDataParallel) |
 | :--- | :--- | :--- |
 | Parameters | **full replica** on every rank | **sharded** 1/N across ranks |
@@ -72,6 +96,17 @@ ncclDevKernel_AllReduce_Sum_f32_TREE_LL(...)             1.902s       89.63%    
 Self CUDA time total: 2.122s
 ```
 
+*Figure: DDP step self-CUDA time — the gradient all-reduce dwarfs compute (values from the trace above).*
+
+```mermaid
+pie showData
+  title DDP step self-CUDA time (percent)
+  "all-reduce (NCCL)" : 89.63
+  "AdamW optimizer" : 7.17
+  "matmul (aten::mm)" : 1.09
+  "other" : 2.11
+```
+
 - **Gradient all-reduce = 89.63% of GPU time** (1.902 s, 85 calls, ~22.4 ms each).
 - **Actual compute (`aten::mm`) = 1.09%.** The matmuls are almost free; the GPUs spend the step **waiting on the network**.
 - AdamW optimizer = 7.17%.
@@ -79,11 +114,50 @@ Self CUDA time total: 2.122s
 
 Open the trace (`assets/lab-09/ddp_trace_rank0.json.gz` → `chrome://tracing` / Perfetto) and the NCCL stream visibly gates the backward pass. When the network is the bottleneck, more/faster GPUs don't help — a bigger pipe does.
 
+*Figure: collectives per step — DDP does one all-reduce; FSDP adds two all-gathers plus a reduce-scatter, so more inter-node round-trips.*
+
+```mermaid
+sequenceDiagram
+  participant R as Rank
+  participant Net as NCCL / network
+  Note over R,Net: DDP - 1 collective per step
+  R->>R: forward
+  R->>R: backward
+  R->>Net: all-reduce grads (1x)
+  Net-->>R: summed grads
+  Note over R,Net: FSDP - 3 collectives per step
+  R->>Net: all-gather params (forward)
+  Net-->>R: full params
+  R->>Net: all-gather params (backward)
+  Net-->>R: full params
+  R->>Net: reduce-scatter grads
+  Net-->>R: sharded grads
+```
+
 ---
 
 ## Fighting the floor (what frameworks actually do)
 
 Given a 257 µs latency floor and 28 GB/s bandwidth, both strategies lean on the same tricks:
+
+*Figure: compute/comm overlap — each gradient bucket's all-reduce launches as soon as its grads are ready, running while backward continues; FSDP prefetches the next all-gather.*
+
+```mermaid
+gantt
+  title Overlap - buckets launch as grads become ready
+  dateFormat X
+  axisFormat %s
+  section Backward compute
+    bucket 3 : 0, 3
+    bucket 2 : 3, 6
+    bucket 1 : 6, 9
+  section NCCL all-reduce
+    reduce bucket 3 : 3, 6
+    reduce bucket 2 : 6, 9
+    reduce bucket 1 : 9, 11
+  section FSDP prefetch
+    all-gather next layer : 2, 5
+```
 
 1. **Gradient bucketing (DDP).** Rather than all-reduce each parameter tensor (each paying the 257 µs floor), DDP fuses gradients into large buckets (default ~25 MB) and all-reduces those — trading many latency-bound small collectives for a few bandwidth-bound large ones. This is why doc-04's small-message latency floor matters.
 2. **Compute/comm overlap.** DDP kicks off a bucket's all-reduce **as soon as** that bucket's gradients are ready (during backward), overlapping communication with the still-running backward compute. FSDP prefetches the next layer's all-gather during the current layer's compute.

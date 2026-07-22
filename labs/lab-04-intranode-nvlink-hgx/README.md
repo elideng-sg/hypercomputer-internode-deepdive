@@ -63,6 +63,16 @@ The NVSwitch fabric is trained and healthy. As lab-11 showed, the tenant sees th
 
 `all_reduce_perf -b 8 -e 8G -f 2 -g 8` (NCCL 2.22.3+cuda12.6), busbw vs. message size:
 
+*Figure: busbw climbs steeply through the ~4-16 MB knee, then flattens at the ~480 GB/s NVLink ceiling. (The 8-GPU NVSwitch mesh itself is diagrammed in [doc-04](../../docs/part1-single-node/04-intranode-nvlink-nvswitch-hgx.md) — not duplicated here.)*
+
+```mermaid
+xychart-beta
+    title "Single-node 8-GPU all-reduce busbw vs message size"
+    x-axis "message size" ["1 MB", "16 MB", "128 MB", "1 GB", "8 GB"]
+    y-axis "busbw (GB/s)" 0 --> 500
+    line [46.2, 233.5, 395.2, 464.4, 479.9]
+```
+
 | size | busbw (GB/s) |
 | ---: | ---: |
 | 1 MB | 46.2 |

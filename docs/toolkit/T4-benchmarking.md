@@ -92,7 +92,34 @@ nvidia-smi -rmc
 
 ### 1.4 Bus Bandwidth vs. Algorithm Bandwidth
 
-This is the **most critical** and **most commonly misunderstood** distinction in collective benchmarking.
+This is the **most critical** and **most commonly misunderstood** distinction in collective benchmarking. The ring below shows why: each GPU moves `S` bytes logically (algbw), while the links carry far more traffic around the ring (busbw).
+
+*Figure: algbw vs busbw in a ring all-reduce — busbw is the number you compare to hardware specs.*
+
+```mermaid
+flowchart LR
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef ctx  fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  subgraph ring["Ring all-reduce — n GPUs"]
+    direction LR
+    g0["GPU 0"]:::meas
+    g1["GPU 1"]:::meas
+    g2["GPU 2"]:::meas
+    g3["GPU 3"]:::meas
+    g0 --"chunk S/n"--> g1
+    g1 --"chunk S/n"--> g2
+    g2 --"chunk S/n"--> g3
+    g3 --"chunk S/n"--> g0
+  end
+  alg["algbw = S / T<br/>logical per-GPU rate"]:::ctx
+  bus["busbw = algbw x 2(n-1)/n<br/>aggregate link traffic"]:::good
+  cmp["compare to<br/>NVLink / NIC spec"]:::accent
+  g0 -. "app sees" .-> alg
+  g2 -. "links see" .-> bus
+  bus --> cmp
+```
 
 #### Definitions
 
@@ -568,7 +595,25 @@ GPU 1: OK (temperature: 71C)
 
 ### Benchmarking Checklist
 
-When benchmarking a new node or cluster, follow this order:
+When benchmarking a new node or cluster, follow this order — each stage gates the next, so a failure stops the pipeline before you waste time on later stages.
+
+*Figure: benchmarking pipeline — inventory to document, each stage gating the next.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef ctx  fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  inv["Inventory<br/>nvidia-smi topo -m"]:::good
+  health["Health<br/>dcgmi diag -r3"]:::good
+  bw["Single-GPU BW<br/>nvbandwidth H2D/D2H"]:::meas
+  p2p["Intra-node P2P<br/>nvbandwidth testcase 3/4"]:::meas
+  sn["Single-node collective<br/>nccl-tests 8 GPU"]:::meas
+  mn["Multi-node collective<br/>nccl-tests 2+ nodes"]:::meas
+  comp["Compute<br/>GEMM / gpu-burn"]:::meas
+  doc["Document<br/>results + NCCL vars"]:::ctx
+  inv --"pass"--> health --"pass"--> bw --"pass"--> p2p --"pass"--> sn --"pass"--> mn --"pass"--> comp --> doc
+```
 
 1. **Inventory:** Confirm GPU model, count, and topology (`nvidia-smi topo -m`).
 2. **Health check:** Run `dcgmi diag -r 3` (see `docs/toolkit/T2-diagnostics-health.md`) to verify all GPUs pass extended diagnostics.

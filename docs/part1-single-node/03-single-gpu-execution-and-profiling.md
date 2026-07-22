@@ -27,6 +27,22 @@ CUDA applications follow a **heterogeneous execution model** where computation i
 - **Host (CPU):** Orchestrates the overall workflow, prepares data, launches kernels, manages memory transfers
 - **Device (GPU):** Executes massively parallel kernels on thousands of CUDA cores
 
+*Figure: the async host-device dance — the kernel launch returns immediately; the host only blocks at cudaDeviceSynchronize.*
+
+```mermaid
+sequenceDiagram
+    participant H as Host CPU
+    participant G as Device GPU
+    H->>G: cudaMalloc
+    H->>G: H2D copy
+    H->>G: launch kernel (async)
+    G-->>H: returns immediately
+    G->>G: execute kernel
+    H->>G: D2H copy
+    H->>G: cudaDeviceSynchronize
+    G-->>H: done, unblocks host
+```
+
 **Workflow:**
 1. **Allocate GPU memory** (`cudaMalloc` or PyTorch `.to(device)`)
 2. **Transfer data from host to device** (H2D via PCIe)
@@ -62,6 +78,20 @@ with torch.cuda.stream(stream_b):
 ### Kernels
 
 A **kernel** is a function executed on the GPU by many threads in parallel. Threads are organized hierarchically:
+
+*Figure: the launch hierarchy — a grid of blocks, each block a set of 32-thread warps.*
+
+```mermaid
+flowchart TD
+    Grid["Grid<br/>all blocks"] --> Block["Block<br/>≤1024 threads · shared mem"]
+    Block --> Warp["Warp<br/>32 threads · SIMT"]
+    Warp --> Thread["Thread"]
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    class Grid,Block meas;
+    class Warp,Thread ctx;
+```
+
 - **Grid:** The entire collection of threads for a kernel launch
 - **Block:** A group of threads (up to 1024 on modern GPUs) that can cooperate via shared memory and synchronization
 - **Warp:** A group of 32 threads that execute in lockstep (SIMT execution)
@@ -131,6 +161,28 @@ A single forward-backward pass in deep learning translates to **hundreds to thou
 ## The Roofline Model
 
 The **roofline model** is a visual performance model that plots **achieved performance** (TFLOPs or GB/s) against **operational intensity** (FLOPs per byte of memory accessed). It identifies whether a kernel is **compute-bound** or **memory-bound**.
+
+*Figure: roofline schematic (not to scale) — the 8192 GEMM sits far right of the ridge, deep in the compute-bound region.*
+
+```mermaid
+flowchart LR
+    subgraph MB["Memory-bound region"]
+        MEM["Memory-BW roof (sloped)<br/>3.35 TB/s"]
+    end
+    R{"Ridge point<br/>~0.3 FLOPs/byte"}
+    subgraph CB["Compute-bound region"]
+        COMP["Compute ceiling (flat)<br/>BF16 ~1000 TFLOPs"]
+        GEMM["8192 GEMM<br/>OI 2736 · 764 TFLOPs"]
+    end
+    MEM --> R --> COMP
+    COMP -.-> GEMM
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    class MEM,COMP ctx;
+    class R accent;
+    class GEMM meas;
+```
 
 ### Key Concepts
 
@@ -321,6 +373,26 @@ For **memory-bound ops** (e.g., element-wise activations, normalization), focus 
 ## Interpreting Profiler Timelines
 
 When viewing the Nsight Systems timeline (`.nsys-rep` in the GUI):
+
+*Figure: the four timeline rows — tight kernel packing is healthy; a sync gap on the API row means an idle GPU.*
+
+```mermaid
+flowchart TD
+    subgraph rows["Nsight Systems timeline rows"]
+        NVTX["NVTX ranges<br/>e.g. GEMM_bf16_8192"]
+        HW["CUDA HW kernels<br/>nvjet_* GEMM bars"]
+        API["CUDA API<br/>cudaDeviceSynchronize"]
+        MEM["Memory ops<br/>H2D / D2H / D2D"]
+    end
+    HW --> GOOD["Tight packing<br/>(minimal gaps)"]
+    API --> BAD["Sync gap<br/>(GPU idle)"]
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    class NVTX,HW,API,MEM ctx;
+    class GOOD good;
+    class BAD crit;
+```
 
 **Rows to focus on:**
 1. **NVTX ranges:** High-level annotations (e.g., "GEMM_torch.bfloat16_8192") — use these to navigate to interesting regions

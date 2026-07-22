@@ -20,6 +20,21 @@ For this series, we focus on GPUs because they balance programmability (CUDA, Op
 
 The GPU's execution model centers on the **streaming multiprocessor (SM)**. Each SM is an independent processing block containing:
 
+*Figure: inside one Hopper SM — warp schedulers dispatch 32-thread warps onto the execution units.*
+
+```mermaid
+flowchart TD
+    WS["Warp schedulers"] --> W["Warps<br/>32 threads (SIMT)"]
+    W --> CC["CUDA cores<br/>128 FP32 / SM"]
+    W --> TC["Tensor Cores<br/>4th gen"]
+    W --> SFU["SFUs<br/>transcendentals"]
+    W --> LS["LD/ST units"]
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    class WS,W meas;
+    class CC,TC,SFU,LS ctx;
+```
+
 - **CUDA Cores** (FP32 and INT32 ALUs): Execute scalar arithmetic operations. A Hopper SM has 128 FP32 units.
 - **Tensor Cores**: Specialized units for matrix operations (covered below).
 - **Special Function Units (SFUs)**: Accelerate transcendentals (sin, cos, exp, etc.).
@@ -34,6 +49,21 @@ A **warp** is a group of 32 threads that execute the same instruction in lockste
 
 A GPU's memory subsystem is explicitly hierarchical:
 
+*Figure: the memory pyramid — capacity grows and latency worsens from registers down to HBM3.*
+
+```mermaid
+flowchart TD
+    R["Registers<br/>per-thread · ~0 cycles"] --> SM["Shared / L1<br/>per-SM · ~20 cycles"]
+    SM --> L2["L2 cache<br/>global · 50 MB"]
+    L2 --> HBM["HBM3<br/>80 GB · ~3 TB/s · 200-400 cyc"]
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+    class R,SM good;
+    class L2 ctx;
+    class HBM crit;
+```
+
 1. **Registers** (per thread): Fastest storage, zero-latency access. Limited capacity (255 registers per thread max). Spilling registers to local memory (backed by DRAM) destroys performance.
 
 2. **Shared Memory / L1 Cache** (per SM): Fast scratchpad (typically 100-200 KB per SM). Shared memory is programmer-managed; adjacent threads can cooperate by loading data into shared memory, synchronizing with `__syncthreads()`, and reusing it. Shared memory has low latency (~20 cycles) and high bandwidth, but limited capacity. Efficient use requires tiling algorithms and coalesced access patterns.
@@ -47,6 +77,16 @@ A GPU's memory subsystem is explicitly hierarchical:
 ## Tensor Cores: Matrix Multiply Accelerators
 
 Modern datacenter GPUs dedicate significant die area to **Tensor Cores** — specialized units that execute small matrix multiplies (e.g., D = A × B + C, where A, B, C, D are 16×16 or 8×8 tiles) in a single instruction. Tensor Cores deliver 8-20× the throughput of standard FP32 CUDA cores for dense linear algebra.
+
+*Figure: H100 Tensor Core peak throughput drops sharply as precision widens (values from the table below).*
+
+```mermaid
+xychart-beta
+    title "H100 Tensor Core peak throughput by dtype (TFLOPS)"
+    x-axis ["FP8", "BF16", "TF32", "FP64"]
+    y-axis "TFLOPS" 0 --> 2000
+    bar [2000, 1000, 500, 60]
+```
 
 Hopper H100 Tensor Cores support:
 

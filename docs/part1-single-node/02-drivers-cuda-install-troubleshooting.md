@@ -174,6 +174,26 @@ Understanding the difference between the **CUDA Toolkit** (application-level) an
 
 ### CUDA Stack Layers
 
+*Figure: the CUDA stack — the top two layers ship in the container, the bottom two live on the host.*
+
+```mermaid
+flowchart TD
+    subgraph C["Container"]
+        A["App<br/>(PyTorch)"] --> RT["CUDA Runtime<br/>libcudart.so · nvcc"]
+    end
+    subgraph H["Host"]
+        DA["CUDA Driver API<br/>libcuda.so"] --> KD["Kernel Driver<br/>nvidia.ko"]
+    end
+    RT --> DA
+    KD --> GPU["GPU"]
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class A,RT meas;
+    class DA,KD ctx;
+    class GPU good;
+```
+
 | Layer | Component | Installed Where | Version Managed By |
 |:------|:----------|:----------------|:-------------------|
 | **Application** | Your code (PyTorch, TensorFlow, custom CUDA kernels) | Container or VM filesystem | You (via Dockerfile or `pip install`) |
@@ -462,6 +482,27 @@ sudo nvidia-bug-report.sh
 
 XIDs (eXception IDs) are fault codes emitted by the NVIDIA driver when a GPU anomaly is detected. They are the **primary fault-reporting mechanism** in Linux.
 
+*Figure: the XID triage loop — from crash to action, classifying severity (fatal/RMA in red).*
+
+```mermaid
+flowchart LR
+    X["Crash / XID"] --> D["dmesg +<br/>nvidia-smi -q"]
+    D --> C["Correlate<br/>ECC / NVLink"]
+    C --> S{"Severity?"}
+    S --"low/medium"--> M["Monitor"]
+    S --"high"--> R["Reset node"]
+    S --"fatal"--> RMA["RMA GPU"]
+    M -.-> X
+    classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class X,RMA crit;
+    class D,C meas;
+    class S accent;
+    class M,R good;
+```
+
 ### Where XIDs Appear
 
 1. **Kernel ring buffer:** `dmesg | grep NVRM`
@@ -559,6 +600,25 @@ The device plugin runs on every GPU node and:
 ## Summary: Diagnostic Decision Tree
 
 Use this decision tree (from Toolkit doc T2) to choose the right diagnostic:
+
+*Figure: match the symptom to the right diagnostic tool (RMA prep in red).*
+
+```mermaid
+flowchart TD
+    S{"Symptom?"}
+    S --"smoke-test"--> T1["nvidia-smi"]
+    S --"pre-job"--> T2["dcgmi diag -r1"]
+    S --"regression"--> T3["dcgmi diag -r2"]
+    S --"intermittent"--> T4["dcgmi diag -r3"]
+    S --"silent corruption"--> T5["gpu-burn"]
+    S --"RMA prep"--> T6["dcgmi diag -r4<br/>nvidia-bug-report.sh"]
+    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+    class S accent;
+    class T1,T2,T3,T4,T5 meas;
+    class T6 crit;
+```
 
 1. **Quick smoke-test:** `nvidia-smi` (instant)
 2. **Pre-job validation:** `dcgmi diag -r 1` (30 sec)

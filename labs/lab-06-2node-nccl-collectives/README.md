@@ -34,6 +34,23 @@ The NGC image ships the `nccl-tests` binaries **and** OpenMPI, but **no `sshd`**
 
 This is the headline finding. With `NCCL_DEBUG=INFO`, the rank-0 log states exactly how the 16 GPUs are wired together across the two nodes:
 
+*Figure: the 16-rank ring — 14 NVLink hops stay inside each node; the 2 ring hops that cross the node boundary (red) are TCP over gVNIC, staged GPU to host to NIC (no RDMA). The 480-vs-28 GB/s cliff this causes is bar-charted in [doc-04](../../docs/part1-single-node/04-intranode-nvlink-nvswitch-hgx.md).*
+
+```mermaid
+graph LR
+    subgraph A["Node A — ranks 0-7"]
+      A0["rank 0"] -->|"7 NVLink hops<br/>via NVSwitch"| A1["rank 1"]
+    end
+    subgraph B["Node B — ranks 8-15"]
+      B8["rank 8"] -->|"7 NVLink hops<br/>via NVSwitch"| B9["rank 9"]
+    end
+    A1 ==>|"Ethernet / gVNIC<br/>GPU to host to NIC"| B8
+    B9 ==>|"Ethernet / gVNIC<br/>GPU to host to NIC"| A0
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    class A0,A1,B8,B9 meas;
+    linkStyle 2,3 stroke:#c5221f,stroke-width:4px;
+```
+
 ```
 NCCL INFO NCCL version 2.22.3+cuda12.6
 NCCL INFO NET/IB : No device found.

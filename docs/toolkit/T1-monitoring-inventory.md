@@ -214,6 +214,30 @@ Full API reference: [NVIDIA NVML Documentation](https://docs.nvidia.com/deploy/n
 
 ### NVML vs. nvidia-smi vs. DCGM
 
+Pick the tool by *who* is asking: a human at a terminal, your own code, or a whole fleet.
+
+*Figure: tool-selection tree — branch on interactivity, custom code, and scale.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  start["Need GPU<br/>metrics?"]:::accent
+  q1{"Human<br/>interactive?"}
+  q2{"Custom code<br/>integration?"}
+  q3{"Fleet-scale<br/>monitoring?"}
+  smi["nvidia-smi<br/>CLI"]:::meas
+  nvml["NVML<br/>API"]:::meas
+  dcgm["DCGM<br/>dcgmi + exporter"]:::meas
+  start --> q1
+  q1 --"yes"--> smi
+  q1 --"no"--> q2
+  q2 --"yes"--> nvml
+  q2 --"no"--> q3
+  q3 --"yes"--> dcgm
+  q3 --"no"--> smi
+```
+
 | Tool | Use case | Invocation | Performance | Scope |
 | :--- | :--- | :--- | :--- | :--- |
 | **nvidia-smi** | Interactive CLI inspection | Command-line | ~100–500 ms per call (slow, designed for human use) | Single host, ad hoc |
@@ -238,7 +262,32 @@ DCGM is the monitoring foundation for production AI clusters (DGX SuperPOD, GKE 
 
 ### Architecture
 
-DCGM has a client-server architecture:
+DCGM has a client-server architecture: a per-node daemon polls NVML and fans metrics out to CLI, API, and a Prometheus exporter.
+
+*Figure: DCGM data-flow pipeline — GPU telemetry from the driver to Grafana dashboards.*
+
+```mermaid
+flowchart LR
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef ctx  fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  subgraph knode["GPU node — DaemonSet"]
+    direction LR
+    gpu["GPU<br/>H100"]:::meas
+    nvml["NVML<br/>libnvidia-ml.so"]:::ctx
+    he["nv-hostengine<br/>daemon"]:::good
+    exp["dcgm-exporter<br/>:9400/metrics"]:::good
+  end
+  cli["dcgmi CLI"]:::ctx
+  api["DCGM API<br/>C/Python/Go"]:::ctx
+  prom["Prometheus"]:::ctx
+  graf["Grafana<br/>dashboards"]:::ctx
+  gpu --> nvml --> he
+  he --> cli
+  he --> api
+  he --> exp
+  exp --"scrape"--> prom --> graf
+```
 
 1. **nv-hostengine** (daemon): Runs on each GPU host, polls NVML for metrics at configurable intervals (default 1 s), caches values, and exposes them via a gRPC API or shared memory.
 2. **dcgmi** (CLI client): Command-line tool for querying metrics, running diagnostics, and controlling the hostengine.

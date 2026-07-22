@@ -58,7 +58,41 @@ The rest of this document is, in effect, three answers to one question: *how do 
 
 **Subnet Manager (SM).** A centralized (or distributed) SM discovers the topology, assigns LIDs (local IDs), and programs forwarding tables. It is the fabric's control plane — there is no analog visible to a GCP tenant.
 
-**SHARP (Scalable Hierarchical Aggregation and Reduction Protocol) — in-network compute.** This is InfiniBand's signature AI feature. Instead of every GPU shipping its full gradient tensor around a ring, the **switches themselves** perform the reduction: leaf switches aggregate partial sums from their GPUs, spine switches aggregate those, and the final result is broadcast back down the tree. This:
+**SHARP (Scalable Hierarchical Aggregation and Reduction Protocol) — in-network compute.** This is InfiniBand's signature AI feature. Instead of every GPU shipping its full gradient tensor around a ring, the **switches themselves** perform the reduction: leaf switches aggregate partial sums from their GPUs, spine switches aggregate those, and the final result is broadcast back down the tree.
+
+*Figure: SHARP in-network reduction — leaf switches aggregate partial sums, the spine reduces, and the result is broadcast back down (dashed); no ring return trip.*
+
+```mermaid
+flowchart TD
+  G0["GPU 0"]
+  G1["GPU 1"]
+  G2["GPU 2"]
+  G3["GPU 3"]
+  L0["Leaf switch<br/>(partial sum)"]
+  L1["Leaf switch<br/>(partial sum)"]
+  SP["Spine switch<br/>(final reduce)"]
+  G0 -->|"partial"| L0
+  G1 -->|"partial"| L0
+  G2 -->|"partial"| L1
+  G3 -->|"partial"| L1
+  L0 -->|"sum"| SP
+  L1 -->|"sum"| SP
+  SP -.->|"broadcast"| L0
+  SP -.->|"broadcast"| L1
+  L0 -.-> G0
+  L0 -.-> G1
+  L1 -.-> G2
+  L1 -.-> G3
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class G0,G1,G2,G3 good;
+  class L0,L1 meas;
+  class SP accent;
+```
+
+This:
 - roughly **halves** the data crossing the fabric for an all-reduce (no ring return trip),
 - makes the collective's cost scale with tree depth (`log`-ish) rather than the ring's `2(n-1)/n`,
 - and offloads the reduction arithmetic off the GPUs.
@@ -80,6 +114,34 @@ Many operators want AI-fabric performance but must (or prefer to) run **Ethernet
 The two pieces together provide the mechanisms that make Ethernet behave like an AI fabric:
 
 **Adaptive routing (per-packet spraying + reordering).** Instead of pinning a flow to one ECMP-hashed path (where two elephant flows can collide on the same link and both suffer), Spectrum-X **sprays packets of a single flow across many paths** and relies on the SuperNIC to **reorder** them at the receiver. This eliminates hash-collision hotspots and dramatically flattens the latency tail under all-to-all and all-reduce load.
+
+*Figure: Spectrum-X packet-spray + reorder — the Spectrum-4 switch sprays one flow across many paths, the receiving SuperNIC reorders into GPU memory, and a hardware congestion-control loop feeds back to the switch.*
+
+```mermaid
+flowchart LR
+  SRC["Source SuperNIC<br/>(one flow)"]
+  SW["Spectrum-4 switch<br/>(packet spray)"]
+  P1["path 1"]
+  P2["path 2"]
+  P3["path 3"]
+  DST["SuperNIC reorder<br/>(receiver)"]
+  GPU["GPU memory<br/>(GPUDirect-RDMA)"]
+  SRC -->|"flow"| SW
+  SW -->|"spray"| P1
+  SW -->|"spray"| P2
+  SW -->|"spray"| P3
+  P1 --> DST
+  P2 --> DST
+  P3 --> DST
+  DST -->|"in-order"| GPU
+  DST -.->|"congestion feedback"| SW
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class SW,DST accent;
+  class GPU meas;
+  linkStyle 8 stroke:#c5221f,stroke-width:3px;
+```
 
 **Hardware congestion control.** Spectrum-4 and the SuperNIC run a closed-loop, hardware-timed congestion-control scheme purpose-built for RoCE incast — reacting far faster and more precisely than software DCQCN alone (see §4), keeping queues shallow and avoiding the PFC pathologies (head-of-line blocking, pause storms) that make naive lossless Ethernet fragile.
 
@@ -106,6 +168,40 @@ Both Spectrum-X and GCP's A3 Ultra/A4 fabrics carry **RoCEv2** (RDMA over Conver
 ## 5. Rail-Optimized Topologies
 
 How the GPUs are physically wired to the fabric matters as much as the switch silicon. The dominant pattern for large GPU clusters is the **rail-optimized fat-tree**:
+
+*Figure: rail-optimized fat-tree — NIC i of every node lands on leaf/rail i (intra-rail = 1 hop); cross-rail climbs to the spine (red). Intra-node GPUs use NVLink scale-up (green); the rail fabric is scale-out.*
+
+```mermaid
+graph TD
+  subgraph nodeA["Node A (NVLink scale-up)"]
+    A0["GPU0 / NIC0"]
+    A1["GPU1 / NIC1"]
+  end
+  subgraph nodeB["Node B (NVLink scale-up)"]
+    B0["GPU0 / NIC0"]
+    B1["GPU1 / NIC1"]
+  end
+  L0["Leaf / Rail 0"]
+  L1["Leaf / Rail 1"]
+  SP["Spine"]
+  A0 -->|"rail 0"| L0
+  B0 -->|"rail 0"| L0
+  A1 -->|"rail 1"| L1
+  B1 -->|"rail 1"| L1
+  L0 -->|"cross-rail"| SP
+  L1 -->|"cross-rail"| SP
+  A0 <-->|"NVLink"| A1
+  B0 <-->|"NVLink"| B1
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class A0,A1,B0,B1 meas;
+  class L0,L1 accent;
+  class SP ctx;
+  linkStyle 4,5 stroke:#c5221f,stroke-width:3px;
+  linkStyle 6,7 stroke:#188038,stroke-width:2px;
+```
 
 - Each node has **N** NICs (one per GPU, or per GPU-pair), and NIC *i* of every node connects to the **same** leaf switch, called **rail *i***. With 8 GPUs/node you get 8 rails.
 - **Intra-rail traffic** (GPU *i* on node A ↔ GPU *i* on node B) crosses a single leaf switch — one hop, lowest latency. NCCL and rail-optimized collectives are arranged so that the heaviest same-rank exchanges stay on-rail.

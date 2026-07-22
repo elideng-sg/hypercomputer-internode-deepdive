@@ -15,6 +15,31 @@
 
 The lab script deploys a single-GPU pod (`scripts/gpu_pod.yaml`) to a DWS (Dynamic Workload Scheduler) H100 node. The pod uses NVIDIA's PyTorch container image, which includes CUDA toolkit, nvidia-smi, and deviceQuery.
 
+*Figure: one `run.sh` invocation fans out into four captured artifacts, then logs provenance.*
+
+```mermaid
+flowchart TD
+    R["run.sh"] --> A["kubectl apply<br/>gpu_pod.yaml (DWS toleration)"]
+    A --> P["pod Ready<br/>(H100 node)"]
+    P --> C{"capture 4<br/>artifacts"}
+    C --> S1["smi.txt<br/>GPU inventory"]
+    C --> S2["smi-q.txt<br/>detailed props"]
+    C --> S3["topo.txt<br/>topology matrix"]
+    C --> S4["devquery.txt<br/>CUDA props"]
+    S1 --> V["append<br/>VERIFICATION.md"]
+    S2 --> V
+    S3 --> V
+    S4 --> V
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class A ctx;
+    class P meas;
+    class C accent;
+    class V good;
+```
+
 ```bash
 bash labs/lab-01-gpu-arch-inspect/run.sh
 ```

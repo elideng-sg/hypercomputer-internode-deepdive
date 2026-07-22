@@ -8,6 +8,23 @@ This guide is a **standalone, comprehensive, hands-on introduction to the NVIDIA
 
 The guide walks one continuous, bottom-up path:
 
+*Figure: the bottom-up spine — four stacked parts, with the NVIDIA tooling layer (T1-T6) cutting across all of them.*
+
+```mermaid
+flowchart TD
+    P1["Part I<br/>Single node"] --> P2["Part II<br/>Inter-node"]
+    P2 --> P3["Part III<br/>Clustering"]
+    P3 --> P4["Part IV<br/>Platform"]
+    T["Tooling layer<br/>T1-T6"] -.-> P1
+    T -.-> P2
+    T -.-> P3
+    T -.-> P4
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+    class P1,P2,P3,P4 meas;
+    class T accent;
+```
+
 1. **Part I — Single node:** GPU microarchitecture (SMs, Tensor Cores, memory hierarchy), driver/CUDA stack and troubleshooting, single-GPU execution and profiling, and the 8-GPU NVLink/NVSwitch (HGX) fabric within a node.
 
 2. **Part II — Inter-node communication:** NICs, RDMA, GPUDirect (TCPX/TCPXO/RoCE), and NCCL collectives that bind nodes into a single distributed computation.
@@ -48,6 +65,27 @@ While the concrete labs run on the **A3 High (`a3-highgpu-8g`, H100)** cluster, 
 
 ### GCP machine families
 
+*Figure: the GCP GPU portfolio fans out family → GPU → inter-node fabric (TCPX vs TCPXO detail is in the table below).*
+
+```mermaid
+graph LR
+    AH["A3 High"] --> H100["H100"]
+    AM["A3 Mega"] --> H100
+    H100 --> TX["TCPX / TCPXO"]
+    AU["A3 Ultra"] --> H200["H200"]
+    H200 --> RC1["RoCE"]
+    A4["A4"] --> B200["B200"]
+    B200 --> RC1
+    A4X["A4X"] --> GB["GB200"]
+    GB --> NVL["NVLink domain"]
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class AH,AM,AU,A4,A4X meas;
+    class H100,H200,B200,GB ctx;
+    class TX,RC1,NVL good;
+```
+
 | GCP machine family | GPU | Inter-node GPU networking | Where it appears in the guide |
 | :--- | :--- | :--- | :--- |
 | A3 High (`a3-highgpu-8g`) — **the lab** | H100 80GB | GPUDirect-**TCPX** (gVNIC) | Parts I–III, measured live |
@@ -59,6 +97,35 @@ While the concrete labs run on the **A3 High (`a3-highgpu-8g`, H100)** cluster, 
 ### GCP ↔ NVIDIA product mapping
 
 The mechanisms and tools taught here are **platform-agnostic** and transfer to on-premises DGX/SuperPOD deployments, other clouds, bare metal, and Slurm or Kubernetes orchestration. Every GCP-specific step is flagged with its generic and cross-product equivalent:
+
+*Figure: each GCP capability (left) maps to its NVIDIA purpose-built equivalent (right).*
+
+```mermaid
+graph LR
+    subgraph GCP["GCP"]
+        G1["Titanium offload"]
+        G2["TCPX / TCPXO"]
+        G3["A4X GB200 NVL"]
+        G4["GKE + JobSet<br/>Kueue + DWS"]
+        G5["device-plugin<br/>DaemonSet"]
+    end
+    subgraph NV["NVIDIA"]
+        N1["BlueField DPU<br/>SuperNIC"]
+        N2["Spectrum-X<br/>InfiniBand"]
+        N3["NVLink Switch<br/>GB200 NVL72"]
+        N4["BCM / Run:ai<br/>Slurm"]
+        N5["GPU Operator"]
+    end
+    G1 --- N1
+    G2 --- N2
+    G3 --- N3
+    G4 --- N4
+    G5 --- N5
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    class G1,G2,G3,G4,G5 meas;
+    class N1,N2,N3,N4,N5 ctx;
+```
 
 - **Host/network offload:** GCP **Titanium** offload & custom fabric ↔ NVIDIA **BlueField DPU / SuperNIC** (explored in Part IV, section 12).
 - **Inter-node GPU fabric:** GCP **GPUDirect-TCPX/TCPXO** (A3) and **GPUDirect-RDMA/RoCE** (A3 Ultra/A4) ↔ NVIDIA **Spectrum-X Ethernet** and **Quantum InfiniBand** (Part IV, section 13).

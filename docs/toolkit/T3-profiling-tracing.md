@@ -259,7 +259,38 @@ This prints all collected metrics in CSV format. You can grep for specific metri
 
 ### Privilege requirements (important for GKE COS)
 
-**Nsight Compute requires elevated GPU performance-counter access** to collect hardware metrics. On many systems (including GKE with Container-Optimized OS), performance counters are **restricted to privileged users** via the kernel module parameter `NVreg_RestrictProfilingToAdminUsers=1`.
+**Nsight Compute requires elevated GPU performance-counter access** to collect hardware metrics. On many systems (including GKE with Container-Optimized OS), performance counters are **restricted to privileged users** via the kernel module parameter `NVreg_RestrictProfilingToAdminUsers=1`. The gate below decides which profiler you can actually run.
+
+*Figure: nsys-vs-ncu privilege gate — timeline is free; kernel metrics need perf-counter access.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  q{"What do<br/>you need?"}:::accent
+  nsys["nsys<br/>timeline, no privilege"]:::good
+  ncu["ncu<br/>kernel metrics / roofline"]:::meas
+  gate{"Perf-counter<br/>access?"}:::accent
+  subgraph grant["Grant perf counters"]
+    cap["CAP_SYS_ADMIN"]:::accent
+    priv["privileged pod"]:::accent
+    mod["node modprobe<br/>not on GKE COS"]:::crit
+  end
+  ok["ncu runs"]:::good
+  err["ERR_NVGPUCTRPERM"]:::crit
+  q --"timeline"--> nsys
+  q --"kernel metrics"--> ncu
+  ncu --> gate
+  gate --"yes"--> cap
+  gate --"yes"--> priv
+  gate --"yes"--> mod
+  cap --> ok
+  priv --> ok
+  mod --> ok
+  gate --"none"--> err
+```
 
 #### The restriction
 
@@ -728,6 +759,30 @@ To improve overlap in PyTorch DDP:
 ---
 
 ## Summary: when to use which tool
+
+The tools form a funnel: each stage zooms in further, and each emits its own artifact.
+
+*Figure: profiling funnel — progressive zoom-in from system timeline to per-kernel and multi-rank views.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx  fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  nsys["nsys<br/>timeline: find slow phase"]:::meas
+  torch["PyTorch profiler<br/>operator bottleneck"]:::meas
+  ncu["ncu<br/>per-kernel deep dive"]:::meas
+  hta["HTA<br/>multi-rank comm/compute"]:::meas
+  a1["timeline.nsys-rep"]:::ctx
+  a2["chrome trace .json"]:::ctx
+  a3["kernel.ncu-rep"]:::ctx
+  a4["HTML report"]:::ctx
+  nsys --"zoom in"--> torch --"zoom in"--> ncu
+  torch --"scale out"--> hta
+  nsys -.-> a1
+  torch -.-> a2
+  ncu -.-> a3
+  hta -.-> a4
+```
 
 | Tool | Use case | Output | Overhead |
 | :--- | :--- | :--- | :--- |

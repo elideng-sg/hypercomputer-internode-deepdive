@@ -51,7 +51,31 @@ A **Data Processing Unit (DPU)** is a specialized processor (typically Arm-based
 
 ### 1.2 The Three Offload Domains
 
-A DPU offloads infrastructure work in three major domains:
+A DPU offloads infrastructure work in three major domains. The signature networking case is the GPUDirect host-bypass path, where GPU-to-GPU RDMA never touches the host CPU:
+
+*Figure: GPUDirect host-bypass path — local GPU to DPU NIC across the fabric to the remote GPU; the host CPU is never in the data path.*
+
+```mermaid
+flowchart LR
+  CPU["Host CPU<br/>(not in data path)"]
+  LG["Local GPU<br/>(HBM)"]
+  LD["BlueField DPU NIC"]
+  NET["Network fabric<br/>(RoCE / IB)"]
+  RD["Remote DPU NIC"]
+  RG["Remote GPU<br/>(HBM)"]
+  LG -->|"PCIe"| LD
+  LD -->|"400 Gbps"| NET
+  NET --> RD
+  RD -->|"PCIe"| RG
+  CPU -.->|"bypassed"| LG
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class LG,RG meas;
+  class CPU ctx;
+  linkStyle 0,1,2,3 stroke:#188038,stroke-width:2px;
+  linkStyle 4 stroke:#c5221f,stroke-width:3px;
+```
 
 #### 1.2.1 Networking Offload
 
@@ -87,6 +111,34 @@ A DPU offloads infrastructure work in three major domains:
 ---
 
 ## 2. DOCA: The Software Stack for BlueField DPUs
+
+DOCA is to the BlueField DPU what CUDA is to the GPU — applications call domain libraries and services that run on a runtime over the DPU's hardware engines.
+
+*Figure: the DOCA stack — applications call DOCA libraries (Flow, RDMA, Telemetry, GPUNetIO) and services, running on the DOCA runtime over BlueField hardware engines.*
+
+```mermaid
+graph TD
+  APP["Applications<br/>(SDN, storage, security)"]
+  subgraph libs["DOCA Libraries"]
+    FLOW["Flow"]
+    RDMA["RDMA"]
+    TEL["Telemetry"]
+    GNIO["GPUNetIO"]
+  end
+  SVC["DOCA Services<br/>(DMS, Argus, Firewall)"]
+  RT["DOCA Runtime"]
+  HW["BlueField hardware engines<br/>(RDMA, crypto, Flow)"]
+  APP --> FLOW & RDMA & TEL & GNIO
+  APP --> SVC
+  FLOW & RDMA & TEL & GNIO --> RT
+  SVC --> RT
+  RT --> HW
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class HW meas;
+  class GNIO accent;
+```
 
 ### 2.1 What is DOCA?
 
@@ -274,6 +326,28 @@ In a multi-tenant GPU cluster (e.g., a university research cluster or cloud GPU 
 ## 5. Contrast with GCP Titanium Offload
 
 This section makes explicit the **GCP Titanium ↔ NVIDIA BlueField mapping** referenced throughout the guide. Both are **host offload subsystems** that move networking/storage/security off the host CPU, but the implementation, visibility, and programmability differ.
+
+*Figure: Titanium vs BlueField visibility — the tenant sees gVNIC/CX-7 while Titanium sits opaque below the hypervisor; on DGX the tenant/admin sees the BlueField DPU and programs it via DOCA.*
+
+```mermaid
+graph LR
+  subgraph gcp["GCP A3/A4 (tenant view)"]
+    GVNIC["gVNIC / ConnectX-7<br/>(tenant sees NIC)"]
+    TITAN["Titanium offload<br/>(below hypervisor, opaque)"]
+  end
+  subgraph dgx["DGX (tenant/admin view)"]
+    BF["BlueField DPU"]
+    DOCA["DOCA stack<br/>(programmable)"]
+  end
+  GVNIC -->|"NIC visible"| TITAN
+  TITAN <-.->|"analogous offload role"| BF
+  BF -->|"programmable via"| DOCA
+
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class BF,DOCA good;
+  class TITAN ctx;
+```
 
 | Dimension | GCP Titanium (A3/A4) | NVIDIA BlueField DPU (DGX) |
 |:---|:---|:---|

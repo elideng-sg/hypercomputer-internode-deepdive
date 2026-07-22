@@ -33,6 +33,36 @@ The table below maps each infrastructure capability (rows) to the concrete mecha
 
 This mapping threads through the entire guide (especially Part IV) and makes explicit which GCP AI Hypercomputer component corresponds to which NVIDIA purpose-built platform product. **Both sides are production-grade**; the architecture and trade-offs differ, but the core GPU/NVLink/NCCL stack is identical.
 
+*Figure: GCP and NVIDIA stacks aligned by layer — the layers differ, the base GPU/HGX/NVLink/NCCL stack is identical.*
+
+```mermaid
+flowchart TD
+  classDef ctx  fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  subgraph gcp["GCP AI Hypercomputer"]
+    direction TB
+    g_orch["GKE + DWS"]:::meas
+    g_nvl["GB200 NVL domains"]:::meas
+    g_net["TCPX / RoCE"]:::meas
+    g_off["Titanium offload"]:::meas
+  end
+  subgraph nv["NVIDIA DGX / SuperPOD"]
+    direction TB
+    n_orch["BCM / Slurm"]:::ctx
+    n_nvl["NVLink Switch NVL72"]:::ctx
+    n_net["Spectrum-X / Quantum"]:::ctx
+    n_off["BlueField DPU"]:::ctx
+  end
+  base["Identical stack<br/>GPU / HGX / NVLink / NCCL"]:::good
+  g_orch -.-> n_orch
+  g_nvl -.-> n_nvl
+  g_net -.-> n_net
+  g_off -.-> n_off
+  g_off --> base
+  n_off --> base
+```
+
 | Infrastructure Layer | GCP AI Hypercomputer (A3 / A4 families) | NVIDIA Purpose-Built Platform (DGX / SuperPOD) |
 |:---|:---|:---|
 | **Host & Network Offload** | **Titanium** (Google's custom offload & network virtualization; handles IPsec, load balancing, and fabric rx/tx offload; not GPU-aware but enables TCPX plugin) | **BlueField DPU** (NVIDIA data processing unit; ARM-based SmartNIC running DOCA software; offloads networking, storage, security; GPU-aware via DOCA GPUNetIO) or **BlueField-3 SuperNIC** (DPU-accelerated NIC on DGX B200 & newer) |
@@ -123,6 +153,30 @@ Below are the platform-specific commands to accomplish common tasks, so you can 
 ---
 
 ## 6. When to Use Which Platform
+
+Choosing a platform comes down to your operational model first, then scale and control needs.
+
+*Figure: platform-selection tree — branch on operational model, then scale and control.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  q1{"Operational<br/>model?"}:::accent
+  gke["GCP GKE<br/>managed, TCPX-specific"]:::good
+  other["Other clouds<br/>EFA / IB, cloud-specific"]:::meas
+  q2{"On-prem<br/>priority?"}:::accent
+  spod["DGX SuperPOD<br/>32-256 nodes, CapEx"]:::meas
+  bare["Bare-metal K8s<br/>full control, DIY"]:::meas
+  slurm["Slurm HPC<br/>batch, MPI-first"]:::meas
+  q1 --"cloud, GCP"--> gke
+  q1 --"cloud, other"--> other
+  q1 --"on-prem"--> q2
+  q2 --"max scale"--> spod
+  q2 --"K8s control"--> bare
+  q2 --"HPC batch"--> slurm
+```
 
 | Platform | Best For | Trade-offs |
 |:---|:---|:---|

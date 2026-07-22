@@ -44,6 +44,36 @@ The HGX baseboard is **not a standalone server**. It requires a host system with
 
 A **DGX H100** or **DGX H200** system is NVIDIA's complete, turnkey AI server. It bundles the HGX baseboard with:
 
+*Figure: the HGX baseboard (8 GPU + 4 NVSwitch, full mesh) nested inside the full DGX chassis — the physical boundary between baseboard and system.*
+
+```mermaid
+flowchart TD
+  subgraph chassis["DGX H100 system chassis"]
+    subgraph hgx["HGX H100 baseboard<br/>(8 GPU + 4 NVSwitch, full mesh)"]
+      G["8x H100 SXM5 GPU"]
+      NVS["4x NVSwitch<br/>(non-blocking mesh)"]
+    end
+    CPU["2x Xeon CPU<br/>(Sapphire Rapids)"]
+    CX7["8x ConnectX-7<br/>(400 Gbps NIC)"]
+    BF3["2x BlueField-3<br/>SuperNIC (DPU)"]
+    NVME["30 TB NVMe"]
+    BMC["BMC<br/>(out-of-band mgmt)"]
+  end
+  G <-->|"NVLink 900 GB/s"| NVS
+  G -->|"PCIe Gen5 x16"| CPU
+  CPU --- CX7
+  CPU --- BF3
+  CPU --- NVME
+  BMC -.->|"sideband monitor"| CPU
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class G meas;
+  class NVS accent;
+  class BMC ctx;
+```
+
 **Hardware:**
 - **Dual Intel Xeon Platinum 8480C (Sapphire Rapids) CPUs** — 56 cores each, 112 cores total, 2 TB system RAM
 - **HGX H100 or HGX H200 baseboard** (8 GPUs + NVSwitch fabric, as above)
@@ -67,6 +97,32 @@ A **DGX H100** or **DGX H200** system is NVIDIA's complete, turnkey AI server. I
 ---
 
 ## 2. DGX System Software Stack
+
+The DGX management software forms a control hierarchy: a fleet agent sits over the OS, which hosts NVSM, and NVSM coordinates with the Fabric Manager and BMC.
+
+*Figure: DGX control flow — the BCM agent sits over DGX OS; NVSM coordinates with GPU Fabric Manager (which trains the NVLink/NVSwitch fabric) and the BMC.*
+
+```mermaid
+graph TD
+  BCM["BCM agent<br/>(fleet orchestration)"]
+  DGXOS["DGX OS<br/>(Ubuntu-based)"]
+  NVSM["NVSM<br/>(system management)"]
+  FM["GPU Fabric Manager<br/>(nv-fabricmanager)"]
+  BMC["BMC<br/>(IPMI / Redfish)"]
+  FABRIC["NVLink / NVSwitch<br/>fabric"]
+  BCM -->|"health + updates"| DGXOS
+  DGXOS -->|"hosts"| NVSM
+  NVSM <-->|"fabric health"| FM
+  NVSM <-->|"sensors + power"| BMC
+  FM -->|"trains links"| FABRIC
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class FM accent;
+  class FABRIC meas;
+  class BMC ctx;
+```
 
 ### 2.1 DGX OS
 
@@ -353,6 +409,38 @@ This section presents a **reference troubleshooting methodology** for DGX system
 ## 4. Mapping DGX Capabilities to GCP A3
 
 The table below summarizes which DGX system-level capabilities are **exposed to GCP A3 tenants**, **abstracted by Google**, or **not applicable**.
+
+*Figure: the tenant/Google boundary on A3 — nvidia-smi, DCGM, and NVLink topology are tenant-observable; NVSM, Fabric Manager, BMC, and firmware sit below the boundary (Google-managed).*
+
+```mermaid
+graph LR
+  subgraph tenant["Tenant CAN observe (in-VM)"]
+    SMI["nvidia-smi"]
+    DCGM["DCGM diag"]
+    TOPO["NVLink topo<br/>+ counters"]
+  end
+  BOUND["Hypervisor / control-plane<br/>boundary"]
+  subgraph managed["Google-managed (hidden)"]
+    NVSM["NVSM"]
+    FM["Fabric Manager"]
+    BMC["BMC / IPMI"]
+    FW["Firmware"]
+  end
+  SMI --> BOUND
+  DCGM --> BOUND
+  TOPO --> BOUND
+  BOUND --> NVSM
+  BOUND --> FM
+  BOUND --> BMC
+  BOUND --> FW
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class SMI,DCGM,TOPO meas;
+  class BOUND accent;
+  class NVSM,FM,BMC,FW ctx;
+```
 
 | Capability / Tool | DGX H100/H200 (On-Prem) | GCP A3 (a3-highgpu-8g) | Notes |
 |:---|:---|:---|:---|

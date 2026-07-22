@@ -18,6 +18,36 @@ This document explains the SuperPOD architecture, contrasts it with the GCP A3 c
 
 The **scalable unit (SU)** is the fundamental design element of a DGX SuperPOD. An SU is a self-contained cluster slice with a fixed number of DGX systems, leaf switches, and storage nodes, sized to fit within a single spine-leaf network tier. The specific SU configuration depends on the GPU generation and fabric choice, but the principle is consistent: **replicate the SU to scale the pod without re-engineering the network topology or management layer**.
 
+*Figure: the Scalable Unit as the unit of replication — 1 SU = 32 DGX H100 (256 GPU) + leaf switches; SUs share a common spine (4-SU = 1024 GPU).*
+
+```mermaid
+graph TD
+  subgraph su1["SU 1 (32 DGX H100 = 256 GPU)"]
+    N1["32x DGX H100"]
+    LS1["Leaf switches"]
+  end
+  subgraph su2["SU 2 (256 GPU)"]
+    N2["32x DGX H100"]
+    LS2["Leaf switches"]
+  end
+  SU3["SU 3 ..."]
+  SU4["SU 4<br/>(4-SU = 1024 GPU)"]
+  SPINE["Shared spine fabric"]
+  N1 --> LS1
+  N2 --> LS2
+  LS1 --> SPINE
+  LS2 --> SPINE
+  SU3 --> SPINE
+  SU4 --> SPINE
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N1,N2,SU3,SU4 meas;
+  class SPINE accent;
+  class LS1,LS2 ctx;
+```
+
 ### Typical SU Configuration (DGX H100 SuperPOD)
 
 A common SU for a DGX H100 SuperPOD (as documented in NVIDIA's reference architecture) comprises:
@@ -41,6 +71,34 @@ The SU design solves a critical problem in large-scale GPU clusters: **bisection
 ## Three Fabrics: Compute, Storage, and Management
 
 A DGX SuperPOD is not a single network; it is **three overlapping fabrics**, each optimized for a different traffic pattern:
+
+*Figure: three physically separate SuperPOD fabrics — compute (IB/Spectrum-X, rail-optimized), storage (IB/100G to VAST/DDN/Weka), and management (1-10G, BCM/IPMI/BMC). No cross-links by design.*
+
+```mermaid
+graph LR
+  subgraph compute["Compute fabric"]
+    C1["DGX GPUs"]
+    C2["IB / Spectrum-X<br/>(rail-optimized)"]
+    C1 --> C2
+  end
+  subgraph storage["Storage fabric"]
+    S1["DGX nodes"]
+    S2["IB / 100G Ethernet<br/>to VAST / DDN / Weka"]
+    S1 --> S2
+  end
+  subgraph mgmt["Management fabric"]
+    M1["DGX BMC / OS"]
+    M2["1-10G Ethernet<br/>(BCM / IPMI / BMC)"]
+    M1 --> M2
+  end
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class C1,C2 meas;
+  class S1,S2 good;
+  class M1,M2 ctx;
+```
 
 ### 1. Compute Fabric (GPU-to-GPU)
 
@@ -77,7 +135,7 @@ The management fabric is **separate from the compute fabric** to ensure that man
 
 ## Rail-Optimized Topology and Multi-Rail NCCL
 
-The **rail-optimized topology** is the signature design pattern of DGX SuperPOD compute fabrics (both Quantum InfiniBand and Spectrum-X Ethernet). Each GPU or GPU-attached NIC connects to a **dedicated rail** — a non-overlapping tree of leaf and spine switches. For a DGX H100 with 8 GPUs and 8 network ports (or 4 dual-port ConnectX-7 NICs, each port mapped to 2 GPUs), each port connects to a different rail. When NCCL performs an all-reduce, it stripes the data across all 8 rails (each rail carries 1/8 of the traffic), distributing the load evenly and maximizing bisection bandwidth.
+The **rail-optimized topology** is the signature design pattern of DGX SuperPOD compute fabrics (both Quantum InfiniBand and Spectrum-X Ethernet). Each GPU or GPU-attached NIC connects to a **dedicated rail** — a non-overlapping tree of leaf and spine switches. For the canonical rail-optimized fat-tree diagram (intra-rail 1-hop vs. cross-rail spine climb, and scale-up vs. scale-out), see the figure in [§13.5: Rail-Optimized Topologies](./13-spectrum-x-and-fabrics.md#5-rail-optimized-topologies); the description below applies it at SU scale. For a DGX H100 with 8 GPUs and 8 network ports (or 4 dual-port ConnectX-7 NICs, each port mapped to 2 GPUs), each port connects to a different rail. When NCCL performs an all-reduce, it stripes the data across all 8 rails (each rail carries 1/8 of the traffic), distributing the load evenly and maximizing bisection bandwidth.
 
 ### How Rail-Optimization Works
 
@@ -102,6 +160,34 @@ In addition to **scale-out** (connecting multiple DGX nodes via network fabrics)
 ### What is an NVLink Switch System?
 
 The **NVLink Switch System** is a set of external NVLink switch trays (not to be confused with the NVSwitch chips **inside** an HGX baseboard) that connect multiple HGX baseboards (or Grace-Blackwell superchips) into a single NVLink domain. Each tray contains multiple NVSwitch chips; the trays are cabled to the GPU baseboards via high-speed copper or fiber NVLink cables. The system operates as a **two-tier NVLink fabric**:
+
+*Figure: NVL72 two-tier NVLink scale-up — Tier 1 on-baseboard NVSwitch (8 GPU each) feeds Tier 2 external NVLink Switch trays, forming one flat 72-GPU NVLink domain (scale-up, not scale-out).*
+
+```mermaid
+flowchart TD
+  subgraph bbA["Baseboard A (Tier 1)"]
+    GA["8x GPU"]
+    SA["on-board NVSwitch"]
+    GA <--> SA
+  end
+  subgraph bbB["Baseboard B (Tier 1)"]
+    GB["8x GPU"]
+    SB["on-board NVSwitch"]
+    GB <--> SB
+  end
+  T2["Tier 2: external<br/>NVLink Switch trays"]
+  DOM["One flat 72-GPU<br/>NVLink domain"]
+  SA -->|"NVLink"| T2
+  SB -->|"NVLink"| T2
+  T2 --> DOM
+
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class GA,GB meas;
+  class SA,SB,T2 accent;
+  class DOM good;
+```
 
 1. **Tier 1 (intra-baseboard):** 8 GPUs on an HGX baseboard connect via NVSwitch chips on the baseboard (same as a DGX H100 or GCP A3 node).
 2. **Tier 2 (inter-baseboard):** Multiple baseboards connect to the external NVLink Switch System, which forwards NVLink traffic between baseboards.
