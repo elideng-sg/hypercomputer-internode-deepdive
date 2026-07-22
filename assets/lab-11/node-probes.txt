@@ -1,0 +1,18 @@
+# cmd: kubectl debug node/gke-...-hhp6 -- chroot /host { lspci | grep -iE 'nvidia|mellanox|bluefield|ethernet'; ls /sys/class/net; which nv-fabricmanager }
+# node: gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6 (a3-highgpu-8g)
+
+### lspci NVIDIA/Mellanox/BlueField ###
+00:0c.0 Ethernet controller: Google, Inc. Compute Engine Virtual Ethernet [gVNIC]
+04:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+05:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+0a:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+0b:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+84:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+85:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+8a:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+8b:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
+### net interfaces ###
+docker0  gke6bad42e5dbd  gke9aaeebfbec1  lo
+eth0	 gke860e357b7c9  gkeb6f151ea7b4
+### nv-fabricmanager present? ###
+(if blank above: nv-fabricmanager not present/visible to tenant node OS)

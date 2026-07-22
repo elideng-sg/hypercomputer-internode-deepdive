@@ -1,0 +1,20 @@
+# cmd: kubectl exec lab11-topo -- nvidia-smi -q | grep -iA3 Fabric (per-GPU fabric state)
+    Fabric
+        State                             : Completed
+        Status                            : Success
+    Processes                             : None
+--
+    Fabric
+        State                             : Completed
+        Status                            : Success
+    Processes                             : None
+--
+    Fabric
+        State                             : Completed
+        Status                            : Success
+    Processes                             : None
+--
+    Fabric
+        State                             : Completed
+        Status                            : Success
+    Processes                             : None

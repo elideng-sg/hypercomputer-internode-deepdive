@@ -1,0 +1,14 @@
+dimension,a3_observed_here,dgx_superpod_reference,evidence
+GPU,8x H100 80GB HBM3 (GH100 SXM5) per node,8x H100/H200 per HGX node,node-probes.txt (8x GH100 on PCI bus)
+Intra-node fabric,NVSwitch all-to-all NV18 (18 NVLink4 links/GPU ~900GB/s bidir),Same HGX NVSwitch mesh,topo-4gpu.txt + nvlink-status.txt
+GPU fabric state,Completed / Success (tenant sees trained result),Completed (admin runs Fabric Manager),fabric-state.txt
+Fabric Manager (nv-fabricmanager),Not tenant-visible (Google-managed),Admin daemon + /var/log/fabricmanager.log,node-probes.txt (not present)
+Inter-node NIC,Google gVNIC only (Compute Engine Virtual Ethernet),ConnectX-7 / BlueField-3 SuperNIC,node-probes.txt (single gVNIC; no Mellanox)
+BlueField DPU,Absent (no Mellanox/BlueField on PCI),Optional BlueField-3 DPU/SuperNIC,node-probes.txt (no bluefield match)
+Inter-node GPU transport,GPUDirect-TCPX (A3 High) / not enabled on this cluster,Quantum InfiniBand or Spectrum-X RoCE,design-spec (no tcpx extended resource)
+In-network reduction (SHARP),Absent (reduction on-GPU via NCCL),SHARP on Quantum InfiniBand switches,reference (doc-13/doc-14)
+NVLink scale-up domain,Single 8-GPU baseboard (no inter-node NVLink),GB200 NVL72 (72-GPU NVLink domain) on A4X-class,reference (doc-14)
+Orchestration,GKE + JobSet + Kueue + DWS,Base Command Manager / Run:ai / Slurm,reference (doc-14)
+BMC / IPMI out-of-band,Not tenant-accessible,Admin IPMI/Redfish,reference (doc-11)
+Firmware updates,Google-managed (opaque),Admin via NVSM,reference (doc-11)
+System health tool,nvidia-smi + DCGM (tenant),NVSM + DCGM + BCM (admin),reference (doc-11)
