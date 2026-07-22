@@ -1,0 +1,40 @@
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:1596 [0] NCCL INFO NCCL version 2.22.3+cuda12.6
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO NET/IB : No device found.
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO NET/IB : No device found.
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO NET/Socket : Using [0]eth0:10.128.0.52<0>
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Using network Socket
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO NET/Socket : GPU Direct RDMA Disabled for HCA 0 'eth0'
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO NVLS multicast support is available on dev 0
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO NVLS Head  0:  0  8
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 00/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 01/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 02/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 03/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 04/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 05/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 06/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 07/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 08/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 09/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 10/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 11/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 12/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 13/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 14/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Channel 15/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO Trees [0] 1/8/-1->0->-1 [1] 1/8/-1->0->-1 [2] 1/8/-1->0->-1 [3] 1/8/-1->0->-1 [4] 1/-1/-1->0->8 [5] 1/-1/-1->0->8 [6] 1/-1/-1->0->8 [7] 1/-1/-1->0->8 [8] 1/8/-1->0->-1 [9] 1/8/-1->0->-1 [10] 1/8/-1->0->-1 [11] 1/8/-1->0->-1 [12] 1/-1/-1->0->8 [13] 1/-1/-1->0->8 [14] 1/-1/-1->0->8 [15] 1/-1/-1->0->8
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2150 [0] NCCL INFO 16 coll channels, 16 collnet channels, 16 nvls channels, 16 p2p channels, 2 p2p channels per peer
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 00/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 01/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 02/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 03/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 04/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 05/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 06/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 07/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 08/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 09/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 10/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 11/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 12/0 : 0[0] -> 1[1] via P2P/CUMEM
+gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m:1596:2179 [0] NCCL INFO Channel 13/0 : 0[0] -> 1[1] via P2P/CUMEM

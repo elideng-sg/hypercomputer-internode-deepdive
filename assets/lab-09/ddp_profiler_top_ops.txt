@@ -1,0 +1,20 @@
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+autograd::engine::evaluate_function: torch::autograd...         0.16%       3.348ms         0.88%      18.549ms      74.194us       0.000us         0.00%        1.918s       7.674ms           250  
+                                       c10d::allreduce_         0.12%       2.538ms         0.46%       9.682ms     113.902us       0.000us         0.00%        1.902s      22.379ms            85  
+                                     record_param_comms         0.25%       5.274ms         0.34%       7.144ms      84.048us        1.902s        89.63%        1.902s      22.379ms            85  
+ncclDevKernel_AllReduce_Sum_f32_TREE_LL(ncclDevKerne...         0.00%       0.000us         0.00%       0.000us       0.000us        1.902s        89.63%        1.902s      22.379ms            85  
+                                        nccl:all_reduce         0.00%       0.000us         0.00%       0.000us       0.000us        1.902s        89.63%        1.902s      22.379ms            85  
+                                          ProfilerStep*         2.61%      55.385ms        97.77%        2.071s     414.228ms       0.000us         0.00%     160.185ms      32.037ms             5  
+                              Optimizer.step#AdamW.step         0.00%       0.000us         0.00%       0.000us       0.000us     152.077ms         7.17%     152.077ms      30.415ms             5  
+                              Optimizer.step#AdamW.step         0.14%       3.028ms         0.46%       9.817ms       1.963ms       0.000us         0.00%     151.360ms      30.272ms             5  
+                                    aten::_foreach_mul_         0.03%     598.725us         0.07%       1.386ms     138.588us      30.774ms         1.45%      30.774ms       3.077ms            10  
+std::enable_if<at::native::(anonymous namespace)::Bi...         0.00%       0.000us         0.00%       0.000us       0.000us      30.774ms         1.45%      30.774ms     384.675us            80  
+                                aten::_foreach_addcdiv_         0.02%     342.754us         0.03%     662.642us     132.528us      29.265ms         1.38%      29.265ms       5.853ms             5  
+std::enable_if<at::native::(anonymous namespace)::Po...         0.00%       0.000us         0.00%       0.000us       0.000us      29.265ms         1.38%      29.265ms     731.620us            40  
+    autograd::engine::evaluate_function: AddmmBackward0         0.08%       1.624ms         0.81%      17.137ms     201.613us       0.000us         0.00%      24.456ms     287.720us            85  
+                                         AddmmBackward0         0.03%     716.740us         0.57%      12.152ms     142.969us       0.000us         0.00%      23.105ms     271.828us            85  
+                                               aten::mm         0.30%       6.346ms         0.48%      10.097ms      61.195us      23.105ms         1.09%      23.105ms     140.033us           165  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 2.118s
+Self CUDA time total: 2.122s

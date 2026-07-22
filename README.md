@@ -14,7 +14,7 @@ Every mechanism and tool is paired with a lab capturing **actual measured data**
 
 > **Honesty note on Part IV.** DGX/HGX *system software*, BlueField DPUs, and Spectrum-X are **not present** on the GCP A3 cluster (each A3 node rides an **HGX H100 baseboard**, but DGX OS / Fabric Manager / DPUs / Spectrum-X are not tenant-visible). Part IV is therefore **knowledge-first / reference-architecture**, with *observe-and-compare* exercises against what the A3 lab can actually show. It never claims that DGX/BlueField/Spectrum-X hardware was run here.
 
-> **Status: 🚧 planning.** The design spec is committed and under review. Implementation (docs + live labs) has not started yet.
+> **Status: 🚧 in progress.** Live on the A3 cluster. **Captured with real data:** the full toolkit (T1–T6); Part I docs 01–04 + labs 01–04 (incl. the 8-GPU NVLink/NVSwitch mesh and ~480 GB/s intra-node all-reduce ceiling); Part II doc 06 + lab 06 (2-node 16-GPU NCCL all-reduce, ~28 GB/s over TCP/gVNIC — the ~17× inter-node cliff); Part III doc 09 + lab 09 (2-node DDP vs FSDP, profiler shows the step is ~90% all-reduce); Part IV docs 11–14 + lab-11 platform-compare. **Not yet run:** doc/lab 05 (NIC/RDMA path, 0-GPU), 07 (gang scheduling), 08 (JobSet/Kueue), 10 (fleet observability). No fabric or measurement is ever claimed that wasn't read off the live cluster — see [`VERIFICATION.md`](VERIFICATION.md).
 
 ---
 
