@@ -1,0 +1,41 @@
+# Fault (a), signature #2 — NCCL watchdog abort when a peer rank dies
+# Setup: 4 raw Pods (nccl-hang-0..3), 1 GPU each on hhp6, headless Service
+#        'nccl-hang' for pod DNS, looping all_reduce of a 1 GiB tensor, PG timeout 60s.
+# No gang controller, so survivors are NOT reaped and reach NCCL's own error path.
+#
+# Healthy phase: rank 0 logged 18 successful iterations (value=4 across 4 ranks):
+    rank 0 iter 0 ok value=4
+    ... 
+    rank 0 iter 17 ok value=4
+#
+# Then nccl-hang-3 was force-deleted at 08:55:10Z. ~5s later rank 0's NCCL watchdog
+# fired (note: it did NOT wait the full 60s timeout — the dead peer's socket closed,
+# so NCCL surfaced a REMOTE-process error immediately):
+
+nccl-hang-0:1:1 [0] NCCL INFO NCCL version 2.22.3+cuda12.6
+[rank0]:[E722 08:55:15.721744728 ProcessGroupNCCL.cpp:542] [Rank 0] Collective WorkNCCL(SeqNum=19, OpType=ALLREDUCE, NumelIn=268435456, NumelOut=268435456, Timeout(ms)=60000) raised the following async exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+[rank0]:[E722 08:55:15.724116323 ProcessGroupNCCL.cpp:1605] [PG ID 0 PG GUID 0(default_pg) Rank 0] Process group watchdog thread terminated with exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+terminate called after throwing an instance of 'c10::DistBackendError'
+ what(): [PG ID 0 PG GUID 0(default_pg) Rank 0] Process group watchdog thread terminated with exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+[nccl-hang-0:1 :0:98] Caught signal 11 (Segmentation fault: Sent by the kernel at address (nil))
+
+# --- key lines, verbatim ---
+# [rank0]:[E722 08:55:15 ProcessGroupNCCL.cpp:1605] ... Process group watchdog thread
+#   terminated with exception: NCCL error: remote process exited or there was a network
+#   error, NCCL version 2.22.3
+# ncclRemoteError: A call failed possibly due to a network error or a remote process
+#   exiting prematurely.
+# terminate called after throwing an instance of 'c10::DistBackendError'
+# [nccl-hang-0:1 :0:98] Caught signal 11 (Segmentation fault) <- process aborts
+
+# DIAGNOSIS: 'ncclRemoteError / remote process exiting prematurely' on the SURVIVING
+# ranks almost always means ANOTHER rank died (OOM-killed, node preemption, segfault,
+# or here a manual pod delete) — not a fault in the rank printing the error. The first
+# rank to CRASH is the root cause; the others just report the broken connection. Triage
+# by finding the rank that exited FIRST / has a non-NCCL error, and check for OOMKilled
+# pods, node NotReady, or XID errors on that rank's GPU. Contrast a true HANG (peer alive
+# but stuck), which instead waits the full timeout and prints 'Watchdog caught collective
+# operation timeout ... Timeout(ms)=60000'.

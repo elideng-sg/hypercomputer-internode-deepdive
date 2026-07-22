@@ -1,0 +1,74 @@
+# lab-10 fault (c): env/config mismatch. Two ranks all-reduce tensors of DIFFERENT
+# element counts (rank 0: 2^28, rank 1: 2^27). A collective requires identical
+# counts on every rank; the mismatch surfaces as an NCCL/Torch error (or hang),
+# standing in for the class of "ranks built with mismatched config/env/image".
+# 2x1 GPU on hhp6; holder/vLLM untouched.
+apiVersion: v1
+kind: Service
+metadata: {name: nccl-mismatch, namespace: default}
+spec:
+  clusterIP: None
+  selector: {app: nccl-mismatch}
+  ports: [{name: c10d, port: 29500}]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nccl-mismatch-0
+  namespace: default
+  labels: {app: nccl-mismatch}
+spec:
+  hostname: nccl-mismatch-0
+  subdomain: nccl-mismatch
+  restartPolicy: Never
+  nodeSelector: {cloud.google.com/gke-nodepool: a3-h100-dws-pool}
+  tolerations:
+  - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+  - {key: cloud.google.com/gke-queued, operator: Exists, effect: NoSchedule}
+  containers:
+  - name: worker
+    image: nvcr.io/nvidia/pytorch:24.10-py3
+    env:
+    - {name: NCCL_DEBUG, value: "WARN"}
+    - {name: MASTER_ADDR, value: "nccl-mismatch-0.nccl-mismatch"}
+    - {name: MASTER_PORT, value: "29500"}
+    - {name: WORLD_SIZE, value: "2"}
+    - {name: RANK, value: "0"}
+    - {name: TORCH_NCCL_ASYNC_ERROR_HANDLING, value: "1"}
+    command: ["bash","-lc"]
+    args:
+    - |
+      for i in $(seq 1 90); do getent hosts "$MASTER_ADDR" && break; sleep 2; done
+      python -c "import torch,torch.distributed as dist,datetime; dist.init_process_group('nccl',timeout=datetime.timedelta(seconds=45)); r=dist.get_rank(); torch.cuda.set_device(0); n=(268435456 if r==0 else 134217728); print(f'rank {r} building tensor of {n} elements',flush=True); t=torch.ones(n,device='cuda'); dist.all_reduce(t); torch.cuda.synchronize(); print(f'rank {r} all_reduce returned value={t[0].item():.0f}',flush=True)"
+    resources: {limits: {nvidia.com/gpu: 1}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nccl-mismatch-1
+  namespace: default
+  labels: {app: nccl-mismatch}
+spec:
+  hostname: nccl-mismatch-1
+  subdomain: nccl-mismatch
+  restartPolicy: Never
+  nodeSelector: {cloud.google.com/gke-nodepool: a3-h100-dws-pool}
+  tolerations:
+  - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+  - {key: cloud.google.com/gke-queued, operator: Exists, effect: NoSchedule}
+  containers:
+  - name: worker
+    image: nvcr.io/nvidia/pytorch:24.10-py3
+    env:
+    - {name: NCCL_DEBUG, value: "WARN"}
+    - {name: MASTER_ADDR, value: "nccl-mismatch-0.nccl-mismatch"}
+    - {name: MASTER_PORT, value: "29500"}
+    - {name: WORLD_SIZE, value: "2"}
+    - {name: RANK, value: "1"}
+    - {name: TORCH_NCCL_ASYNC_ERROR_HANDLING, value: "1"}
+    command: ["bash","-lc"]
+    args:
+    - |
+      for i in $(seq 1 90); do getent hosts "$MASTER_ADDR" && break; sleep 2; done
+      python -c "import torch,torch.distributed as dist,datetime; dist.init_process_group('nccl',timeout=datetime.timedelta(seconds=45)); r=dist.get_rank(); torch.cuda.set_device(0); n=(268435456 if r==0 else 134217728); print(f'rank {r} building tensor of {n} elements',flush=True); t=torch.ones(n,device='cuda'); dist.all_reduce(t); torch.cuda.synchronize(); print(f'rank {r} all_reduce returned value={t[0].item():.0f}',flush=True)"
+    resources: {limits: {nvidia.com/gpu: 1}}

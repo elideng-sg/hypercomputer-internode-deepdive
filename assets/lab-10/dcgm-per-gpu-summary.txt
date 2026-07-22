@@ -1,0 +1,12 @@
+# Curated from assets/lab-10/dcgm-metrics-raw.txt — hhp6, live scrape of GKE-managed dcgm-exporter.
+# Note GPUs 5 & 6 carry container=vllm/namespace=inference labels: dcgm-exporter joins each GPU to its consuming pod.
+
+GPU  SM_CLK     PWR_W      TEMP   UTIL%  FB_USED_MiB  POD
+0    345        71.722000  33     0      0            —
+1    345        68.023000  33     0      0            —
+2    345        69.178000  33     0      0            —
+3    345        72.011000  30     0      0            —
+4    345        69.397000  34     0      0            —
+5    1980       126.601000 35     0      77581        pod="qwen3-vllm-b76697d85-krs4j"
+6    1980       122.423000 35     0      77581        pod="qwen3-vllm-b76697d85-krs4j"
+7    345        70.640000  36     0      0            —
