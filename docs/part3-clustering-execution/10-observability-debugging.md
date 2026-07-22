@@ -97,6 +97,18 @@ JobSet's **default `failurePolicy` is fail-fast**: the moment one child Job fail
 
 The JobSet reaped the survivors so fast (~3 s) that we never saw NCCL's *own* error path. To capture that, the lab re-ran with **raw Pods + a headless Service** (no gang controller), so the survivors persist and reach NCCL's error handling. `assets/lab-10/fault-nccl-hang-signature.txt`:
 
+*Figure: the killed peer's socket closes, so rank 0 aborts in ~5 s — long before the 60 s collective timeout would have fired.*
+
+```mermaid
+sequenceDiagram
+    participant R0 as rank 0 (survivor)
+    participant R3 as rank 3 (killed)
+    Note over R0,R3: 18 healthy all-reduce iterations (value=4)
+    R3-->>R0: pod force-deleted @ 08:55:10 — socket closes
+    Note over R0: watchdog fires @ 08:55:15 (~5 s, NOT the 60 s timeout)
+    R0->>R0: ncclRemoteError -> DistBackendError -> signal 11 (abort)
+```
+
 ```
 [rank0]:[E722 08:55:15 ProcessGroupNCCL.cpp:1605] ... Process group watchdog thread
   terminated with exception: NCCL error: remote process exited or there was a network
@@ -139,6 +151,16 @@ Doc-05 established that on A3-High a **single ~200 Gbit/s gVNIC** carries *all* 
 victim flow ALONE (8 streams):                 162 Gbit/s
 background 32-stream load (noisy neighbour):   163 Gbit/s   <- NIC at its ceiling
 SAME victim flow DURING saturation:             23 Gbit/s   <- ~7× collapse
+```
+
+*Figure: the victim flow runs at line rate alone, but collapses to ~1/7 once a neighbour pegs the shared gVNIC.*
+
+```mermaid
+xychart-beta
+    title "Cross-node victim throughput vs a noisy neighbour (Gbit/s)"
+    x-axis ["victim alone", "gVNIC ceiling", "victim DURING saturation"]
+    y-axis "Gbit/s" 0 --> 180
+    bar [162, 163, 23]
 ```
 
 The victim flow — standing in for a cross-node collective — drops from **162 to 23 Gbit/s, a ~7× collapse**, purely because a neighbour saturated the shared NIC. The GPUs are untouched and perfectly healthy the whole time; only the network is contended.
