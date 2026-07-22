@@ -25,6 +25,30 @@ This lab validates the NVIDIA driver and CUDA stack on a live GKE **A3 High** (`
 
 ## Lab Steps
 
+*Figure: the end-to-end diagnostics workflow — the DCGM and gpu-burn checks run as separate Job containers before validate and teardown.*
+
+```mermaid
+flowchart TD
+    D["deploy gpu-debug pod<br/>(1-GPU, PyTorch image)"] --> V1["capture<br/>driver / CUDA"]
+    V1 --> Q["nvidia-smi -q<br/>ECC / thermal / power / throttle"]
+    Q --> X["dmesg / XID scan"]
+    X --> DCGM
+    X --> BURN
+    subgraph Jobs["separate Job containers"]
+      DCGM["DCGM diag Job<br/>(dcgm image, -r 2)"]
+      BURN["gpu-burn Job<br/>(60s stress)"]
+    end
+    DCGM --> VAL["validate<br/>(PASS / OK)"]
+    BURN --> VAL
+    VAL --> CL["cleanup<br/>delete pod + jobs"]
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class D meas;
+    class DCGM,BURN accent;
+    class VAL good;
+```
+
 ### Step 1: Deploy GPU Debug Pod
 
 The lab uses a 1-GPU debug pod (`gpu-debug`) based on `nvcr.io/nvidia/pytorch:24.10-py3` (includes CUDA toolkit and nvidia-smi).

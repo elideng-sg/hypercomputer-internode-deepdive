@@ -311,7 +311,29 @@ Below is a **starter reference** of well-known XID codes. The full table is main
 
 ### Interpreting XIDs: Symptom → Cause → Action
 
-**General approach:**
+**General approach:** move from observation to action by correlating signals and classifying severity.
+
+*Figure: XID troubleshooting flow — observe, look up, correlate, classify severity, act.*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  obs["Observe XID<br/>dmesg / DCGM"]:::meas
+  lookup["Look up code<br/>xid-table.md"]:::meas
+  corr["Check signals<br/>ECC / throttle / NVLink"]:::meas
+  sev{"Severity?"}:::accent
+  trans["Transient<br/>monitor"]:::good
+  pers["Persistent<br/>reset + re-test"]:::accent
+  fatal["Fatal<br/>RMA GPU"]:::crit
+  obs --> lookup --> corr --> sev
+  sev --"single event"--> trans
+  sev --"recurring"--> pers
+  sev --"uncorrectable"--> fatal
+```
+
 1. **Identify the XID code** in `dmesg` or DCGM
 2. **Look up the code** in `../../reference/xid-table.md`
 3. **Check correlated symptoms:**
@@ -533,7 +555,32 @@ GPU 7: PASSED
 
 ## Summary: Diagnostic Decision Tree
 
-Use this decision tree to choose the right diagnostic tool:
+Use this decision tree to choose the right diagnostic tool: start from the symptom, follow the branch to the exact command, and note the runtime cost of each.
+
+*Figure: diagnostic decision tree — symptom to command, with runtime badges (30 s to 4 h).*
+
+```mermaid
+flowchart TD
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  sym{"GPU<br/>symptom?"}:::accent
+  r1["dcgmi diag -r1<br/>~30 s"]:::good
+  r2["dcgmi diag -r2<br/>~5 min"]:::meas
+  r3["dcgmi diag -r3<br/>~30 min"]:::meas
+  burn["gpu-burn<br/>1-60 min"]:::meas
+  rma["dcgmi diag -r4 + bug-report<br/>1-4 h"]:::crit
+  xid["dmesg | grep NVRM"]:::meas
+  thr["nvidia-smi -q -d PERFORMANCE"]:::meas
+  sym --"smoke-test"--> r1
+  sym --"perf regression"--> r2
+  sym --"intermittent crash"--> r3
+  sym --"NaN loss"--> burn
+  sym --"RMA prep"--> rma
+  sym --"specific XID"--> xid
+  sym --"throttle"--> thr
+```
 
 1. **Quick smoke-test (before a job):**
    - → `dcgmi diag -r 1` (30 sec)

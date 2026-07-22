@@ -21,6 +21,84 @@ This is the pivot of the whole guide: the point where a collective's ring leaves
 
 A **collective** is a communication primitive over a *group* of ranks (here, 16 GPUs). Three carry almost all of distributed training:
 
+*Figure: all-reduce over 4 ranks — before, each rank holds its own value; after, every rank holds the sum.*
+
+```mermaid
+graph LR
+  subgraph B1["Before"]
+    p0["R0: a"]
+    p1["R1: b"]
+    p2["R2: c"]
+    p3["R3: d"]
+  end
+  subgraph A1["After: every rank holds the sum"]
+    q0["R0: a+b+c+d"]
+    q1["R1: a+b+c+d"]
+    q2["R2: a+b+c+d"]
+    q3["R3: a+b+c+d"]
+  end
+  p0 --> q0
+  p1 --> q1
+  p2 --> q2
+  p3 --> q3
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class p0,p1,p2,p3 ctx
+  class q0,q1,q2,q3 good
+```
+
+*Figure: all-gather — each rank contributes one shard; after, all ranks hold the full tensor.*
+
+```mermaid
+graph LR
+  subgraph B2["Before: each rank owns one shard"]
+    g0["R0: A"]
+    g1["R1: B"]
+    g2["R2: C"]
+    g3["R3: D"]
+  end
+  subgraph A2["After: every rank owns all shards"]
+    h0["R0: ABCD"]
+    h1["R1: ABCD"]
+    h2["R2: ABCD"]
+    h3["R3: ABCD"]
+  end
+  g0 --> h0
+  g1 --> h1
+  g2 --> h2
+  g3 --> h3
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class g0,g1,g2,g3 ctx
+  class h0,h1,h2,h3 good
+```
+
+*Figure: reduce-scatter — sum across ranks, then each rank keeps a single result shard.*
+
+```mermaid
+graph LR
+  subgraph B3["Before: each rank has the full vector"]
+    s0["R0: a,b,c,d"]
+    s1["R1: a,b,c,d"]
+    s2["R2: a,b,c,d"]
+    s3["R3: a,b,c,d"]
+  end
+  subgraph A3["After: each keeps one summed shard"]
+    t0["R0: sum a"]
+    t1["R1: sum b"]
+    t2["R2: sum c"]
+    t3["R3: sum d"]
+  end
+  s0 --> t0
+  s1 --> t1
+  s2 --> t2
+  s3 --> t3
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class s0,s1,s2,s3 ctx
+  class t0,t1,t2,t3 good
+```
+
 | Collective | What it does | Where it shows up |
 | :--- | :--- | :--- |
 | **all-reduce** | sum a tensor across all ranks, every rank gets the result | DDP gradient sync (doc-09) |
@@ -33,6 +111,25 @@ NCCL (NVIDIA Collective Communications Library) implements these. It picks an **
 
 The classic algorithm is the **ring**: `n` ranks in a logical loop, the tensor split into `n` chunks, and `2(n-1)` steps (a reduce-scatter phase + an all-gather phase). Each rank sends and receives `(n-1)/n` of the tensor in each phase.
 
+*Figure: ring all-reduce — n ranks in a loop run a reduce-scatter phase then an all-gather phase, 2(n-1) steps total.*
+
+```mermaid
+graph LR
+  R0["Rank 0"] --> R1["Rank 1"]
+  R1 --> R2["Rank 2"]
+  R2 --> R3["Rank 3"]
+  R3 --> R0
+  R0 -.-> ph1["Phase 1: reduce-scatter<br/>n-1 steps"]
+  ph1 --> ph2["Phase 2: all-gather<br/>n-1 steps"]
+  ph2 --> note["2(n-1) steps, each moves (n-1)/n<br/>busbw = algbw x 2(n-1)/n"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class ph1 meas
+  class ph2 good
+  class note accent
+```
+
 That factor is exactly why we report **bus bandwidth** (`busbw`) rather than raw **algorithm bandwidth** (`algbw = message_size / time`):
 
 ```
@@ -42,6 +139,27 @@ busbw = algbw · 2(n-1)/n
 `busbw` normalizes out the collective's inherent traffic multiplier so numbers are comparable across different rank counts and against the hardware link rate. (Full derivation in [T4](../toolkit/T4-benchmarking.md).) Both lab-04 and lab-06 use this identical definition, which is what makes the 480-vs-28 comparison fair.
 
 ### Ring vs. tree
+
+*Figure: ring (bandwidth-optimal, latency grows with n) vs. tree (log-depth, latency-optimal) — NCCL picks TREE for the 2-node shape.*
+
+```mermaid
+graph TD
+  subgraph Ring["Ring: bandwidth optimal, latency ~ n"]
+    r0["R0"] --> r1["R1"]
+    r1 --> r2["R2"]
+    r2 --> r3["R3"]
+    r3 --> r0
+  end
+  subgraph Tree["Tree: log depth, latency optimal"]
+    t0["R0"] --> t1["R1"]
+    t0 --> t2["R2"]
+    t1 --> t3["R3"]
+  end
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  class r0,r1,r2,r3 good
+  class t0,t1,t2,t3 meas
+```
 
 - **Ring** maximizes bandwidth (every link busy) but latency grows with `n`.
 - **Tree** (log-depth) minimizes latency for small messages and few nodes — which is why NCCL selected TREE for the 2-node/16-rank all-reduce. On a bandwidth-starved link, algorithm choice matters far less than the link itself, as the numbers below show.
@@ -59,6 +177,35 @@ NCCL INFO NET/Socket : Using [0]eth0:10.128.0.52<0>
 NCCL INFO Using network Socket
 NCCL INFO NET/Socket : GPU Direct RDMA Disabled for HCA 0 'eth0'
 NCCL INFO Channel 00/16 :  0  7  6  5  4  3  2  1  8 15 14 13 12 11 10  9
+```
+
+*Figure: the 16-GPU ring — 14 NVLink hops within the two nodes, 2 slow Ethernet/gVNIC hops crossing the boundary (staged GPU to host to NIC, no GPUDirect RDMA).*
+
+```mermaid
+graph LR
+  subgraph NodeA["Node A: GPUs 0-7 (NVLink)"]
+    a0["rank 0"]
+    achain["ranks 7..2<br/>7 NVLink hops"]
+    a1["rank 1"]
+    a0 --- achain
+    achain --- a1
+  end
+  subgraph NodeB["Node B: GPUs 8-15 (NVLink)"]
+    b8["rank 8"]
+    bchain["ranks 15..10<br/>7 NVLink hops"]
+    b9["rank 9"]
+    b8 --- bchain
+    bchain --- b9
+  end
+  a1 =="Ethernet / gVNIC<br/>GPU to host to NIC"==> b8
+  b9 =="Ethernet / gVNIC<br/>NIC to host to GPU"==> a0
+  a1 -.-> stage["No GPUDirect RDMA:<br/>every crossing byte stages<br/>GPU to host RAM to NIC"]
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class a0,achain,a1,b8,bchain,b9 good
+  class stage crit
+  linkStyle 4 stroke:#c5221f,stroke-width:3px;
+  linkStyle 5 stroke:#c5221f,stroke-width:3px;
 ```
 
 Line by line:

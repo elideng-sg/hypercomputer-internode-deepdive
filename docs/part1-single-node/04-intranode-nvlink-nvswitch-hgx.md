@@ -33,6 +33,23 @@ lab-11 confirmed this from the tenant side: `lspci` enumerates 8× GH100 SXM5, a
 
 Each Hopper GPU exposes two very different off-chip paths:
 
+*Figure: two off-chip paths — NVLink4 to peer GPUs is ~10x the PCIe path and bypasses the CPU entirely.*
+
+```mermaid
+flowchart LR
+    HOST["Host CPU / NIC"]
+    GPU["GPU"]
+    PEER["Peer GPUs<br/>(baseboard)"]
+    GPU --"PCIe Gen5 x16<br/>~50 GB/s"--> HOST
+    GPU =="NVLink4<br/>~478 GB/s each way"==> PEER
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class GPU meas;
+    class HOST ctx;
+    class PEER good;
+```
+
 | Path | Role | Per-GPU bandwidth (this node) |
 | :--- | :--- | :--- |
 | **PCIe Gen5 x16** | Host↔GPU (H2D/D2H), NIC↔GPU | ~50 GB/s each way (lab-03 measured ~27 GB/s over the PyTorch path) |
@@ -43,6 +60,37 @@ NVLink is roughly **an order of magnitude** faster than PCIe and, crucially, kee
 ### The NVSwitch all-to-all mesh
 
 With 4 NVSwitch chips on the baseboard, the 8 GPUs form a **non-blocking all-to-all mesh**: every GPU reaches every other GPU across the *same* 18-link NVLink path, with no PCIe or NUMA hop in between. lab-04 measured this directly — `nvidia-smi topo -m` shows `NV18` in **every** off-diagonal cell:
+
+*Figure: the 8-GPU all-to-all — every GPU links to the central NVSwitch fabric (NV18 = 18 NVLink4 links); the NUMA split affects only host memory, not GPU↔GPU.*
+
+```mermaid
+graph TD
+    SW["NVSwitch fabric<br/>4 chips · non-blocking"]
+    subgraph NUMA0["NUMA 0 (host)"]
+        G0["GPU0"]
+        G1["GPU1"]
+        G2["GPU2"]
+        G3["GPU3"]
+    end
+    subgraph NUMA1["NUMA 1 (host)"]
+        G4["GPU4"]
+        G5["GPU5"]
+        G6["GPU6"]
+        G7["GPU7"]
+    end
+    G0 --- SW
+    G1 --- SW
+    G2 --- SW
+    G3 --- SW
+    G4 --- SW
+    G5 --- SW
+    G6 --- SW
+    G7 --- SW
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+    class G0,G1,G2,G3,G4,G5,G6,G7 meas;
+    class SW good;
+```
 
 ```
       GPU0  GPU1  GPU2  GPU3  GPU4  GPU5  GPU6  GPU7
@@ -79,6 +127,16 @@ Fabric
 
 NVLink link rates are the *hardware* number. What a distributed workload actually gets is the **collective** bandwidth — what NCCL sustains running an all-reduce across all 8 GPUs. lab-04 ran `all_reduce_perf -b 8 -e 8G -f 2 -g 8` (NCCL 2.22.3+cuda12.6):
 
+*Figure: busbw ramps from a latency-bound floor through a ~4-16 MB knee to a ~480 GB/s NVLink ceiling.*
+
+```mermaid
+xychart-beta
+    title "Single-node 8-GPU all-reduce busbw vs message size"
+    x-axis ["8 B", "1 MB", "16 MB", "128 MB", "1 GB", "8 GB"]
+    y-axis "busbw (GB/s)" 0 --> 500
+    line [0, 46.2, 233.5, 395.2, 464.4, 479.9]
+```
+
 | Message size | `busbw` (GB/s) | Regime |
 | ---: | ---: | :--- |
 | 8 B | ~0.00 | latency-bound (~34 µs floor) |
@@ -99,6 +157,16 @@ NVLink link rates are the *hardware* number. What a distributed workload actuall
 ## Why intra-node ≫ inter-node
 
 This is the pivot into Part II. The **same** collective, the **same** NCCL, the **same** GPUs — measured across a *second* node — collapses:
+
+*Figure: the ~17x cliff at the node boundary — leaving NVLink for TCP over gVNIC drops busbw from ~480 to ~28 GB/s.*
+
+```mermaid
+xychart-beta
+    title "The ~17x cliff: intra-node vs inter-node all-reduce busbw"
+    x-axis ["Intra-node NVLink4", "Inter-node TCP/gVNIC"]
+    y-axis "busbw (GB/s)" 0 --> 500
+    bar [480, 28]
+```
 
 | Collective (all-reduce, 1 GB) | Fabric | Peak `busbw` |
 | :--- | :--- | ---: |

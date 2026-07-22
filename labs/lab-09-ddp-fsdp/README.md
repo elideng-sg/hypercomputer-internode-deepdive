@@ -30,6 +30,16 @@ LAB09_POD_A=nccl-workbench-a LAB09_POD_B=nccl-workbench-b \
 
 Identical model, 16 ranks over 2 nodes, batch 16/rank, dim 4096, 8 layers:
 
+*Figure: DDP is faster here (656 vs 476 samples/s) even though FSDP is 16x lighter per rank (68.2 M vs 1090.8 M params) — over a 28 GB/s TCP path, FSDP's extra collective costs throughput.*
+
+```mermaid
+xychart-beta
+    title "DDP vs FSDP — global throughput (samples/s)"
+    x-axis ["DDP", "FSDP"]
+    y-axis "samples/s" 0 --> 700
+    bar [656.0, 476.2]
+```
+
 | mode | params **per rank** | steady-state ms/step | global samples/s |
 | :--- | ---: | ---: | ---: |
 | **DDP** | ~1090.8 M (full replica) | **390.26** | **656.0** |

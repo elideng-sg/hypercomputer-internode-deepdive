@@ -27,6 +27,30 @@ bash labs/lab-11-platform-compare/run.sh
 
 `lspci` (via a read-only `kubectl debug node` chroot, no GPU allocation needed) enumerates **8× H100 SXM5** and exactly **one** network controller — Google gVNIC:
 
+*Figure: what the tenant can see (above the boundary) vs. what Google manages below it — no ConnectX, no BlueField, and Fabric Manager / BMC are opaque.*
+
+```mermaid
+flowchart TD
+    subgraph TEN["Tenant-visible (pod / node OS)"]
+      G["8x H100 SXM5<br/>HGX baseboard"]
+      NV["NVSwitch mesh<br/>NV18 all-to-all"]
+      NIC["gVNIC NIC<br/>(single)"]
+      G --- NV
+      G --- NIC
+    end
+    subgraph MGT["Below tenant boundary — Google-managed"]
+      FM["Fabric Manager<br/>(not visible)"]
+      BMC["BMC / firmware<br/>(opaque)"]
+      NOCX["no ConnectX<br/>SuperNIC"]
+      NOBF["no BlueField DPU"]
+    end
+    TEN -.->|"tenant boundary"| MGT
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    class G,NV,NIC meas;
+    class FM,BMC,NOCX,NOBF ctx;
+```
+
 ```
 00:0c.0 Ethernet controller: Google, Inc. Compute Engine Virtual Ethernet [gVNIC]
 04:00.0 3D controller: NVIDIA Corporation GH100 [H100 SXM5 80GB] (rev a1)
@@ -69,6 +93,37 @@ This is the **result** of Fabric Manager training the NVSwitch fabric — the te
 ## A3 (measured) vs. DGX SuperPOD (reference)
 
 Full machine-readable table: [`assets/lab-11/a3-vs-dgx-superpod.csv`](../../assets/lab-11/a3-vs-dgx-superpod.csv). Highlights:
+
+*Figure: same HGX GPU/fabric on both sides; the platforms diverge at the NIC, DPU, in-network reduction, and orchestration layers (A3 measured = blue, DGX reference = grey).*
+
+```mermaid
+graph LR
+    subgraph A3["A3 — measured here"]
+      direction TB
+      A_F["Fabric: NVSwitch NV18<br/>(measured)"]
+      A_N["NIC: gVNIC only"]
+      A_D["DPU: none"]
+      A_R["In-network reduce: none<br/>(on-GPU NCCL)"]
+      A_O["Orchestration: GKE<br/>JobSet / Kueue / DWS"]
+    end
+    subgraph DGX["DGX SuperPOD — reference"]
+      direction TB
+      D_F["Fabric: HGX NVSwitch<br/>(same mesh)"]
+      D_N["NIC: ConnectX-7 /<br/>BlueField-3 SuperNIC"]
+      D_D["DPU: BlueField-3"]
+      D_R["In-network reduce: SHARP<br/>on Quantum IB"]
+      D_O["Orchestration: Slurm /<br/>BCM / Run:ai"]
+    end
+    A_F --- D_F
+    A_N --- D_N
+    A_D --- D_D
+    A_R --- D_R
+    A_O --- D_O
+    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+    class A_F,A_N,A_D,A_R,A_O meas;
+    class D_F,D_N,D_D,D_R,D_O ctx;
+```
 
 | Dimension | A3 — observed here | DGX SuperPOD — reference |
 | :--- | :--- | :--- |

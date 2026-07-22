@@ -75,6 +75,17 @@ The benchmark has already been executed. Results are in `../../assets/lab-03/`.
 
 **Measured TFLOPs on H100 80GB HBM3:**
 
+*Figure: throughput rises then falls with matrix size — peak near 4096-8192, then a drop at 16384 (first bar FP16, second bar BF16).*
+
+```mermaid
+xychart-beta
+    title "H100 GEMM throughput vs matrix size (FP16 and BF16)"
+    x-axis "matrix size (N x N)" ["2048", "4096", "8192", "16384"]
+    y-axis "TFLOPs" 0 --> 800
+    bar [645.63, 740.24, 740.02, 651.06]
+    bar [631.46, 764.58, 764.25, 688.69]
+```
+
 | Matrix Size | FP16 TFLOPs | BF16 TFLOPs |
 |-------------|-------------|-------------|
 | 2048        | 645.63      | 631.46      |
@@ -98,6 +109,17 @@ The benchmark has already been executed. Results are in `../../assets/lab-03/`.
 ### Memory Bandwidth (H2D/D2H)
 
 **Measured on PCIe Gen4 x16:**
+
+*Figure: the striking ~14x asymmetry — H2D (first bar) plateaus near 27.6 GB/s while D2H (second bar) sits under 3 GB/s.*
+
+```mermaid
+xychart-beta
+    title "PCIe transfer asymmetry — H2D vs D2H (GB/s)"
+    x-axis "transfer size (MB)" ["1", "4", "16", "64", "256", "1024"]
+    y-axis "GB/s" 0 --> 30
+    bar [21.31, 25.63, 26.98, 27.43, 27.62, 27.66]
+    bar [2.97, 2.71, 2.71, 1.93, 1.94, 1.95]
+```
 
 | Size (MB) | H2D (GB/s) | D2H (GB/s) |
 |-----------|------------|------------|
