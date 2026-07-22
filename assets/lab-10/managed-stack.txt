@@ -1,0 +1,19 @@
+### managed GPU metrics DaemonSet (dcgm-exporter, GKE-managed)
+NAME            DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE   CONTAINERS      IMAGES                                                                                                                                                                            SELECTOR
+dcgm-exporter   2         2         2       2            2           <none>          8d    dcgm-exporter   us-central1-artifactregistry.gcr.io/gke-release/gke-release/nvidia/gke-dcgm-exporter:4.4.1-4.6.0-gke.17@sha256:039eeeb80e5404e0f926a71460e78f52d4caf6b1cf93de0714f2fe946b13169f   app.kubernetes.io/name=gke-managed-dcgm-exporter
+
+### dcgm-exporter pods (one per GPU node)
+NAME                  READY   STATUS    RESTARTS   AGE     IP           NODE                                                  NOMINATED NODE   READINESS GATES
+dcgm-exporter-jr6bv   1/1     Running   0          2d6h    10.36.1.2    gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m   <none>           <none>
+dcgm-exporter-rv72r   1/1     Running   0          2d23h   10.36.0.21   gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6   <none>           <none>
+
+### Google Managed Prometheus collectors + operator (gmp-system)
+NAME                            READY   STATUS    RESTARTS   AGE     IP           NODE                                                  NOMINATED NODE   READINESS GATES
+collector-g27pw                 2/2     Running   0          2d21h   10.36.2.3    gke-hypercomputer-a3-clu-default-pool-a02c882e-hzm1   <none>           <none>
+collector-ntzk2                 2/2     Running   0          5d10h   10.36.0.3    gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6   <none>           <none>
+collector-w68rx                 2/2     Running   0          2d6h    10.36.1.4    gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m   <none>           <none>
+gmp-operator-77d9684b78-rd6q9   1/1     Running   0          38h     10.36.2.23   gke-hypercomputer-a3-clu-default-pool-a02c882e-hzm1   <none>           <none>
+
+### GMP scrape config CRs (PodMonitoring/ClusterPodMonitoring)
+NAME                                                                       AGE
+clusterpodmonitoring.monitoring.googleapis.com/gke-managed-dcgm-exporter   8d

@@ -1,0 +1,38 @@
+# Fault (b) — NIC saturation steals inter-node collective bandwidth
+# Setup: two hostNetwork iperf3 probes, one per GPU node (hhp6 <-> hv7m), 0 GPU.
+# They share the SAME single 200 Gbit/s gVNIC that doc-05/06 showed carries ALL
+# inter-node NCCL traffic over plain TCP (no dedicated GPU-NIC / GPUDirect here).
+# A "victim" 8-stream flow stands in for a cross-node collective; a 32-stream
+# background load stands in for a bandwidth-hungry co-tenant (data loading,
+# checkpoint upload, logging, another job).
+#
+# NOTE ON SCOPE: a *live concurrent cross-node NCCL* run is not performed here
+# because the second GPU node (hv7m) is fully held by the DWS capacity holder
+# (see doc-07) and must never be disturbed. iperf3 over the identical gVNIC is the
+# faithful, GPU-free proxy for the shared-NIC contention; the collective figure it
+# maps onto is the measured cross-node busbw floor from lab-06.
+
+### victim flow ALONE (8 parallel TCP streams):
+[SUM]   0.00-8.00  sec   151 GBytes   162 Gbits/sec   sender
+[SUM]   0.00-8.00  sec   151 GBytes   162 Gbits/sec   receiver
+
+### background 32-stream load — pegs the gVNIC at its ceiling:
+[SUM]   0.00-25.00 sec   473 GBytes   163 Gbits/sec   sender   <- NIC saturated
+
+### the SAME victim flow, now DURING saturation:
+[SUM]   0.00-8.00  sec   21.5 GBytes  23.0 Gbits/sec  sender   <- ~7x collapse
+[SUM]   0.00-8.00  sec   21.4 GBytes  23.0 Gbits/sec  receiver
+
+# RESULT: 162 -> 23 Gbit/s, a ~7x drop, purely from a competing tenant on the same
+# NIC. There is no dedicated GPU fabric to protect the collective (contrast A3 Ultra
+# CX-7 RoCE or InfiniBand rails, which isolate GPU traffic), so on this A3-High node
+# ANY neighbor that saturates the gVNIC directly degrades cross-node NCCL busbw.
+#
+# DIAGNOSIS: a collective that is intermittently slow (busbw far below the lab-06
+# cross-node floor, varying run-to-run) with HEALTHY GPUs (DCGM util/clock/temp
+# normal, no XID) points at the NETWORK, not the GPU. Confirm by watching host NIC
+# throughput (node /proc/net/dev, VPC flow metrics) for saturation coincident with
+# the slow window, and check for co-located bandwidth-hungry pods. Fixes: isolate
+# collective traffic (dedicated GPU-NIC / GPUDirect-TCPX where the machine type
+# offers it), rate-limit or reschedule the noisy neighbor, or move to a machine
+# family with RDMA rails (A3 Ultra / A4) that separate GPU fabric from the host NIC.

@@ -1,0 +1,32 @@
+# Pod-DNS rendezvous via the JobSet headless service
+#
+# The standalone getent probe could not run: the 4-GPU all-reduce completed in
+# ~10s (image cached on the node), so every pod had already Succeeded before the
+# probe fired. The pod DNS is instead PROVEN by the successful c10d rendezvous —
+# all 4 ranks connected to the rank-0 pod via its stable DNS name and finished
+# the collective (see allreduce-result.txt, value=4.0 on every rank).
+#
+# JobSet creates a headless Service named after the JobSet and sets each pod's
+# subdomain to it, so every pod gets a STABLE DNS name independent of its random
+# pod suffix:
+#
+#   <jobset>-<replicatedJob>-<jobIndex>-<podIndex>.<jobset>.<ns>.svc.cluster.local
+#
+# For this run (jobset=nccl-jobset, replicatedJob=worker, 1 pod per job):
+#   nccl-jobset-worker-0-0.nccl-jobset   <- rank 0 / MASTER_ADDR
+#   nccl-jobset-worker-1-0.nccl-jobset   <- rank 1
+#   nccl-jobset-worker-2-0.nccl-jobset   <- rank 2
+#   nccl-jobset-worker-3-0.nccl-jobset   <- rank 3
+#
+# Every rank set MASTER_ADDR=nccl-jobset-worker-0-0.nccl-jobset and reached it:
+# cmd: bash -c echo\ \'###\ rank\ logs\ \(expect\ value=4.0\ across\ ranks\)\'\;\ for\ j\ in\ 0\ 1\ 2\ 3\;\ do\ echo\ \"--\ worker-\$j\ --\"\;\ kubectl\ logs\ job/nccl-jobset-worker-\$j\ 2\>/dev/null\ \|\ grep\ -E\ \'RANK\|all_reduce\|host=\'\ \|\ tail\ -3\ \|\|\ echo\ \'\(no\ log\)\'\;\ done
+host=nccl-jobset-worker-0-0 RANK=0 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 0/4 all_reduce done value=4.0 (expect 4.0)
+host=nccl-jobset-worker-1-0 RANK=1 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 1/4 all_reduce done value=4.0 (expect 4.0)
+host=nccl-jobset-worker-2-0 RANK=2 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 2/4 all_reduce done value=4.0 (expect 4.0)
+host=nccl-jobset-worker-3-0 RANK=3 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 3/4 all_reduce done value=4.0 (expect 4.0)
+### headless service that publishes these names:
+nccl-jobset clusterIP=None selector={"jobset.sigs.k8s.io/jobset-name":"nccl-jobset"}

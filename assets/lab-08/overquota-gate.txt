@@ -1,0 +1,6 @@
+# cmd: bash -c $'echo \'### over-quota JobSet: Kueue holds it (QuotaReserved=False), no pods created\'; kubectl get workloads -n default -o json | python3 -c \'import json,sys\nfor w in json.load(sys.stdin)["items"]:\n    if "overquota" in w["metadata"]["name"]:\n        conds=[(c["type"],c["status"],c.get("reason","")) for c in w.get("status",{}).get("conditions",[])]\n        print("  workload:", w["metadata"]["name"], "conds=", conds)\'; echo; echo \'### pods for over-quota jobset (expect NONE):\'; kubectl get pods -l jobset.sigs.k8s.io/jobset-name=nccl-jobset-overquota 2>&1 | tail -2'
+### over-quota JobSet: Kueue holds it (QuotaReserved=False), no pods created
+  workload: jobset-nccl-jobset-overquota-fc214 conds= [('QuotaReserved', 'False', 'Pending')]
+
+### pods for over-quota jobset (expect NONE):
+No resources found in default namespace.

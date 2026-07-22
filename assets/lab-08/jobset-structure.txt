@@ -1,0 +1,23 @@
+# cmd: bash -c echo\ \'###\ JobSet\'\;\ kubectl\ get\ jobset\ nccl-jobset\ -o\ wide\;\ echo\;\ echo\ \'###\ child\ Jobs\ \(one\ per\ replica\)\'\;\ kubectl\ get\ jobs\ -l\ jobset.sigs.k8s.io/jobset-name=nccl-jobset\ -o\ wide\ 2\>/dev/null\ \|\|\ kubectl\ get\ jobs\ \|\ grep\ nccl-jobset\;\ echo\;\ echo\ \'###\ headless\ Service\ \(provides\ pod\ DNS\)\'\;\ kubectl\ get\ svc\ nccl-jobset\ -o\ wide\;\ echo\;\ echo\ \'###\ pods\ -\>\ node\ placement\'\;\ kubectl\ get\ pods\ -l\ jobset.sigs.k8s.io/jobset-name=nccl-jobset\ -o\ wide
+### JobSet
+NAME          TERMINALSTATE   RESTARTS   COMPLETED   SUSPENDED   AGE
+nccl-jobset                   0                      false       11s
+
+### child Jobs (one per replica)
+NAME                   STATUS     COMPLETIONS   DURATION   AGE   CONTAINERS   IMAGES                             SELECTOR
+nccl-jobset-worker-0   Running    0/1           10s        10s   worker       nvcr.io/nvidia/pytorch:24.10-py3   batch.kubernetes.io/controller-uid=9fb90db2-8327-4854-9de6-4d334fa16041
+nccl-jobset-worker-1   Running    0/1           10s        10s   worker       nvcr.io/nvidia/pytorch:24.10-py3   batch.kubernetes.io/controller-uid=c375d25e-a30a-42fa-a803-2aa0a2913ac0
+nccl-jobset-worker-2   Complete   1/1           10s        10s   worker       nvcr.io/nvidia/pytorch:24.10-py3   batch.kubernetes.io/controller-uid=b79c0acf-6355-4989-95e2-cdd64844efe5
+nccl-jobset-worker-3   Running    0/1           10s        10s   worker       nvcr.io/nvidia/pytorch:24.10-py3   batch.kubernetes.io/controller-uid=e0c4bba8-da4a-4d14-a0a6-15ec5edbed38
+
+### headless Service (provides pod DNS)
+NAME          TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+nccl-jobset   ClusterIP   None         <none>        <none>    12s   jobset.sigs.k8s.io/jobset-name=nccl-jobset
+
+### pods -> node placement
+NAME                           READY   STATUS      RESTARTS   AGE   IP           NODE                                                  NOMINATED NODE   READINESS GATES
+nccl-jobset-worker-0-0-rjg9d   0/1     Completed   0          12s   10.36.0.39   gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6   <none>           <none>
+nccl-jobset-worker-1-0-kvbps   0/1     Completed   0          12s   10.36.0.38   gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6   <none>           <none>
+nccl-jobset-worker-2-0-6fszb   0/1     Completed   0          12s   10.36.0.37   gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6   <none>           <none>
+nccl-jobset-worker-3-0-dxkvs   0/1     Completed   0          12s   10.36.0.36   gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6   <none>           <none>
+jobset.jobset.x-k8s.io/nccl-jobset condition met

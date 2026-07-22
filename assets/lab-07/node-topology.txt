@@ -1,0 +1,35 @@
+# cmd: bash -c for\ n\ in\ gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6\ gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m\;\ do\ echo\ \"###\ \$n\ labels\"\;\ kubectl\ get\ node\ \$n\ -o\ json\ \|\ python3\ -c\ \'import\ json\,sys\;\ l=json.load\(sys.stdin\)\[\"metadata\"\]\[\"labels\"\]\;\ \[print\(\"\ \"\,k\,\"=\"\,v\)\ for\ k\,v\ in\ sorted\(l.items\(\)\)\ if\ any\(t\ in\ k\ for\ t\ in\ \[\"topology\"\,\"accelerator\"\,\"nodepool\"\,\"instance-type\"\,\"provisioning\"\]\)\]\'\;\ echo\ \"\ taints:\"\;\ kubectl\ get\ node\ \$n\ -o\ jsonpath=\'\{range\ .spec.taints\[\*\]\}\ \ \{.key\}=\{.value\}:\{.effect\}\{\"\\n\"\}\{end\}\'\;\ echo\;\ done
+### gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6 labels
+  autoscaling.gke.io/provisioning-request = gke-default-a3-h100-req-zone-a-d7f29c15106a6524
+  beta.kubernetes.io/instance-type = a3-highgpu-8g
+  cloud.google.com/gce-topology-block = b507111e53ee24d6bd15dd9720d58829
+  cloud.google.com/gce-topology-host = e29274bf6771ca7a88d8f95ffbf03331
+  cloud.google.com/gce-topology-subblock = 2cd87b066ececf8554f79cdc6e374a4c
+  cloud.google.com/gke-accelerator = nvidia-h100-80gb
+  cloud.google.com/gke-nodepool = a3-h100-dws-pool
+  cloud.google.com/gke-provisioning = standard
+  node.kubernetes.io/instance-type = a3-highgpu-8g
+  topology.gke.io/zone = us-central1-a
+  topology.kubernetes.io/region = us-central1
+  topology.kubernetes.io/zone = us-central1-a
+ taints:
+  nvidia.com/gpu=present:NoSchedule
+  cloud.google.com/gke-queued=true:NoSchedule
+
+### gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m labels
+  autoscaling.gke.io/provisioning-request = gke-default-a3-h100-req-zone-a2-5aeab073f450ac93
+  beta.kubernetes.io/instance-type = a3-highgpu-8g
+  cloud.google.com/gce-topology-block = d97ad0f3cdd5ab02d889f5cf5e31a25d
+  cloud.google.com/gce-topology-host = d28315b051c222b14ef1514dda7ef908
+  cloud.google.com/gce-topology-subblock = 915f03607bfcf9c91fdbd7f0007252b3
+  cloud.google.com/gke-accelerator = nvidia-h100-80gb
+  cloud.google.com/gke-nodepool = a3-h100-dws-pool
+  cloud.google.com/gke-provisioning = standard
+  node.kubernetes.io/instance-type = a3-highgpu-8g
+  topology.gke.io/zone = us-central1-a
+  topology.kubernetes.io/region = us-central1
+  topology.kubernetes.io/zone = us-central1-a
+ taints:
+  nvidia.com/gpu=present:NoSchedule
+  cloud.google.com/gke-queued=true:NoSchedule
+

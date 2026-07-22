@@ -1,0 +1,19 @@
+# cmd: bash -c echo\ \'###\ pods\ \(expect\ Pending\):\'\;\ kubectl\ get\ pods\ -l\ job-name=gang-pending-demo\ -o\ wide\;\ echo\;\ echo\ \'###\ scheduling\ events:\'\;\ kubectl\ get\ events\ --field-selector\ reason=FailedScheduling\ --sort-by=.lastTimestamp\ \|\ tail\ -5\;\ echo\;\ echo\ \'###\ describe\ \(one\ pod\):\'\;\ POD=\$\(kubectl\ get\ pods\ -l\ job-name=gang-pending-demo\ -o\ jsonpath=\'\{.items\[0\].metadata.name\}\'\)\;\ kubectl\ describe\ pod\ \$POD\ \|\ sed\ -n\ \'/Events:/\,\$p\'
+### pods (expect Pending):
+NAME                        READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+gang-pending-demo-0-l49j8   0/1     Pending   0          16s   <none>   <none>   <none>           <none>
+gang-pending-demo-1-cwllv   0/1     Pending   0          16s   <none>   <none>   <none>           <none>
+
+### scheduling events:
+LAST SEEN   TYPE      REASON             OBJECT                                  MESSAGE
+4m46s       Warning   FailedScheduling   pod/a3-holder-zone-b-6548bcb65-4rdbj    0/3 nodes are available: 3 node(s) didn't match Pod's node affinity/selector. no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
+4m16s       Warning   FailedScheduling   pod/a3-holder-zone-c-574d484d8d-2jhx7   0/3 nodes are available: 3 node(s) didn't match Pod's node affinity/selector. no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
+17s         Warning   FailedScheduling   pod/gang-pending-demo-0-l49j8           0/3 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 2 Insufficient nvidia.com/gpu. no new claims to deallocate, preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+17s         Warning   FailedScheduling   pod/gang-pending-demo-1-cwllv           0/3 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 2 Insufficient nvidia.com/gpu. no new claims to deallocate, preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+
+### describe (one pod):
+Events:
+  Type     Reason             Age   From                Message
+  ----     ------             ----  ----                -------
+  Warning  FailedScheduling   19s   default-scheduler   0/3 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 2 Insufficient nvidia.com/gpu. no new claims to deallocate, preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+  Normal   NotTriggerScaleUp  17s   cluster-autoscaler  Pod didn't trigger scale-up: 3 node(s) didn't match Pod's node affinity/selector

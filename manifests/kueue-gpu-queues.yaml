@@ -1,0 +1,37 @@
+# Kueue quota objects for lab-08. A single ResourceFlavor mapped to the A3 pool,
+# a ClusterQueue with a deliberately SMALL nvidia.com/gpu quota (4) so we can
+# show both admission (a job within quota) and gating (a job over quota), and a
+# namespaced LocalQueue that jobs reference via the kueue.x-k8s.io/queue-name label.
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ResourceFlavor
+metadata:
+  name: a3-h100
+spec:
+  nodeLabels:
+    cloud.google.com/gke-accelerator: nvidia-h100-80gb
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ClusterQueue
+metadata:
+  name: gpu-cq
+spec:
+  namespaceSelector: {}          # all namespaces may borrow
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: a3-h100
+      resources:
+      - name: "cpu"
+        nominalQuota: "64"
+      - name: "memory"
+        nominalQuota: "256Gi"
+      - name: "nvidia.com/gpu"
+        nominalQuota: "4"        # small on purpose: 4 GPUs of the free 6 on hhp6
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: gpu-lq
+  namespace: default
+spec:
+  clusterQueue: gpu-cq

@@ -1,0 +1,30 @@
+# cmd: bash -c echo\ \'###\ NICs\ on\ gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6\ \(hostNetwork\;\ via\ /sys/class/net\ +\ /proc/net/dev\)\'\;\ echo\ \'---\ interfaces\ ---\'\;\ kubectl\ exec\ net-probe-0\ --\ ls\ -1\ /sys/class/net\;\ echo\;\ echo\ \'---\ speed\ \(Mbit/s\)\ \&\ MTU\ per\ iface\ ---\'\;\ kubectl\ exec\ net-probe-0\ --\ sh\ -c\ \'for\ i\ in\ \$\(ls\ /sys/class/net\)\;\ do\ spd=\$\(cat\ /sys/class/net/\$i/speed\ 2\>/dev/null\ \|\|\ echo\ NA\)\;\ mtu=\$\(cat\ /sys/class/net/\$i/mtu\ 2\>/dev/null\ \|\|\ echo\ NA\)\;\ typ=\$\(cat\ /sys/class/net/\$i/device/uevent\ 2\>/dev/null\ \|\ grep\ -i\ driver\ \|\|\ echo\ driver=NA\)\;\ echo\ \"\$i\ speed=\$\{spd\}\ mtu=\$\{mtu\}\ \$typ\"\;\ done\'\;\ echo\;\ echo\ \'---\ /proc/net/dev\ ---\'\;\ kubectl\ exec\ net-probe-0\ --\ cat\ /proc/net/dev
+### NICs on gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6 (hostNetwork; via /sys/class/net + /proc/net/dev)
+--- interfaces ---
+docker0
+eth0
+gke7ead1e36a16
+gke860e357b7c9
+gke9aaeebfbec1
+gkeb6f151ea7b4
+lo
+
+--- speed (Mbit/s) & MTU per iface ---
+docker0 speed=-1 mtu=1460 driver=NA
+eth0 speed=200000 mtu=1460 DRIVER=gve
+gke7ead1e36a16 speed=10000 mtu=1460 driver=NA
+gke860e357b7c9 speed=10000 mtu=1460 driver=NA
+gke9aaeebfbec1 speed=10000 mtu=1460 driver=NA
+gkeb6f151ea7b4 speed=10000 mtu=1460 driver=NA
+lo speed=NA mtu=65536 driver=NA
+
+--- /proc/net/dev ---
+Inter-|   Receive                                                |  Transmit
+ face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+    lo: 2793413970 4913633    0    0    0     0          0         0 2793413970 4913633    0    0    0     0       0          0
+  eth0: 872634216698 614904714    0    0    0     0          0         0 503415645746 35221127    0    0    0     0       0          0
+docker0:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0
+gkeb6f151ea7b4: 20116701058 2703838    0    0    0     0          0         0 2783690734 4556623    0    0    0     0       0          0
+gke860e357b7c9: 187640074 1377623    0    0    0     0          0         0 3072511676 1015309    0    0    0     0       0          0
+gke9aaeebfbec1: 394490252   98378    0    0    0     0          0         0  7889773   82260    0    0    0     0       0          0
+gke7ead1e36a16: 1045962   10531    0    0    0     0          0         0  1336566   14798    0    0    0     0       0          0

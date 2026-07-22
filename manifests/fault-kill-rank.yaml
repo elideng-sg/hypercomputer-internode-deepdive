@@ -1,0 +1,52 @@
+# lab-10 fault (a): a 4-rank looping NCCL all-reduce used to demonstrate the
+# collective-hang / watchdog-timeout signature when one rank dies mid-job.
+# 4 workers x 1 GPU = 4 of hhp6's free GPUs; the DWS-held node is never touched.
+# The runner kills one pod ~30s in; the survivors block in all_reduce and, after
+# the process-group timeout (90s), NCCL's watchdog aborts them with a clear signature.
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: fault-kill-rank
+  namespace: default
+spec:
+  replicatedJobs:
+  - name: worker
+    replicas: 4
+    template:
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 0
+        template:
+          spec:
+            restartPolicy: Never
+            nodeSelector:
+              cloud.google.com/gke-nodepool: a3-h100-dws-pool
+            tolerations:
+            - key: nvidia.com/gpu
+              operator: Exists
+              effect: NoSchedule
+            - key: cloud.google.com/gke-queued
+              operator: Exists
+              effect: NoSchedule
+            containers:
+            - name: worker
+              image: nvcr.io/nvidia/pytorch:24.10-py3
+              env:
+              - name: NCCL_DEBUG
+                value: "INFO"
+              command:
+              - bash
+              - -lc
+              - |
+                set -e
+                export MASTER_ADDR="fault-kill-rank-worker-0-0.fault-kill-rank"
+                export MASTER_PORT=29500
+                export WORLD_SIZE=4
+                export RANK=$(hostname | sed -E 's/.*worker-([0-9]+)-[0-9]+$/\1/')
+                echo "host=$(hostname) RANK=${RANK}"
+                for i in $(seq 1 90); do getent hosts "$MASTER_ADDR" && break; sleep 2; done
+                python -c "import torch,torch.distributed as dist,datetime,time; dist.init_process_group('nccl',timeout=datetime.timedelta(seconds=90)); r=dist.get_rank(); torch.cuda.set_device(0); t=torch.ones(268435456,device='cuda'); [ (dist.all_reduce(t), torch.cuda.synchronize(), print(f'rank {r} iter {k} ok value={t[0].item():.0f}',flush=True), t.fill_(1.0), time.sleep(3)) for k in range(200) ]"
+              resources:
+                limits:
+                  nvidia.com/gpu: 1

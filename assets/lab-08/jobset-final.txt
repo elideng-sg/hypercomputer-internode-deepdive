@@ -1,0 +1,3 @@
+# cmd: bash -c kubectl\ get\ jobset\ nccl-jobset\ -o\ json\ \|\ python3\ -c\ \'import\ json\,sys\;\ w=json.load\(sys.stdin\)\;\ print\(\"conditions:\"\,\ \[\(c\[\"type\"\]\,c\[\"status\"\]\)\ for\ c\ in\ w.get\(\"status\"\,\{\}\).get\(\"conditions\"\,\[\]\)\]\)\;\ print\(\"replicatedJobsStatus:\"\,\ w.get\(\"status\"\,\{\}\).get\(\"replicatedJobsStatus\"\)\)\'
+conditions: [('Completed', 'True')]
+replicatedJobsStatus: [{'active': 0, 'failed': 0, 'name': 'worker', 'ready': 0, 'succeeded': 4, 'suspended': 0}]

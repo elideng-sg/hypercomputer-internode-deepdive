@@ -1,0 +1,23 @@
+# cmd: bash -c for\ n\ in\ gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6\ gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m\;\ do\ echo\ \"###\ \$n\"\;\ kubectl\ describe\ node\ \$n\ \|\ sed\ -n\ \'/Allocatable/\,/System\ Info/p\'\;\ echo\;\ done
+### gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hhp6
+Allocatable:
+  cpu:                207410m
+  ephemeral-storage:  5642136341201
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             1885812064Ki
+  nvidia.com/gpu:     8
+  pods:               110
+System Info:
+
+### gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m
+Allocatable:
+  cpu:                207410m
+  ephemeral-storage:  5642136341201
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             1885812064Ki
+  nvidia.com/gpu:     8
+  pods:               110
+System Info:
+

@@ -1,0 +1,7 @@
+# cmd: bash -c kubectl\ get\ pods\ -o\ wide\ \|\ awk\ \'NR==1\ \|\|\ /holder/\'\;\ echo\;\ echo\ \'###\ interpretation:\ a2=Running\ holds\ one\ node\;\ b/c=Pending\ wait\ on\ req-zone-b/c\ \(Provisioned=False\)\'
+NAME                                                                      READY   STATUS      RESTARTS   AGE     IP            NODE                                                  NOMINATED NODE   READINESS GATES
+a3-holder-zone-a2-54ff6c9d44-6hcfn                                        1/1     Running     0          147m    10.36.1.7     gke-hypercomputer-a3-a3-h100-dws-pool-16664d9c-hv7m   <none>           <none>
+a3-holder-zone-b-6548bcb65-4rdbj                                          0/1     Pending     0          5d17h   <none>        <none>                                                <none>           <none>
+a3-holder-zone-c-574d484d8d-2jhx7                                         0/1     Pending     0          5d17h   <none>        <none>                                                <none>           <none>
+
+### interpretation: a2=Running holds one node; b/c=Pending wait on req-zone-b/c (Provisioned=False)

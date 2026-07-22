@@ -1,0 +1,39 @@
+# lab-08 gating demo: a JobSet that requests 8 GPUs, exceeding the ClusterQueue
+# nominalQuota of 4. Kueue holds its Workload as NOT admitted (Suspended) and
+# NO pods are ever created — admission gating happens before scheduling. Used
+# only to capture the QuotaReserved=false state, then deleted.
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: nccl-jobset-overquota
+  namespace: default
+  labels:
+    kueue.x-k8s.io/queue-name: gpu-lq
+spec:
+  replicatedJobs:
+  - name: worker
+    replicas: 8
+    template:
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 0
+        template:
+          spec:
+            restartPolicy: Never
+            nodeSelector:
+              cloud.google.com/gke-nodepool: a3-h100-dws-pool
+            tolerations:
+            - key: nvidia.com/gpu
+              operator: Exists
+              effect: NoSchedule
+            - key: cloud.google.com/gke-queued
+              operator: Exists
+              effect: NoSchedule
+            containers:
+            - name: worker
+              image: nvcr.io/nvidia/pytorch:24.10-py3
+              command: ["bash", "-lc", "echo should-never-run; sleep 30"]
+              resources:
+                limits:
+                  nvidia.com/gpu: 1

@@ -1,0 +1,28 @@
+### ClusterPodMonitoring that wires dcgm-exporter -> Google Managed Prometheus
+apiVersion: monitoring.googleapis.com/v1
+kind: ClusterPodMonitoring
+metadata:
+  annotations:
+    components.gke.io/component-name: gpu-dcgm
+    components.gke.io/component-version: 1.34.1-gke.2
+    components.gke.io/layer: addon
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app.kubernetes.io/name: gke-managed-dcgm-exporter
+  name: gke-managed-dcgm-exporter
+spec:
+  endpoints:
+  - interval: 30s
+    port: metrics
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gke-managed-dcgm-exporter
+  targetLabels:
+    metadata: []
+status:
+  conditions:
+  - lastTransitionTime: "2026-07-14T03:32:47Z"
+    lastUpdateTime: "2026-07-14T03:32:47Z"
+    status: "True"
+    type: ConfigurationCreateSuccess
+  observedGeneration: 1

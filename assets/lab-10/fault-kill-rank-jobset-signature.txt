@@ -1,0 +1,30 @@
+# Fault (a), signature #1 — JobSet fail-fast blast radius
+# A 4-rank looping all-reduce (fault-kill-rank JobSet) ran cleanly for ~40 healthy
+# iterations (rank 0: "iter N ok value=4"), then rank 3's pod was force-deleted at
+# 08:47:25Z. 3 seconds later the JobSet controller reacted:
+
+### kubectl get jobs -l jobset...=fault-kill-rank
+job.batch/fault-kill-rank-worker-3   Failed   0/1
+
+### kubectl get jobset fault-kill-rank -o jsonpath='{.status}'
+conditions:
+  - type: Failed  status: True
+    reason:  FailedJobs
+    message: "jobset failed due to one or more job failures (first failed job: fault-kill-rank-worker-3)"
+    lastTransitionTime: 2026-07-22T08:47:28Z
+replicatedJobsStatus: [{name: worker, active: 0, failed: 1, ready: 0, succeeded: 0}]
+restarts: 0
+terminalState: Failed
+
+### event
+Warning  FailedJobs  jobset/fault-kill-rank
+  jobset failed due to one or more job failures (first failed job: fault-kill-rank-worker-3)
+
+# LESSON: under JobSet's DEFAULT failurePolicy, the death of ONE rank fails the
+# ENTIRE gang immediately (terminalState=Failed, restarts=0) and the surviving
+# ranks are torn down within seconds. The blast radius of a single-rank failure is
+# the whole job. To make a job resilient you must set spec.failurePolicy
+# (maxRestarts > 0, optionally restartStrategy: BlockingRecreate) so JobSet
+# recreates the whole gang rather than just failing. Because the survivors are
+# reaped this fast, you rarely see the NCCL-internal timeout here — signature #2
+# (below) shows that hang by removing the gang controller.
