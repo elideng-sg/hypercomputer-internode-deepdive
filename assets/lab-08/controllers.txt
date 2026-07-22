@@ -1,0 +1,13 @@
+# cmd: bash -c echo\ \'###\ JobSet\ +\ Kueue\ controllers\'\;\ kubectl\ get\ deploy\ -n\ jobset-system\ jobset-controller-manager\ -o\ wide\;\ kubectl\ get\ deploy\ -n\ kueue-system\ kueue-controller-manager\ -o\ wide\;\ echo\;\ echo\ \'###\ CRDs\'\;\ kubectl\ get\ crd\ \|\ grep\ -iE\ \'jobsets.jobset\|clusterqueues.kueue\|localqueues.kueue\|workloads.kueue\|resourceflavors.kueue\'
+### JobSet + Kueue controllers
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                  SELECTOR
+jobset-controller-manager   1/1     1            1           19m   manager      registry.k8s.io/jobset/jobset:v0.12.0   app.kubernetes.io/instance=jobset,app.kubernetes.io/managed-by=kustomize,app.kubernetes.io/name=jobset,control-plane=controller-manager
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                SELECTOR
+kueue-controller-manager   1/1     1            1           19m   manager      registry.k8s.io/kueue/kueue:v0.18.3   control-plane=controller-manager
+
+### CRDs
+clusterqueues.kueue.x-k8s.io                           2026-07-22T07:45:38Z
+jobsets.jobset.x-k8s.io                                2026-07-22T07:45:25Z
+localqueues.kueue.x-k8s.io                             2026-07-22T07:45:38Z
+resourceflavors.kueue.x-k8s.io                         2026-07-22T07:45:40Z
+workloads.kueue.x-k8s.io                               2026-07-22T07:45:42Z

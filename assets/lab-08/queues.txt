@@ -1,0 +1,66 @@
+# cmd: bash -c echo\ \'###\ ClusterQueue\ \(nominal\ vs\ used\)\ +\ LocalQueue\'\;\ kubectl\ get\ clusterqueue\ gpu-cq\ -o\ wide\;\ kubectl\ get\ localqueue\ gpu-lq\ -n\ default\ -o\ wide\;\ echo\;\ kubectl\ get\ clusterqueue\ gpu-cq\ -o\ jsonpath=\'\{.status\}\'\ \|\ python3\ -m\ json.tool\ 2\>/dev/null\ \|\|\ true
+### ClusterQueue (nominal vs used) + LocalQueue
+NAME     COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+gpu-cq            BestEffortFIFO   0                   0
+NAME     CLUSTERQUEUE   PENDING WORKLOADS   ADMITTED WORKLOADS
+gpu-lq   gpu-cq         0                   0
+
+{
+    "admittedWorkloads": 0,
+    "conditions": [
+        {
+            "lastTransitionTime": "2026-07-22T08:05:17Z",
+            "message": "Can admit new workloads",
+            "observedGeneration": 1,
+            "reason": "Ready",
+            "status": "True",
+            "type": "Active"
+        }
+    ],
+    "flavorsReservation": [
+        {
+            "name": "a3-h100",
+            "resources": [
+                {
+                    "borrowed": "0",
+                    "name": "cpu",
+                    "total": "0"
+                },
+                {
+                    "borrowed": "0",
+                    "name": "memory",
+                    "total": "0"
+                },
+                {
+                    "borrowed": "0",
+                    "name": "nvidia.com/gpu",
+                    "total": "0"
+                }
+            ]
+        }
+    ],
+    "flavorsUsage": [
+        {
+            "name": "a3-h100",
+            "resources": [
+                {
+                    "borrowed": "0",
+                    "name": "cpu",
+                    "total": "0"
+                },
+                {
+                    "borrowed": "0",
+                    "name": "memory",
+                    "total": "0"
+                },
+                {
+                    "borrowed": "0",
+                    "name": "nvidia.com/gpu",
+                    "total": "0"
+                }
+            ]
+        }
+    ],
+    "pendingWorkloads": 0,
+    "reservingWorkloads": 0
+}

@@ -1,0 +1,14 @@
+# cmd: bash -c echo\ \'###\ rank\ logs\ \(expect\ value=4.0\ across\ ranks\)\'\;\ for\ j\ in\ 0\ 1\ 2\ 3\;\ do\ echo\ \"--\ worker-\$j\ --\"\;\ kubectl\ logs\ job/nccl-jobset-worker-\$j\ 2\>/dev/null\ \|\ grep\ -E\ \'RANK\|all_reduce\|host=\'\ \|\ tail\ -3\ \|\|\ echo\ \'\(no\ log\)\'\;\ done
+### rank logs (expect value=4.0 across ranks)
+-- worker-0 --
+host=nccl-jobset-worker-0-0 RANK=0 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 0/4 all_reduce done value=4.0 (expect 4.0)
+-- worker-1 --
+host=nccl-jobset-worker-1-0 RANK=1 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 1/4 all_reduce done value=4.0 (expect 4.0)
+-- worker-2 --
+host=nccl-jobset-worker-2-0 RANK=2 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 2/4 all_reduce done value=4.0 (expect 4.0)
+-- worker-3 --
+host=nccl-jobset-worker-3-0 RANK=3 MASTER=nccl-jobset-worker-0-0.nccl-jobset
+RANK 3/4 all_reduce done value=4.0 (expect 4.0)

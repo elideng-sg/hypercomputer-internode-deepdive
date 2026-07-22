@@ -1,0 +1,6 @@
+# cmd: bash -c $'echo \'### Kueue Workload for the JobSet (expect Admitted / QuotaReserved=True)\'; kubectl get workloads -n default -o wide; echo; kubectl get workloads -n default -o json | python3 -c \'import json,sys\nfor w in json.load(sys.stdin)["items"]:\n    n=w["metadata"]["name"]; conds=[(c["type"],c["status"]) for c in w.get("status",{}).get("conditions",[])]\n    adm=w.get("status",{}).get("admission",{}).get("clusterQueue","-")\n    print(f"  {n}: cq={adm} conds={conds}")\''
+### Kueue Workload for the JobSet (expect Admitted / QuotaReserved=True)
+NAME                       QUEUE    RESERVED IN   ADMITTED   FINISHED   AGE
+jobset-nccl-jobset-b8196   gpu-lq   gpu-cq        True                  8s
+
+  jobset-nccl-jobset-b8196: cq=gpu-cq conds=[('QuotaReserved', 'True'), ('Admitted', 'True')]
