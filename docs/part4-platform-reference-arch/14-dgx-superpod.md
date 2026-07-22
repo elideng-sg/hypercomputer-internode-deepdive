@@ -52,7 +52,7 @@ Key properties of the compute fabric:
 - **Rail-optimized topology** (forward link: `./13-spectrum-x-and-fabrics.md`): each GPU NIC or GPU-attached network link connects to a **dedicated rail** (a non-overlapping tree of switches). A DGX H100 has 8 GPUs and 8 network ports (one per GPU); each port connects to a different rail. This design ensures that all-to-all NCCL collectives distribute traffic evenly across rails, maximizing bisection bandwidth and avoiding single-rail congestion. The rail-optimized model is the **key differentiator** of InfiniBand and Spectrum-X fabrics for AI workloads.
 - **In-network computing** (InfiniBand SHARP): Quantum InfiniBand switches support **SHARP (Scalable Hierarchical Aggregation and Reduction Protocol)**, an in-network aggregation engine that offloads all-reduce operations to the switch fabric. Instead of GPUs sending data to a root node for reduction and broadcasting the result, the switches perform the reduction **in flight**, cutting the effective latency and freeing GPU/CPU cycles. SHARP is **not available on Spectrum-X or GCP TCPX/RoCE**; it is unique to InfiniBand.
 
-**Contrast with GCP A3:** The GCP compute fabric for A3 High/Mega uses **GPUDirect-TCPX** (a GCP-proprietary NCCL plugin that offloads GPU memory DMA to the **Titanium** network offload ASIC; discussed in Part II). TCPX achieves low latency (~10 µs one-way for small messages) and high bandwidth (~190 GB/s measured aggregate on 2-node NCCL tests; see `VERIFICATION.md`), but it is **not rail-optimized** in the tenant-visible sense — the gVNIC appears as a single 200 Gbps pipe, and traffic striping across multiple rails (if present in the underlay) is handled by Titanium and the Jupiter fabric controller, not by NCCL topology hints. A3 Ultra/A4 (with ConnectX-7 RoCE) is **closer to the SuperPOD model** — the NIC exposes multiple RDMA-capable virtual functions (VFs), and NCCL can stripe traffic across them — but the fabric is still Google-managed, not tenant-configured.
+**Contrast with GCP A3:** The GCP compute fabric for A3 High/Mega uses **GPUDirect-TCPX** (a GCP-proprietary NCCL plugin that offloads GPU memory DMA to the **Titanium** network offload ASIC; discussed in Part II). TCPX is designed for low latency and high aggregate bandwidth on the multi-NIC A3 GPU network, but it is **not rail-optimized** in the tenant-visible sense — the gVNIC appears as a single 200 Gbps pipe, and traffic striping across multiple rails (if present in the underlay) is handled by Titanium and the Jupiter fabric controller, not by NCCL topology hints. A3 Ultra/A4 (with ConnectX-7 RoCE) is **closer to the SuperPOD model** — the NIC exposes multiple RDMA-capable virtual functions (VFs), and NCCL can stripe traffic across them — but the fabric is still Google-managed, not tenant-configured.
 
 ### 2. Storage Fabric (High-Throughput to Parallel Filesystem)
 
@@ -210,7 +210,7 @@ Run **fabric bandwidth tests** (`perftest` suite: `ib_write_bw`, `ib_send_bw`, e
 - No packet loss or retransmits (lossless fabric).
 - Latency is within spec (e.g., <2 µs for small InfiniBand messages).
 
-**Contrast with GCP A3:** GCP does **not provide acceptance test results** to individual tenants (you cannot request "show me the HPL score for my 2-node A3 cluster"). However, GCP publishes **aggregate MLPerf results** for its A3 and A4 clusters (under the "Google" submitter; see MLPerf Training v4.0 results for A3 Mega ResNet-50 and GPT-3 scores). Tenants can run **their own validation** (NCCL-tests, DCGM diagnostics, custom benchmarks) on their GKE clusters to verify that performance matches expectations. See `VERIFICATION.md` in this repo for the acceptance-style tests we ran on the 2-node A3 cluster (NCCL bandwidth, single-GPU GEMM, multi-GPU all-reduce, DCGM health checks).
+**Contrast with GCP A3:** GCP does **not provide acceptance test results** to individual tenants (you cannot request "show me the HPL score for my 2-node A3 cluster"). However, GCP publishes **aggregate MLPerf results** for its A3 and A4 clusters (under the "Google" submitter; see MLPerf Training v4.0 results for A3 Mega ResNet-50 and GPT-3 scores). Tenants can run **their own validation** (NCCL-tests, DCGM diagnostics, custom benchmarks) on their GKE clusters to verify that performance matches expectations. See `VERIFICATION.md` in this repo for the acceptance-style tests recorded so far on the A3 cluster (single-GPU arch inspection, driver/CUDA + DCGM health, single-GPU GEMM and profiling); the multi-GPU and 2-node NCCL sweeps are added to that log as they run.
 
 ---
 
@@ -256,7 +256,7 @@ For related architecture docs:
 
 - **[`./11-dgx-hgx-systems.md`](./11-dgx-hgx-systems.md)** — DGX H100/H200 system architecture, HGX baseboard, NVSM, Fabric Manager (if this doc exists).
 - **[`./13-spectrum-x-and-fabrics.md`](./13-spectrum-x-and-fabrics.md)** — Spectrum-X Ethernet vs Quantum InfiniBand, rail-optimized topology, SHARP, RoCE (if this doc exists).
-- **[`./12-bluefield-dpu.md`](./12-bluefield-dpu.md)** — BlueField DPU architecture, DOCA, offload capabilities (if this doc exists).
+- **[`./12-bluefield-dpu-doca.md`](./12-bluefield-dpu-doca.md)** — BlueField DPU architecture, DOCA, offload capabilities.
 
 ---
 
