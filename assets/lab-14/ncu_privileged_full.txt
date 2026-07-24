@@ -1,0 +1,18 @@
+==PROF== Connected to process 798 (/usr/bin/python3.10)
+==WARNING== Unable to access the following 6 metrics: ctc__rx_bytes_data_user.sum, ctc__rx_bytes_data_user.sum.pct_of_peak_sustained_elapsed, ctc__rx_bytes_data_user.sum.per_second, ctc__tx_bytes_data_user.sum, ctc__tx_bytes_data_user.sum.pct_of_peak_sustained_elapsed, ctc__tx_bytes_data_user.sum.per_second.
+
+==PROF== Profiling "nvjet_hsh_256x128_64x4_1x2_h_..." - 0 (1/3): 0%....50%....100% - 37 passes
+==PROF== Profiling "nvjet_hsh_256x128_64x4_1x2_h_..." - 1 (2/3): 0%....50%....100% - 37 passes
+==PROF== Profiling "nvjet_hsh_256x128_64x4_1x2_h_..." - 2 (3/3): 0%....50%....100% - 37 passes
+dtype,size,tflops
+fp16,2048,0.05
+fp16,4096,744.76
+fp16,8192,751.78
+fp16,16384,704.07
+bf16,2048,381.61
+bf16,4096,774.05
+bf16,8192,776.46
+bf16,16384,736.88
+# FP8 not supported, skipping
+==PROF== Disconnected from process 798
+==PROF== Report: /workspace/gemm_ncu.ncu-rep

@@ -1,0 +1,3 @@
+# cmd: dcgmi diag -r 3   (DCGM image nvcr.io/nvidia/cloud-native/dcgm:4.4.0-1-ubuntu22.04, 1 GPU on gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn)
+Error: Unable to complete diagnostic for entities *,cpu:*. Return: (-30) : DCGM GPU Diagnostic returned an error
+Error: Cannot load plugins. Unable to change to the plugin dir '/usr/libexec/datacenter-gpu-manager-4/plugins/cuda13/': 'No such file or directory'

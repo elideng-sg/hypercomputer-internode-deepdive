@@ -1,0 +1,50 @@
+        Idle                                           : Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        SW Power Capping                               : 216559430 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        Pending                                        : Enabled
+            SRAM Correctable                           : 0
+            SRAM Uncorrectable Parity                  : 0
+            SRAM Uncorrectable SEC-DED                 : 0
+            DRAM Correctable                           : 0
+            DRAM Uncorrectable                         : 0
+            SRAM Correctable                           : 0
+            SRAM Uncorrectable Parity                  : 0
+            SRAM Uncorrectable SEC-DED                 : 0
+            DRAM Correctable                           : 0
+            DRAM Uncorrectable                         : 0
+        Aggregate Uncorrectable SRAM Sources
+            SRAM SM                                    : 0
+        Channel Repair Pending                         : No
+        TPC Repair Pending                             : No
+    Remapped Rows
+        Correctable Error                              : 0
+        Uncorrectable Error                            : 0
+        Pending                                        : No
+        Remapping Failure Occurred                     : No
+        GPU Current Temp                               : 36 C
+        Average Power Draw                             : 72.12 W
+        Instantaneous Power Draw                       : 72.23 W
+        Current Power Limit                            : 700.00 W
+        Average Power Draw                             : 37.01 W
+        Instantaneous Power Draw                       : N/A
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Graphics                                       : 345 MHz
+        SM                                             : 345 MHz
+    Applications Clocks
+        Graphics                                       : 1980 MHz
+    Default Applications Clocks
+        Graphics                                       : 1980 MHz
+        Graphics                                       : 1980 MHz
+        SM                                             : 1980 MHz
+        Graphics                                       : 1980 MHz
+    SM Clock Samples

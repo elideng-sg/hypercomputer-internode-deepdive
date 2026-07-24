@@ -1,0 +1,69 @@
+# ARRIVE rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn local=0 world=24 08:33:11.447
+# STRAGGLER rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn sleeping 70s before all_reduce 08:33:15.014
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn:1509:2162 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m.c.hdlab-elideng.internal<50366>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn:1509:2162 [0] transport/net_socket.cc:217 NCCL WARN NET/Socket : socket progress error
+[rank16]:[E724 08:34:25.962612472 ProcessGroupNCCL.cpp:542] [Rank 16] Collective WorkNCCL(SeqNum=3, OpType=ALLREDUCE, NumelIn=67108864, NumelOut=67108864, Timeout(ms)=45000) raised the following async exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+Last error:
+NET/Socket : socket progress error
+Exception raised from checkForNCCLErrorsInternal at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2037 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7efed4bb30a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7efed5d6708e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x262 (0x7efed5d7c772 in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7b (0x7efed5d7c8eb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x22b (0x7efed5d862fb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7efed5d87d7d in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xdc253 (0x7efed46b0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x94ac3 (0x7eff34221ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7eff342b3850 in /lib/x86_64-linux-gnu/libc.so.6)
+
+[rank16]:[E724 08:34:25.964297542 ProcessGroupNCCL.cpp:1795] [PG ID 0 PG GUID 0(default_pg) Rank 16] Exception (either an error or timeout) detected by watchdog at work: 3, last enqueued NCCL work: 3, last completed NCCL work: 2.
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn:1509:2075 [0] proxy.cc:1458 NCCL WARN [Service thread] Accept failed Resource temporarily unavailable
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn:1509:2075 [0] proxy.cc:1497 NCCL WARN [Service thread] Could not receive type from localRank 0, res=3, closed=0
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn:1509:2075 [0] proxy.cc:1521 NCCL WARN [Proxy Service 16] Failed to execute operation Close from rank 16, retcode 3
+[rank16]:[E724 08:34:26.407935832 ProcessGroupNCCL.cpp:630] [Rank 16] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[rank16]:[E724 08:34:26.407966711 ProcessGroupNCCL.cpp:636] [Rank 16] To avoid data inconsistency, we are taking the entire process down.
+[rank16]:[E724 08:34:26.408039965 ProcessGroupNCCL.cpp:1605] [PG ID 0 PG GUID 0(default_pg) Rank 16] Process group watchdog thread terminated with exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+Last error:
+NET/Socket : socket progress error
+Exception raised from checkForNCCLErrorsInternal at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2037 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7efed4bb30a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7efed5d6708e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x262 (0x7efed5d7c772 in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7b (0x7efed5d7c8eb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x22b (0x7efed5d862fb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7efed5d87d7d in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xdc253 (0x7efed46b0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x94ac3 (0x7eff34221ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7eff342b3850 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 16] Process group watchdog thread terminated with exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+Last error:
+NET/Socket : socket progress error
+Exception raised from checkForNCCLErrorsInternal at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2037 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7efed4bb30a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7efed5d6708e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x262 (0x7efed5d7c772 in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7b (0x7efed5d7c8eb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x22b (0x7efed5d862fb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7efed5d87d7d in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xdc253 (0x7efed46b0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x94ac3 (0x7eff34221ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7eff342b3850 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:1611 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7efed4bb30a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7efed5d6708e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0xdd23be (0x7efed59f63be in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: <unknown function> + 0xdc253 (0x7efed46b0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #4: <unknown function> + 0x94ac3 (0x7eff34221ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #5: <unknown function> + 0x126850 (0x7eff342b3850 in /lib/x86_64-linux-gnu/libc.so.6)
+

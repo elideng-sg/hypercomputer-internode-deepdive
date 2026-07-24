@@ -1,0 +1,21 @@
+# ARRIVE rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 local=0 world=24 08:32:47.710
+# comms_bench world=24 iters=5 nbytes=67108864 pg_timeout=45s 08:32:54.717
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7:936:936 [0] NCCL INFO NCCL_SOCKET_IFNAME set to nonexistent0
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7:936:936 [0] bootstrap.cc:48 NCCL WARN Bootstrap : no socket interface found
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7:936:936 [0] NCCL INFO init.cc:82 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7:936:936 [0] NCCL INFO init.cc:102 -> 3
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/comms_bench.py", line 100, in <module>
+[rank0]:     main()
+[rank0]:   File "/workspace/comms_bench.py", line 68, in main
+[rank0]:     dist.all_reduce(buf)
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+[rank0]:     return func(*args, **kwargs)
+[rank0]:   File "/usr/local/lib/python3.10/dist-packages/torch/distributed/distributed_c10d.py", line 2503, in all_reduce
+[rank0]:     work = group.allreduce([tensor], opts)
+[rank0]: torch.distributed.DistBackendError: NCCL error in: /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2261, internal error - please report this issue to the NCCL developers, NCCL version 2.22.3
+[rank0]: ncclInternalError: Internal check failed.
+[rank0]: Last error:
+[rank0]: Bootstrap : no socket interface found
+[rank0]:[W724 08:32:55.957111069 ProcessGroupNCCL.cpp:1262] Warning: WARNING: process group has NOT been destroyed before we destruct ProcessGroupNCCL. On normal program exit, the application should call destroy_process_group to ensure that any pending NCCL operations have finished in this process. In rare cases this process can exit before this point and block the progress of another member of the process group. This constraint has always been present,  but this warning has only been added since PyTorch 2.4 (function operator())
