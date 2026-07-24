@@ -1,0 +1,22 @@
+# --- proof: no ERR_NVGPUCTRPERM, and a real metrics page ---
+    SM Frequency                    Ghz         1.36
+    Memory Throughput                 %        57.21
+    DRAM Throughput                   %        16.34
+    Duration                         us        31.68
+    Compute (SM) Throughput           %        73.44
+    Memory Throughput               Gbyte/s       546.70
+    Achieved Occupancy                        %        14.14
+    SM Frequency                    Ghz         1.36
+    Memory Throughput                 %        57.19
+    DRAM Throughput                   %        16.40
+    Duration                         us        31.62
+    Compute (SM) Throughput           %        73.42
+    Memory Throughput               Gbyte/s       549.30
+    Achieved Occupancy                        %        14.15
+    SM Frequency                    Ghz         1.36
+    Memory Throughput                 %        57.16
+    DRAM Throughput                   %        16.27
+    Duration                         us        31.68
+    Compute (SM) Throughput           %        73.38
+    Memory Throughput               Gbyte/s       544.73
+    Achieved Occupancy                        %        14.14

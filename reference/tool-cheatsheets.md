@@ -21,7 +21,7 @@ kubectl exec gpu-debug -- nvidia-smi --query-gpu=driver_version,name,vbios_versi
 kubectl exec "$POD" -- nvidia-smi nvlink --status -i 0    # per-GPU NVLink link state (lab-04, lab-11)
 ```
 
-- Useful `-q -d <group>`s: `ECC`, `PERFORMANCE`, `TEMPERATURE`, `POWER` (run in lab-02); `ROW_REMAP`, `PAGE_RETIREMENT`, `PCIE` are the health-triage groups referenced by [xid-table.md](xid-table.md) (produced live in **lab-14**).
+- Useful `-q -d <group>`s: `ECC`, `PERFORMANCE`, `TEMPERATURE`, `POWER`, `CLOCK` (run in lab-02/lab-14); the remapped-row health group is **`ROW_REMAPPER`** (produced live in **lab-14**). **Watch the token names (gotcha G10):** `ROW_REMAP` and `PCIE` are **not** valid `-d` groups — one bad token rejects the whole comma list. There is no `PCIE` group.
 - `nvidia-smi dmon` / `pmon` (streaming per-GPU/per-process sampling) are **not yet run** in any existing lab — introduced in **lab-14** (throttle under load) and **lab-17** (day-2 monitoring).
 
 ## DCGM (dcgmi)
@@ -34,14 +34,14 @@ kubectl exec gpu-debug -- dcgmi diag -r 2                 # medium diagnostic su
 #   command: ["dcgmi","diag","-r","2"]                    # (lab-02 manifest form)
 ```
 
-- Diagnostic levels: `-r 1` (quick), `-r 2` (medium — the one run in lab-02), `-r 3` (long, deployment-grade — introduced in **lab-14**).
+- Diagnostic levels: `-r 1` (quick), `-r 2` (medium — the one run in lab-02), `-r 3` (long, deployment-grade). **Honesty note:** lab-14 *attempted* `-r 3` on the asia-east1-c R580/CUDA-13 driver but **could not run it** — no stock public DCGM image ships cuda13 diag plugins (3.3.8 → "unsupported Cuda version"; 4.4.0 → missing `plugins/cuda13/`; gotchas G12/G13). lab-02's `-r 2` on the older us-central1 driver stays the reference for a green diag. **Match the DCGM image's diag plugins to the node's CUDA generation.**
 - **Lab-10's "DCGM" is the managed `dcgm-exporter` Prometheus pipeline, not the `dcgmi` CLI.** Metrics are scraped over HTTP, not via `dcgmi dmon`:
   ```bash
   kubectl port-forward -n gke-managed-system pod/dcgm-exporter-<id> 9400 &
   curl -s localhost:9400/metrics                          # (lab-10 dcgm-metrics-raw.txt)
   ```
-  Key field IDs present in the scrape: `DCGM_FI_DEV_{SM_CLOCK,GPU_TEMP,POWER_USAGE,GPU_UTIL,FB_USED}` and the profiling fields `DCGM_FI_PROF_{GR_ENGINE_ACTIVE,SM_ACTIVE,PIPE_TENSOR_ACTIVE,DRAM_ACTIVE,PCIE_TX_BYTES,NVLINK_TX_BYTES}`. These drive the **lab-17** Grafana/PromQL dashboards.
-- `dcgmi dmon -e <fields>` / `dcgmi health` — introduced in **lab-14** (single-GPU health) / **lab-17** (day-2); not run in the current labs.
+  Key field IDs present in the scrape: `DCGM_FI_DEV_{SM_CLOCK,GPU_TEMP,MEMORY_TEMP,POWER_USAGE,GPU_UTIL,MEM_COPY_UTIL,FB_USED,FB_FREE,FB_TOTAL,TOTAL_ENERGY_CONSUMPTION}` and the profiling fields `DCGM_FI_PROF_{GR_ENGINE_ACTIVE,SM_ACTIVE,PIPE_FP,PIPE_TENSOR_ACTIVE,DRAM_ACTIVE,PCIE_TX_BYTES,PCIE_RX_BYTES,NVLINK_TX_BYTES,NVLINK_RX_BYTES}`. These drive the **lab-17** Grafana/PromQL dashboards. **Honesty note (gotcha G11, confirmed live in lab-14):** the managed exporter's default field set is **exactly these 19 fields** — it does **not** include `DCGM_FI_DEV_XID_ERRORS`. For XID as a metric you must run your own exporter with a custom field list; on managed GKE, XIDs surface via NPD → Cloud Logging instead (see [xid-table.md](xid-table.md)).
+- `dcgmi dmon -e <fields>` / `dcgmi health` — planned for **lab-17** (day-2 monitoring); **not run** in the current labs (lab-14 attempted `dcgmi diag -r 3` only, which hit the version-matching wall above).
 
 ## Nsight Systems (nsys)
 
