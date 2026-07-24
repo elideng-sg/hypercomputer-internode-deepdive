@@ -149,9 +149,49 @@ Two things a 2-node pool cannot surface:
 
 *(Captured in `assets/lab-12/ringtree_{ring,tree}.txt` and `ringtree_crossover.csv`; run via `labs/lab-12-scaling-sweep/run_ringtree.sh`.)*
 
-## Strong / weak scaling efficiency *(measurement pending — lab-12c)*
+## Strong / weak scaling efficiency: the curve reaches training
 
-Scaling *efficiency* is a slope, and a single 2-node step-time is one point. lab-12c captures DDP and FSDP step-times at 8/16/24 GPUs (strong scaling: fixed global batch → efficiency %; weak scaling: batch grows with node count) so the communication curve above can be tied to real training throughput. Filled from lab-12c assets when captured.
+Scaling *efficiency* is a slope, and a single 2-node step-time is one point. lab-12c runs the same 1B-parameter synthetic model (reused from lab-09) under DDP and FSDP at 8/16/24 GPUs, so the communication curve above can be tied to real training throughput. The efficiency does not just drop — it **collapses**, and the collapse is a *curve*.
+
+**Weak scaling** (per-rank batch fixed at 16; global batch grows with GPU count; ideal = linear samples/s):
+
+| Mode | 8 GPU | 16 GPU | 24 GPU |
+| :--- | ---: | ---: | ---: |
+| DDP — step time | 58 ms | 375 ms | 713 ms |
+| DDP — efficiency | 100% | **15.5%** | **8.2%** |
+| FSDP — step time | 37 ms | 551 ms | 644 ms |
+| FSDP — efficiency | 100% | 6.7% | 5.7% |
+
+**Strong scaling** (global batch fixed at 384; per-rank batch shrinks; ideal = step time falls 1/N):
+
+| Mode | 8 GPU | 16 GPU | 24 GPU |
+| :--- | ---: | ---: | ---: |
+| DDP — step time | 60 ms | 436 ms | 728 ms |
+| DDP — efficiency | 100% | 6.8% | 2.7% |
+
+*Figure: training-throughput scaling efficiency is a collapsing curve — the ~6.5× step-time jump at 8→16 GPUs is the ~4.3 GB gradient all-reduce leaving NVLink for the ~24 GB/s TCP fabric; the 16→24 decline is the same fabric getting worse with a third hop.*
+
+```mermaid
+graph LR
+  E8["8 GPU (1 node)<br/>100% — NVLink"] -->|"cross the node<br/>boundary"| E16["16 GPU (2 nodes)<br/>DDP 15.5% · FSDP 6.7%"]
+  E16 -->|"3rd TCP hop"| E24["24 GPU (3 nodes)<br/>DDP 8.2% · FSDP 5.7%"]
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class E8 good; class E16 meas; class E24 crit;
+```
+
+What only three points can show:
+
+1. **Efficiency is a slope, not a step.** DDP weak-scaling efficiency falls 100% → 15.5% → 8.2%. A 2-node run gives you the 15.5% and nothing else — you could not tell whether adding a third node would recover (compute amortizing comms) or keep falling. It keeps falling, because the added node adds a slower fabric hop (12a), not more effective bandwidth. The step-time arithmetic matches: a ~4.3 GB fp32 gradient all-reduce at ~13 GB/s effective algbw is ~340 ms, which is essentially the entire 375 ms 16-GPU step.
+
+2. **FSDP is hit harder than DDP across the node boundary.** FSDP trades DDP's single gradient all-reduce for an all-gather (forward) **plus** a reduce-scatter (backward) — more inter-node traffic per step — so its efficiency craters faster (6.7% vs 15.5% at 2 nodes). On a fast fabric FSDP's memory savings dominate; on this TCP floor the extra collectives dominate instead. That trade only becomes visible once the collectives cross the node boundary.
+
+3. **Strong scaling is worse than weak.** Fixing the global batch (strong) shrinks each GPU's compute while the comms grows, so there is even less compute to hide the all-reduce behind: 6.8% at 2 nodes, 2.7% at 3. The comms-bound regime is laid bare.
+
+> **Honest framing.** These are deliberately comms-bound numbers: a communication-heavy model on a plain-TCP fabric with small per-step compute, chosen to *isolate* the fabric's effect on scaling. Production training overlaps comms with compute, uses larger batches, and — crucially — a faster fabric (TCPX/RDMA) that lifts 12a's busbw ceiling. The absolute efficiencies would improve; the **shape** (a descending curve driven by inter-node bandwidth) is the transferable lesson, and it is exactly what a third node makes measurable.
+
+*(Captured in `assets/lab-12/train_{weak,strong}_scaling.csv` and `train_*_{ddp,fsdp}_*gpu.txt`; run via `labs/lab-12-scaling-sweep/run_training.sh`.)*
 
 ---
 
@@ -161,8 +201,9 @@ Scaling *efficiency* is a slope, and a single 2-node step-time is one point. lab
 1. The inter-node all-reduce number is a **descending curve** in node count (465 → 23.7 → 14.95 GB/s across 1/2/3 nodes), because a ring serializes through every inter-node hop — not a fixed floor.
 2. The **latency floor grows** with every node (0.040 → 0.175 → 0.325 ms); small-message collectives get monotonically worse with scale.
 3. **busbw normalizes** the ring's traffic growth, so the decline is real per-byte fabric inefficiency.
-4. Node-scaling curves are captured on **one cluster**; the ~28.6 GB/s `us-central1` figure is a labeled cross-cluster comparison, not a curve point.
-5. The transport is **read off the wire** at every step — still plain TCP/gVNIC at 24 GPUs, with the ring now crossing three node boundaries.
+4. At **≥3 nodes the algorithm matters again**: forced Tree beats Ring at every message size (~11× mid-range), and NCCL's default (ring-like) leaves ~20–30% unclaimed — invisible at 2 nodes.
+5. **Training efficiency collapses as a curve**: DDP weak-scaling efficiency 100% → 15.5% → 8.2%; FSDP falls faster (extra collectives); strong scaling worse still (2.7% at 24 GPU). The comms curve reaches real throughput.
+6. Node-scaling curves are captured on **one cluster**; the ~28.6 GB/s `us-central1` figure is a labeled cross-cluster comparison, not a curve point. The transport is **read off the wire** at every step — still plain TCP/gVNIC at 24 GPUs.
 
 **Next steps:**
 - [lab-12](../labs/lab-12-scaling-sweep/) — reproduce the curve; run the ring/tree and training-efficiency sweeps

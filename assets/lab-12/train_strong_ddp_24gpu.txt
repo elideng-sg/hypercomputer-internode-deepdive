@@ -1,0 +1,214 @@
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7014 [0] NCCL INFO NCCL_SOCKET_IFNAME set to eth0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7014 [0] NCCL INFO Bootstrap : Using eth0:10.140.0.7<0>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7014 [0] NCCL INFO cudaDriverVersion 13000
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7014 [0] NCCL INFO NCCL version 2.22.3+cuda12.6
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Plugin Path : /opt/hpcx/nccl_rdma_sharp_plugin/lib/libnccl-net.so
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO P2P plugin v8 IBext_v8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NCCL_SOCKET_IFNAME set to eth0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NET/IB : No device found.
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NET/IB : No device found.
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NET/Socket : Using [0]eth0:10.140.0.7<0>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Using network Socket
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO ncclCommInitRank comm 0x5c9e53b96de0 rank 0 nranks 24 cudaDev 0 nvmlDev 0 busId 4000 commId 0x6a1529aab5de6d15 - Init START
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO MNNVL busId 0x4000 fabric UUID 0.0 cliqueId 0x0 state 3 healthMask 0x0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NET/Socket : GPU Direct RDMA Disabled for HCA 0 'eth0'
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Setting affinity for GPU 0 to 0fffffff,ffffff00,00000000,000fffff,ffffffff
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NVLS multicast support is available on dev 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO comm 0x5c9e53b96de0 rank 0 nRanks 24 nNodes 3 localRanks 8 localRank 0 MNNVL 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO NVLS Head  0:  0  8 16
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 00/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 01/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 02/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 03/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 04/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 05/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 06/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 07/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 08/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 09/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 10/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 11/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 12/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 13/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 14/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Channel 15/16 :    0   7   6   5   4   3   2   1   8  15  14  13  12  11  10   9  16  23  22  21
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Trees [0] 1/16/-1->0->-1 [1] 1/16/-1->0->-1 [2] 1/16/-1->0->-1 [3] 1/16/-1->0->-1 [4] 1/-1/-1->0->8 [5] 1/-1/-1->0->8 [6] 1/-1/-1->0->8 [7] 1/-1/-1->0->8 [8] 1/16/-1->0->-1 [9] 1/16/-1->0->-1 [10] 1/16/-1->0->-1 [11] 1/16/-1->0->-1 [12] 1/-1/-1->0->8 [13] 1/-1/-1->0->8 [14] 1/-1/-1->0->8 [15] 1/-1/-1->0->8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO P2P Chunksize set to 131072
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO threadThresholds 8/8/64 | 192/8/64 | 512 | 512
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO 16 coll channels, 16 collnet channels, 16 nvls channels, 16 p2p channels, 2 p2p channels per peer
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO CC Off, Multi-GPU CC Off, workFifoBytes 1048576
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO ncclCommInitRank comm 0x5c9e53b96de0 rank 0 nranks 24 cudaDev 0 nvmlDev 0 busId 4000 commId 0x6a1529aab5de6d15 - Init COMPLETE
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7568 [0] NCCL INFO Init timings: rank 0 nranks 24 total 1.53 (kernels 0.20, bootstrap 0.94, allgathers 0.04, topo 0.05, graphs 0.05, connections 0.22, rest 0.02)
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 0 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4004f40
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 00/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 1 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4004fb8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 01/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 2 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005030
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 02/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 3 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40050a8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 03/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 4 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005120
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 04/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 5 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005198
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 05/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 6 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005210
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 06/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 7 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005288
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 07/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 8 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005300
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 08/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 9 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005378
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 09/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 10 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40053f0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 10/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 11 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005468
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 11/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 12 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40054e0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 12/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 13 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005558
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 13/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 14 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40055d0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 14/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy recv connection 15 from local rank 0, transport 2
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005648
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 15/0 : 17[1] -> 0[0] [receive] via NET/Socket/0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 00/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 16 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40056c0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 01/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 17 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005738
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 02/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 18 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40057b0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 03/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 19 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005828
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 04/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 20 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a40058a0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 05/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 21 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005918
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 06/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 22 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005990
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 07/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 23 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005a08
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 08/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 24 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005a80
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 09/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 25 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005af8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 10/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 26 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005b70
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 11/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 27 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005be8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 12/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 28 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005c60
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 13/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 29 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005cd8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 14/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send# mode=ddp world=24 dim=4096 layers=8 batch=16 params/rank~1090.8M
+#  step       loss    step_ms  img_per_s
+      0     1.3445    1083.69      354.3
+      1     1.3715     696.80      551.1
+      2     1.3206     600.78      639.2
+      3     1.2645     660.89      581.0
+      4     1.1647     794.26      483.5
+      5     1.0937     841.70      456.2
+      6     1.0623     829.35      463.0
+      7     1.0787     815.47      470.9
+      8     1.0700     660.59      581.3
+      9     1.0764     656.62      584.8
+     10     1.0651     650.43      590.4
+     11     1.0739     654.83      586.4
+     12     1.0639     648.21      592.4
+     13     1.0549     706.91      543.2
+     14     1.0547     698.38      549.8
+     15     1.0638     716.67      535.8
+     16     1.0481     725.96      529.0
+     17     1.0436     701.03      547.8
+     18     1.0425     680.66      564.2
+     19     1.0469     609.15      630.4
+     20     1.0415     721.20      532.4
+     21     1.0352     793.17      484.1
+     22     1.0448     749.12      512.6
+     23     1.0436     724.83      529.8
+     24     1.0457     655.85      585.5
+     25     1.0399     667.76      575.1
+     26     1.0373    1162.02      330.5
+     27     1.0415     838.04      458.2
+     28     1.0281     644.38      595.9
+     29     1.0304     653.87      587.3
+# steady-state: 728.25 ms/step  527.3 samples/s (global)
+# done
+ connection 30 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005d50
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Channel 15/0 : 0[0] -> 7[7] via P2P/CUMEM
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO New proxy send connection 31 from local rank 0, transport 0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7bb5a4005dc8
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7598 [0] NCCL INFO Connected all rings
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO socketProgressOpt: abort called
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:47 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:550 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:573 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:621 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO socketProgressOpt: abort called
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO misc/socket.cc:47 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO misc/socket.cc:752 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO misc/socket.cc:428 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO misc/socket.cc:564 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO misc/socket.cc:668 -> 3
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] proxy.cc:1458 NCCL WARN [Service thread] Accept failed Resource temporarily unavailable
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO socketProgressOpt: abort called
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:47 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:58 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO misc/socket.cc:775 -> 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO socketProgressOpt: abort called
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] NCCL INFO misc/socket.cc:826 -> 3
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] proxy.cc:1497 NCCL WARN [Service thread] Could not receive type from localRank 0, res=3, closed=0
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7585 [0] proxy.cc:1521 NCCL WARN [Proxy Service 0] Failed to execute operation Close from rank 0, retcode 3
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO comm 0x5c9e53b96de0 rank 0 nranks 24 cudaDev 0 busId 4000 - Abort COMPLETE
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO NET/Plugin: Closing net plugin 'IBext_v8'
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:7014:7801 [0] NCCL INFO NET/Plugin: Closing collnet plugin 'SHARP'
