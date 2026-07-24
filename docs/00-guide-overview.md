@@ -2,60 +2,71 @@
 
 ## What this guide is
 
-This guide is a **standalone, comprehensive, hands-on introduction to the NVIDIA GPU and AI-infrastructure stack** — from a single GPU's silicon architecture, up through node and cluster communication, to the purpose-built AI-factory platforms NVIDIA ships (DGX/HGX systems, BlueField DPUs, Spectrum-X fabrics, DGX SuperPOD). It teaches both the **mechanism** (why it works) and the **practice** (how to run, monitor, profile, benchmark, and debug) using the standard NVIDIA toolchain, backed by **labs executed live on a real 2-node GKE A3 H100 cluster**.
+This guide is a **standalone, comprehensive, hands-on introduction to the NVIDIA GPU and AI-infrastructure stack** — from a single GPU's silicon architecture, up through node and cluster communication, to the purpose-built AI-factory platforms NVIDIA ships (DGX/HGX systems, BlueField DPUs, Spectrum-X fabrics, DGX SuperPOD) — and on to the **operations/diagnostics** and **architecture/GCP-integration** skills engineers need to run and design real workloads. It teaches both the **mechanism** (why it works) and the **practice** (how to run, monitor, profile, benchmark, and debug) using the standard NVIDIA toolchain, backed by **labs executed live on real GKE A3 H100 clusters** — a 2-node cluster (16 × H100) and a 3-node cluster (24 × H100) that turns the inter-node cliff into a measured scaling *curve*.
 
-### The four-part journey
+### The journey: four foundational parts + two applied tracks
 
-The guide walks one continuous, bottom-up path:
+The guide walks one continuous, bottom-up path (Parts I–IV), then adds two applied tracks (Parts V–VI) that reuse the same stack and toolchain:
 
-*Figure: the bottom-up spine — four stacked parts, with the NVIDIA tooling layer (T1-T6) cutting across all of them.*
+*Figure: the bottom-up spine — four stacked foundational parts plus two applied tracks, with the NVIDIA tooling layer (T1-T6) cutting across all of them.*
 
 ```mermaid
 flowchart TD
     P1["Part I<br/>Single node"] --> P2["Part II<br/>Inter-node"]
     P2 --> P3["Part III<br/>Clustering"]
     P3 --> P4["Part IV<br/>Platform"]
+    P4 --> P5["Part V<br/>Ops & diagnostics"]
+    P5 --> P6["Part VI<br/>Architecture & GCP"]
     T["Tooling layer<br/>T1-T6"] -.-> P1
     T -.-> P2
     T -.-> P3
     T -.-> P4
+    T -.-> P5
+    T -.-> P6
     classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+    classDef plan fill:#e8eaed,stroke:#9aa0a6,color:#202124;
     classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
     class P1,P2,P3,P4 meas;
+    class P5,P6 plan;
     class T accent;
 ```
 
 1. **Part I — Single node:** GPU microarchitecture (SMs, Tensor Cores, memory hierarchy), driver/CUDA stack and troubleshooting, single-GPU execution and profiling, and the 8-GPU NVLink/NVSwitch (HGX) fabric within a node.
 
-2. **Part II — Inter-node communication:** NICs, RDMA, GPUDirect (TCPX/TCPXO/RoCE), and NCCL collectives that bind nodes into a single distributed computation.
+2. **Part II — Inter-node communication:** NICs, RDMA, GPUDirect (TCPX/TCPXO/RoCE), and NCCL collectives that bind nodes into a single distributed computation. A **scaling bridge** (doc-15) extends the 2-node cliff into an 8/16/24-GPU curve on the 3-node cluster.
 
 3. **Part III — Clustering and distributed execution:** GKE scheduling (device plugins, topology awareness, gang scheduling via JobSet/Kueue), distributed training frameworks (DDP/FSDP with `torchrun`), and fleet-scale observability (DCGM metrics pipelines, debugging stalled collectives).
 
 4. **Part IV — Platform and reference architectures:** How NVIDIA builds AI factories — DGX/HGX systems and system-level troubleshooting (NVSM, Fabric Manager), BlueField DPUs and DOCA, Spectrum-X Ethernet vs. Quantum InfiniBand vs. cloud fabrics, and the DGX SuperPOD reference architecture. Each component is contrasted with what the GCP A3 lab demonstrates, clearly separating measured facts (from the live cluster) from reference-architecture knowledge.
 
-Cutting across all four parts is a **NVIDIA tooling layer** — monitoring (`nvidia-smi`, DCGM, `dcgm-exporter`), health and diagnostics (`dcgmi diag`, XID decode, `nvidia-bug-report.sh`), profiling (`nsys`, `ncu`, NVTX), benchmarking (`nvbandwidth`, `nccl-tests`), and fabric tools (`perftest`, `ethtool`, NCCL topology export) — taught in context as they appear and consolidated in cross-cutting reference docs.
+5. **Part V — Operations, diagnostics & troubleshooting** *(scenario-based; specced, in build):* the skill Parts I–IV don't teach — **symptom → hypothesis → tool → read the output → root cause → fix**. A triage-method hub (doc-16), single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 operations, with the NVIDIA tools (`ncu`, `dcgmi dmon`, `nccl-tests`, `ethtool`, HTA, PromQL/Grafana) finally run *in anger*.
+
+6. **Part VI — Architecture & GCP integration** *(design-first use-cases; specced, in build):* how a GPU workload is actually architected and deployed on GCP — GKE network design as a decision (with a **live GPUDirect-TCPX before/after** that measures the cliff closing), the storage/data path, an end-to-end training pipeline, and inference serving + MLOps.
+
+Cutting across all six parts is a **NVIDIA tooling layer** — monitoring (`nvidia-smi`, DCGM, `dcgm-exporter`), health and diagnostics (`dcgmi diag`, XID decode, `nvidia-bug-report.sh`), profiling (`nsys`, `ncu`, NVTX), benchmarking (`nvbandwidth`, `nccl-tests`), and fabric tools (`perftest`, `ethtool`, NCCL topology export) — taught in context as they appear and consolidated in cross-cutting reference docs.
 
 ---
 
-## The cluster at a glance
+## The clusters at a glance
 
-All labs run on a live GKE A3 H100 cluster with the following characteristics:
+Labs run on **two live GKE A3 High (H100) clusters** in project `hdlab-elideng`. They are the **same machine family** (`a3-highgpu-8g`, HGX H100 baseboard) but different clusters, so software versions can differ — which is why a scaling **curve** is always captured on a *single* cluster and any cross-cluster numbers are labelled as such, never spliced.
 
-| Property | Value |
-| :--- | :--- |
-| Project | `hdlab-elideng` |
-| Cluster | `hypercomputer-a3-cluster` (GKE `v1.33`) |
-| Region | `us-central1` |
-| GPU pool | `a3-h100-dws-pool` — **2 × `a3-highgpu-8g`** = **16 × H100 80GB** (each node = an HGX H100 8-GPU baseboard) |
-| Provisioning | Dynamic Workload Scheduler (DWS) queued provisioning, 7-day holds |
-| Aux pool | `default-pool` (e2-standard-4) for control/CPU workloads |
+| Property | Documented lab cluster | Scaling / 3-node cluster |
+| :--- | :--- | :--- |
+| Cluster | `hypercomputer-a3-cluster` (GKE `v1.33`) | `hypercomputer-a3-asiaeast1` (GKE `v1.34`) |
+| Region / zone | `us-central1` | `asia-east1-c` |
+| GPU pool | `a3-h100-dws-pool` — **2 × `a3-highgpu-8g`** = **16 × H100 80GB** | `a3-high-flex-pool` — **3 × `a3-highgpu-8g`** = **24 × H100 80GB** |
+| Provisioning | Dynamic Workload Scheduler (DWS) queued, 7-day holds | **Flex-start**, 7-day expiry (scarce; held, not drained) |
+| Used by | Parts I–IV (labs 01–11), Part V/VI scenarios where either cluster fits | The 8/16/24-GPU scaling curve (labs 12–13, doc-15); cluster-failure & straggler scenarios needing room |
+
+Each node = an HGX H100 8-GPU baseboard, exposing `nvidia.com/gpu: 8`. Auxiliary `default-pool` (e2-standard-4) carries control/CPU workloads.
 
 Key facts verified during execution:
-- Each A3 node exposes `nvidia.com/gpu: 8` as a Kubernetes extended resource.
-- Inter-node GPU networking uses GPUDirect-TCPX over gVNIC (characterizing the actual data path and, where feasible, enabling and benchmarking Fast Socket / TCPX is a core teaching thread).
-- No tenant-visible BlueField DPU, Spectrum-X SuperNIC, or DGX Fabric Manager is present on this cluster (this contrast is explored in Part IV).
+- **Both clusters are single-gVNIC / TCP today** — inter-node NCCL traverses the standard gVNIC/VPC TCP path (~28.6 GB/s floor), *not* GPUDirect. No multi-network CRDs, no TCPX/TCPXO/RDMA DaemonSets. Characterizing this actual path is a core Part II thread; **Part VI `lab-18` provisions a new multi-network node pool to enable GPUDirect-TCPX and measure the before/after**.
+- No tenant-visible BlueField DPU, Spectrum-X SuperNIC, or DGX Fabric Manager is present on either cluster (this contrast is explored in Part IV).
+- Flex capacity on the 3-node cluster is scarce and hard to re-grab, so resilience exercises inject faults at the **job/pod level** — no node is ever drained or deleted (the "always hold the GPU" posture).
 
-Every documented measurement is traceable via the `VERIFICATION.md` provenance log, which records what was run, when, on which nodes, and which artifact resulted.
+Every documented measurement is traceable via the `VERIFICATION.md` provenance log, which records what was run, when, on which **cluster/nodes**, and which artifact resulted.
 
 ---
 
@@ -165,7 +176,7 @@ Each layer of the guide is built on a **three-way spine** that connects conceptu
 1. This overview doc (`docs/00-guide-overview.md`)
 2. The README (`README.md`) for the repository map and setup instructions
 
-**Then proceed layer by layer through the four parts:**
+**Then proceed layer by layer through the four foundational parts, then the two applied tracks:**
 
 **Part I — Single Node:**
 - Read: `docs/part1-single-node/01-gpu-microarchitecture.md`
@@ -178,16 +189,27 @@ Each layer of the guide is built on a **three-way spine** that connects conceptu
 - Practice: `labs/lab-05-network-path-inspect/`
 - Tools: `docs/toolkit/T5-networking-fabric-tools.md`
 - Repeat for section 06 (NCCL collectives)
+- **Scaling bridge:** `docs/15-scaling-shape-of-the-cliff.md` + `labs/lab-12-scaling-sweep/` — the 8/16/24-GPU curve on the 3-node cluster *(in build)*
 
 **Part III — Clustering and Distributed Execution:**
 - Read: `docs/part3-clustering-execution/07-gke-scheduling-topology.md`
 - Practice: `labs/lab-07-gke-gang-schedule/`
-- Proceed through sections 08 (JobSet/Kueue), 09 (DDP/FSDP), and 10 (observability)
+- Proceed through sections 08 (JobSet/Kueue), 09 (DDP/FSDP), and 10 (observability); `labs/lab-13-topology-resilience/` covers 24-GPU gang placement + Flex-safe node-loss *(in build)*
 
 **Part IV — Platform and Reference Architectures (knowledge-first):**
 - Read: `docs/part4-platform-reference-arch/11-dgx-hgx-systems.md`
 - Practice: `labs/lab-11-platform-compare/` (observe-and-compare exercises, contrasting the A3 lab with DGX/SuperPOD)
 - Proceed through sections 12 (BlueField DPUs), 13 (Spectrum-X fabrics), and 14 (DGX SuperPOD)
+
+**Part V — Operations, Diagnostics & Troubleshooting** *(scenario-based; in build):*
+- Start at the triage hub: `docs/part5-operations-diagnostics/16-diagnostic-method.md`
+- Practice each scenario: `labs/lab-14-single-gpu-health-triage/`, `lab-15-internode-comms-debug/`, `lab-16-cluster-job-failure-triage/`, `lab-17-perf-monitoring-day2-ops/`
+- Docs 17–20 pair with those labs; every scenario ends in a root cause or an operational decision
+
+**Part VI — Architecture & GCP Integration** *(design-first; in build):*
+- Read: `docs/part6-architecture-gcp-integration/21-gke-network-design.md`
+- Practice: `labs/lab-18-enable-gpudirect-tcpx/` (flagship — live gVNIC→TCPX before/after), then `lab-19-storage-data-path/`, `lab-20-e2e-training-pipeline/`, `lab-21-inference-serving-autoscale/`
+- Docs 22–24 cover the storage/data path, the end-to-end pipeline, and inference serving + MLOps
 
 **Cross-cutting toolkit references** are listed in each doc's "Tools in this layer" section and are consolidated under `docs/toolkit/`. Read them when a tool first appears or as needed.
 
