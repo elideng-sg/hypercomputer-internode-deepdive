@@ -1,0 +1,4 @@
+mode,gpus,nodes,step_ms,strong_scaling_eff_pct
+ddp,8,1,59.62,100.0
+ddp,16,2,436.35,6.8
+ddp,24,3,728.25,2.7

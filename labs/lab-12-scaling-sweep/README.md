@@ -24,10 +24,12 @@ The script targets the asia cluster by exporting `KUBE_CONTEXT` and `LAB_NODEPOO
 **Files:**
 - `run.sh` — **12a:** orchestrates the borrow window and the three (8/16/24-GPU) sweeps; stages lab-06's benchmark into each pod via `kubectl cp`
 - `run_ringtree.sh` — **12b:** forces `NCCL_ALGO=Ring` vs `Tree` at 24 GPUs (same borrow window) to compare algorithms
-- assets: `allreduce_{8,16,24}gpu.txt` (busbw tables), `nccl_transport_24gpu.txt` (transport + 3-node ring), `scaling_curve.csv` + `scaling_peak_busbw.png` (the curve), `ringtree_{ring,tree}.txt` + `ringtree_crossover.csv` (12b), `*_full.log` (full rank-0 NCCL INFO)
+- `run_training.sh` — **12c:** DDP/FSDP weak & strong scaling at 8/16/24 GPUs (reuses lab-09's `train_ddp_fsdp.py`)
+- assets: `allreduce_{8,16,24}gpu.txt` (busbw tables), `nccl_transport_24gpu.txt` (transport + 3-node ring), `scaling_curve.csv` + `scaling_peak_busbw.png` (the curve), `ringtree_{ring,tree}.txt` + `ringtree_crossover.csv` (12b), `train_{weak,strong}_scaling.csv` + `train_*_*gpu.txt` (12c), `*_full.log` (full rank-0 NCCL INFO)
 
 ```bash
 bash labs/lab-12-scaling-sweep/run_ringtree.sh   # 12b: ring vs tree at 24 GPUs
+bash labs/lab-12-scaling-sweep/run_training.sh   # 12c: DDP/FSDP scaling efficiency
 ```
 
 ### GPU safety — a guarded, gap-free hold handoff
@@ -140,6 +142,22 @@ Forcing `NCCL_ALGO=Ring` then `Tree` (same `NCCL_PROTO=Simple`, same sweep) at 2
 - **No crossover — Tree wins at every size.** Ring threads each chunk through **three serial inter-node TCP hops**; Tree's inter-node reduction is depth ~2 with a shallower critical path, which pays off most where latency dominates (mid-range, ~11×) and never reverses (~1.3× at 1 GiB). doc-06's "algorithm matters less than the link" was a 2-node truth; at ≥3 nodes the algorithm's inter-node hop count matters too.
 - **The default under-picks.** 12a's auto-selected 24-GPU peak (14.95 GB/s) tracks **ring** — so on this fabric the default all-reduce is ~20–30% slower than an explicit `NCCL_ALGO=Tree`. An actionable tuning win that only exists at ≥3 nodes.
 - **Forcing confirmed by the divergent curves:** with only `NCCL_ALGO` differing between the two runs, the ~40% peak-busbw gap (14.24 vs 19.87) is itself proof the env var took effect.
+
+### 5. Training scaling efficiency — `assets/lab-12/train_{weak,strong}_scaling.csv` (12c)
+
+`run_training.sh` reuses lab-09's 1B-param DDP/FSDP model at 8/16/24 GPUs. Efficiency doesn't step down — it **collapses as a curve**:
+
+| Mode / scaling | 8 GPU | 16 GPU | 24 GPU |
+| :--- | ---: | ---: | ---: |
+| DDP weak (step ms) | 58 | 375 | 713 |
+| DDP weak efficiency | 100% | **15.5%** | **8.2%** |
+| FSDP weak efficiency | 100% | 6.7% | 5.7% |
+| DDP strong efficiency | 100% | 6.8% | 2.7% |
+
+- **The ~6.5× step-time jump at 8→16** is the ~4.3 GB fp32 gradient all-reduce leaving NVLink for the ~24 GB/s TCP fabric (~340 ms of the 375 ms step is the all-reduce). 16→24 declines further as the third hop joins — the training face of §2's busbw curve.
+- **FSDP falls faster than DDP** (6.7% vs 15.5% at 2 nodes): it trades DDP's one all-reduce for all-gather + reduce-scatter — more inter-node traffic per step. On this TCP floor the extra collectives dominate its memory savings.
+- **Strong scaling is worse than weak** (2.7% at 24 GPU): fixing the global batch shrinks per-GPU compute while comms grows, so there's less compute to hide the all-reduce behind.
+- *Honest framing:* deliberately comms-bound (heavy model, TCP fabric, small compute) to isolate the fabric's effect. Production overlaps comms/compute and uses a faster fabric; the transferable lesson is the **shape**, which needs a third point.
 
 ---
 

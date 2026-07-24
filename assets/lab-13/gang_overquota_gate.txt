@@ -1,0 +1,6 @@
+# cmd: bash -c $'echo \'### over-quota (32 GPU) workload: QuotaReserved=False, no pods\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o json | python3 -c \'import json,sys\nfor w in json.load(sys.stdin)["items"]:\n    if "overquota" in w["metadata"]["name"]:\n        conds=[(c["type"],c["status"],c.get("reason","")) for c in w.get("status",{}).get("conditions",[])]\n        print("  workload:", w["metadata"]["name"], "conds=", conds)\'; echo; echo \'### pods for over-quota jobset (expect NONE):\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get pods -l jobset.sigs.k8s.io/jobset-name=nccl-gang-overquota 2>&1 | tail -2'
+### over-quota (32 GPU) workload: QuotaReserved=False, no pods
+  workload: jobset-nccl-gang-overquota-9d6d3 conds= [('QuotaReserved', 'False', 'Pending')]
+
+### pods for over-quota jobset (expect NONE):
+No resources found in default namespace.

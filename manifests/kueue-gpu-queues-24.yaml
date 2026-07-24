@@ -1,0 +1,41 @@
+# Kueue quota objects for lab-13a (3-node / 24-GPU gang on asia-east1-c).
+#
+# Differs from kueue-gpu-queues.yaml (lab-08, us-central1) only in scale: the
+# ClusterQueue's nvidia.com/gpu nominalQuota is 24 — EXACTLY the full 3-node
+# gang — so an at-quota 24-GPU JobSet is admitted as one Workload, while a
+# 32-GPU JobSet (4 replicas) is gang-gated with zero pods. Names are suffixed
+# -24 so they never collide with the lab-08 objects if both clusters are viewed
+# together.
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ResourceFlavor
+metadata:
+  name: a3-high-flex
+spec:
+  nodeLabels:
+    cloud.google.com/gke-accelerator: nvidia-h100-80gb
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ClusterQueue
+metadata:
+  name: gpu-cq-24
+spec:
+  namespaceSelector: {}
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: a3-high-flex
+      resources:
+      - name: "cpu"
+        nominalQuota: "96"
+      - name: "memory"
+        nominalQuota: "384Gi"
+      - name: "nvidia.com/gpu"
+        nominalQuota: "24"       # the whole 3-node pool: admits the 24-GPU gang, gates 32
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: gpu-lq-24
+  namespace: default
+spec:
+  clusterQueue: gpu-cq-24

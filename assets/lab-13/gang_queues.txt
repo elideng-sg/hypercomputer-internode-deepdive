@@ -1,0 +1,6 @@
+# cmd: bash -c echo\ \'###\ ClusterQueue\ +\ LocalQueue\ \(24-GPU\ quota\)\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ clusterqueue\ gpu-cq-24\ -o\ wide\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ localqueue\ gpu-lq-24\ -n\ default\ -o\ wide
+### ClusterQueue + LocalQueue (24-GPU quota)
+NAME        COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+gpu-cq-24            BestEffortFIFO   0                   0
+NAME        CLUSTERQUEUE   PENDING WORKLOADS   ADMITTED WORKLOADS
+gpu-lq-24   gpu-cq-24      0                   0

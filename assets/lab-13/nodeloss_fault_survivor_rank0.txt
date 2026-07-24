@@ -1,0 +1,136 @@
+# nodeloss: world_size=24 pg_timeout=90s elems=67108864 (268 MB fp32)
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=5 elapsed=3.0s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=10 elapsed=4.2s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=15 elapsed=5.4s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=20 elapsed=6.6s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=25 elapsed=7.8s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=30 elapsed=9.0s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=35 elapsed=10.2s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=40 elapsed=11.4s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=45 elapsed=12.5s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=50 elapsed=13.7s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=55 elapsed=14.9s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=60 elapsed=16.0s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=65 elapsed=17.2s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=70 elapsed=18.3s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=75 elapsed=19.5s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=80 elapsed=20.7s
+# heartbeat rank=0 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx iter=85 elapsed=21.8s
+NCCL version 2.22.3+cuda12.6
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+[rank0]:[E724 06:56:39.480328940 ProcessGroupNCCL.cpp:542] [Rank 0] Collective WorkNCCL(SeqNum=89, OpType=ALLREDUCE, NumelIn=67108864, NumelOut=67108864, Timeout(ms)=90000) raised the following async exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+Last error:
+socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+Exception raised from checkForNCCLErrorsInternal at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2037 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7a199a1f70a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7a199b45008e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x262 (0x7a199b465772 in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7b (0x7a199b4658eb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x22b (0x7a199b46f2fb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7a199b470d7d in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xdc253 (0x7a1999cb0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x94ac3 (0x7a19f9902ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7a19f9994850 in /lib/x86_64-linux-gnu/libc.so.6)
+
+[rank0]:[E724 06:56:39.482018118 ProcessGroupNCCL.cpp:1795] [PG ID 0 PG GUID 0(default_pg) Rank 0] Exception (either an error or timeout) detected by watchdog at work: 89, last enqueued NCCL work: 89, last completed NCCL work: 88.
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:673 [0] proxy.cc:1458 NCCL WARN [Service thread] Accept failed Resource temporarily unavailable
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:673 [0] proxy.cc:1497 NCCL WARN [Service thread] Could not receive type from localRank 0, res=3, closed=0
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:673 [0] proxy.cc:1521 NCCL WARN [Proxy Service 0] Failed to execute operation Close from rank 0, retcode 3
+[rank0]:[E724 06:56:40.859307760 ProcessGroupNCCL.cpp:630] [Rank 0] Some NCCL operations have failed or timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on corrupted/incomplete data.
+[rank0]:[E724 06:56:40.859342812 ProcessGroupNCCL.cpp:636] [Rank 0] To avoid data inconsistency, we are taking the entire process down.
+[rank0]:[E724 06:56:40.859385270 ProcessGroupNCCL.cpp:1605] [PG ID 0 PG GUID 0(default_pg) Rank 0] Process group watchdog thread terminated with exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+Last error:
+socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+Exception raised from checkForNCCLErrorsInternal at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2037 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7a199a1f70a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7a199b45008e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x262 (0x7a199b465772 in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7b (0x7a199b4658eb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x22b (0x7a199b46f2fb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7a199b470d7d in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xdc253 (0x7a1999cb0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x94ac3 (0x7a19f9902ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7a19f9994850 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 0] Process group watchdog thread terminated with exception: NCCL error: remote process exited or there was a network error, NCCL version 2.22.3
+ncclRemoteError: A call failed possibly due to a network error or a remote process exiting prematurely.
+Last error:
+socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+Exception raised from checkForNCCLErrorsInternal at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2037 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7a199a1f70a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7a199b45008e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x262 (0x7a199b465772 in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7b (0x7a199b4658eb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x22b (0x7a199b46f2fb in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7a199b470d7d in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0xdc253 (0x7a1999cb0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x94ac3 (0x7a19f9902ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7a19f9994850 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:1611 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x7a199a1f70a8 in /usr/local/lib/python3.10/dist-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x114308e (0x7a199b45008e in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0xdd23be (0x7a199b0df3be in /usr/local/lib/python3.10/dist-packages/torch/lib/libtorch_cuda.so)
+frame #3: <unknown function> + 0xdc253 (0x7a1999cb0253 in /lib/x86_64-linux-gnu/libstdc++.so.6)
+frame #4: <unknown function> + 0x94ac3 (0x7a19f9902ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #5: <unknown function> + 0x126850 (0x7a19f9994850 in /lib/x86_64-linux-gnu/libc.so.6)
+

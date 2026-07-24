@@ -1,0 +1,11 @@
+# cmd: bash -c echo\ \'###\ gang\ pods\ -\>\ node\ placement\ \(expect\ 3\ pods\,\ 3\ distinct\ nodes\,\ 8\ GPU\ each\)\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ pods\ -l\ jobset.sigs.k8s.io/jobset-name=nccl-gang\ -o\ wide\;\ echo\;\ echo\ \'###\ distinct\ nodes\ used:\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ pods\ -l\ jobset.sigs.k8s.io/jobset-name=nccl-gang\ -o\ jsonpath=\'\{range\ .items\[\*\]\}\{.spec.nodeName\}\{\"\\n\"\}\{end\}\'\ \|\ sort\ -u
+### gang pods -> node placement (expect 3 pods, 3 distinct nodes, 8 GPU each)
+NAME                         READY   STATUS              RESTARTS   AGE   IP            NODE                                                  NOMINATED NODE   READINESS GATES
+nccl-gang-worker-0-0-q8jl8   0/1     ContainerCreating   0          10s   10.140.0.10   gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn   <none>           <none>
+nccl-gang-worker-1-0-dhf7x   0/1     ContainerCreating   0          10s   10.140.0.12   gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7   <none>           <none>
+nccl-gang-worker-2-0-nj5tp   0/1     ContainerCreating   0          10s   10.140.0.11   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>
+
+### distinct nodes used:
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn

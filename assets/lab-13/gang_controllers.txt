@@ -1,0 +1,6 @@
+# cmd: bash -c echo\ \'###\ JobSet\ +\ Kueue\ controllers\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ deploy\ -n\ jobset-system\ jobset-controller-manager\ -o\ wide\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ deploy\ -n\ kueue-system\ kueue-controller-manager\ -o\ wide
+### JobSet + Kueue controllers
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                  SELECTOR
+jobset-controller-manager   1/1     1            1           35m   manager      registry.k8s.io/jobset/jobset:v0.12.0   app.kubernetes.io/instance=jobset,app.kubernetes.io/managed-by=kustomize,app.kubernetes.io/name=jobset,control-plane=controller-manager
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                SELECTOR
+kueue-controller-manager   1/1     1            1           35m   manager      registry.k8s.io/kueue/kueue:v0.18.3   control-plane=controller-manager
