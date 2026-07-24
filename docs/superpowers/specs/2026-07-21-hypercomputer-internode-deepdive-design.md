@@ -2,7 +2,13 @@
 
 **Date:** 2026-07-21 (rev 5)
 **Author:** elideng-sg (with Claude Code)
-**Status:** Approved — proceeding to implementation plan
+**Status:** Approved — Parts I–IV built and live; enrichment tracks specced (see below)
+
+> **Scope evolution (2026-07-23).** This spec defined the original **four-part, 2-node** guide (Parts I–IV, labs 01–11), which is built and live. Three enrichment tracks have since been specced (and merged) on top of it, extending the guide to **six parts / labs 01–21** across two clusters. This document remains the **root design**; the tracks below layer onto it and are coordinated by the integration roadmap:
+> - [`2026-07-23-three-node-scaling-enrichment-design.md`](2026-07-23-three-node-scaling-enrichment-design.md) — 3-node scaling (labs 12–13, doc-15): cliff → curve.
+> - [`2026-07-23-diagnostics-troubleshooting-operations-track-design.md`](2026-07-23-diagnostics-troubleshooting-operations-track-design.md) — **Part V** operations/diagnostics (labs 14–17, docs 16–20).
+> - [`2026-07-23-architecture-gcp-integration-track-design.md`](2026-07-23-architecture-gcp-integration-track-design.md) — **Part VI** architecture & GCP integration (labs 18–21, docs 21–24), incl. live GPUDirect-TCPX.
+> - [`2026-07-23-integration-roadmap.md`](2026-07-23-integration-roadmap.md) — shared-file ownership + cross-track build order (read this before implementing any track).
 
 ---
 
