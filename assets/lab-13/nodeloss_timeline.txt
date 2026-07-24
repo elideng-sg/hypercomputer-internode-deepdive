@@ -1,0 +1,49 @@
+# lab-13b node-loss resilience — 2026-07-24T06:58:36Z
+# cluster asia-east1-c  nodes: gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx gke-hypercomputer-a3-a3-high-flex-poo-27562461-nmrc gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4
+# victim node (ranks killed): gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4 (ranks 16-23)
+
+## survivor fault signature (grep of survivor rank-0 log):
+# nodeloss: world_size=24 pg_timeout=90s elems=67108864 (268 MB fp32)
+NCCL version 2.22.3+cuda12.6
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:110:697 [0] misc/socket.cc:50 NCCL WARN socketProgress: Connection closed by remote peer gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4.c.hdlab-elideng.internal<55912>
+
+## victim rank-16 last lines (heartbeats stop at the kill):
+# heartbeat rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4 iter=65 elapsed=17.3s
+# heartbeat rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4 iter=70 elapsed=18.5s
+# heartbeat rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4 iter=75 elapsed=19.6s
+# heartbeat rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4 iter=80 elapsed=20.8s
+# heartbeat rank=16 node=gke-hypercomputer-a3-a3-high-flex-poo-27562461-zcn4 iter=85 elapsed=21.9s
+
+## survivor-set rerun (16-GPU / 2-node) tail:
+# done
+NCCL version 2.22.3+cuda12.6
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:906:1475 [0] proxy.cc:1458 NCCL WARN [Service thread] Accept failed Operation now in progress
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:906:1475 [0] proxy.cc:1497 NCCL WARN [Service thread] Could not receive type from localRank 0, res=3, closed=0
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:906:1475 [0] proxy.cc:1521 NCCL WARN [Proxy Service 0] Failed to execute operation Close from rank 0, retcode 3
+
+## survivor-set rerun completed cleanly: YES

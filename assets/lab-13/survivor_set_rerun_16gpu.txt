@@ -1,0 +1,36 @@
+# world_size=16  backend=nccl  warmup=5 iters=10
+#       size        count    time_ms   algbw_GBps   busbw_GBps
+          8B            2      0.220         0.00         0.00
+         16B            4      0.109         0.00         0.00
+         32B            8      0.112         0.00         0.00
+         64B           16      0.122         0.00         0.00
+        128B           32      0.098         0.00         0.00
+        256B           64      0.106         0.00         0.00
+        512B          128      0.109         0.00         0.01
+         1KB          256      0.107         0.01         0.02
+         2KB          512      0.127         0.02         0.03
+         4KB         1024      0.134         0.03         0.06
+         8KB         2048      0.154         0.05         0.10
+        16KB         4096      0.175         0.09         0.18
+        32KB         8192      0.200         0.16         0.31
+        64KB        16384      0.319         0.21         0.38
+       128KB        32768      0.328         0.40         0.75
+       256KB        65536      0.355         0.74         1.38
+       512KB       131072      0.379         1.38         2.59
+         1MB       262144      0.433         2.42         4.54
+         2MB       524288      0.688         3.05         5.72
+         4MB      1048576      1.140         3.68         6.90
+         8MB      2097152      1.610         5.21         9.77
+        16MB      4194304      2.209         7.60        14.24
+        32MB      8388608      3.688         9.10        17.06
+        64MB     16777216      6.564        10.22        19.17
+       128MB     33554432     13.009        10.32        19.35
+       256MB     67108864     25.075        10.71        20.07
+# done
+NCCL version 2.22.3+cuda12.6
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:906:1475 [0] proxy.cc:1458 NCCL WARN [Service thread] Accept failed Operation now in progress
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:906:1475 [0] proxy.cc:1497 NCCL WARN [Service thread] Could not receive type from localRank 0, res=3, closed=0
+
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-njnx:906:1475 [0] proxy.cc:1521 NCCL WARN [Proxy Service 0] Failed to execute operation Close from rank 0, retcode 3
