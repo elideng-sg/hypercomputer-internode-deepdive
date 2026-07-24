@@ -1,0 +1,4 @@
+gpus,nodes,peak_busbw_GBps,latency_floor_ms
+8,1,465.43,0.040
+16,2,23.70,0.175
+24,3,14.95,0.325

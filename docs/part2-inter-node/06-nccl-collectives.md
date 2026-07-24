@@ -253,6 +253,10 @@ lab-06's all-reduce sweep (16 ranks, 2 nodes, NCCL 2.22.3), `busbw` vs. size:
 
 On *this* cluster none are enabled, so we honestly measure the TCP floor. When you run the same lab on a TCPX/RDMA-enabled cluster, the transport line changes and the ~28 GB/s rises accordingly — the lab is written to make that change self-evident.
 
+### The cliff has a shape (the third node)
+
+The ~28 GB/s here is **two** points on the node axis (1 and 2 nodes). Two points prove the cliff; they cannot show whether the inter-node number is a *floor* or a *descending curve*. Add a **third** node — 24 GPUs on the `asia-east1-c` cluster ([lab-12](../../labs/lab-12-scaling-sweep/)) — and peak busbw drops a *further* ~37% (23.7 → 14.95 GB/s) as the ring gains a third serial TCP hop, while the latency floor keeps climbing. The inter-node number is a **descending curve in node count**, not a constant. The full 8/16/24-GPU story — and why the curve must stay on one cluster — is [doc-15: scaling, the shape of the cliff](../15-scaling-shape-of-the-cliff.md).
+
 ---
 
 ## Summary

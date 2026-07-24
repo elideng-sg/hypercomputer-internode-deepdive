@@ -44,7 +44,11 @@ spec:
 EOF
 done
 kubectl wait --for=condition=Ready pod/net-probe-0 pod/net-probe-1 --timeout=180s
-cap_run $LAB links.txt -- bash -c "for p in net-probe-0 net-probe-1; do echo \"### \$p\"; kubectl exec \$p -- ip -br link; kubectl exec \$p -- ip -br addr; echo; done"
+# The networkstatic/iperf3 image ships no `ip`/`iproute2`, so read the NIC
+# inventory straight from sysfs: name, link speed, MTU, and bound driver.
+# (Matches the links.txt format below; do NOT switch this to `ip -br link`.)
+READ_NICS='for d in /sys/class/net/*; do n=$(basename "$d"); sp=$(cat "$d/speed" 2>/dev/null || echo NA); mt=$(cat "$d/mtu" 2>/dev/null || echo NA); dr=$(basename "$(readlink "$d/device/driver" 2>/dev/null)" 2>/dev/null); [ -n "$dr" ] || dr="-"; printf "%-15s speed=%-7s mtu=%-6s DRIVER=%s\n" "$n" "$sp" "$mt" "$dr"; done'
+cap_run $LAB links.txt -- bash -c "for p in net-probe-0 net-probe-1; do echo \"### \$p\"; kubectl exec \$p -- sh -c '$READ_NICS'; echo; done"
 
 # --- 5. iperf3 inter-node TCP bandwidth baseline ----------------------------
 # net-probe-0 = server, net-probe-1 = client. Report single and 8 parallel streams.
