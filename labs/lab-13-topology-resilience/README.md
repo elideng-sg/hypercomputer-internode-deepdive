@@ -1,4 +1,13 @@
-# Lab 13: Topology & Resilience — the 16-GPU survivor set (lab-13b)
+# Lab 13: Topology & Resilience — 3-node gang placement (13a) + the 16-GPU survivor set (13b)
+
+This lab has two independent parts, each capturing something a two-node pool physically cannot show:
+
+- **lab-13a — the 24-GPU gang** (`run_gang.sh`): a **non-power-of-2** 24-GPU gang admitted by **JobSet + Kueue** as *one* Workload and placed **one 8-GPU pod per node across all three nodes**, then a **32-GPU** gang gang-**gated** by the 24-GPU quota. Two nodes can express neither a 24-way gang nor a 3-node all-or-nothing placement.
+- **lab-13b — the survivor set** (`run_nodeloss.sh`): kill one node's ranks mid-run and watch the surviving 16 ranks fault fast, then rerun a **16-GPU / 2-node survivor set** to completion. Lose 1 of 2 nodes → 0 survivors; the survivor story needs N ≥ 3.
+
+---
+
+## lab-13b — the 16-GPU survivor set
 
 **Objective:** Run a **24-GPU** all-reduce job across all three nodes, **kill the ranks on one node mid-run** (a job-level fault — never a node drain or delete, so scarce Flex capacity is never released), and capture two things a two-node pool physically cannot show:
 
@@ -124,9 +133,68 @@ The two surviving nodes (`…njnx` + `…nmrc`) are still held and healthy, so t
 
 ---
 
-## Related: lab-13a (24-GPU gang placement) is gated on a controller install
+## lab-13a — the 24-GPU / 3-node gang (JobSet + Kueue)
 
-The scaling spec also calls for **lab-13a** — a 24-GPU **non-power-of-2 gang** admitted by **JobSet + Kueue** across 3 nodes (the placement story that a 16-GPU/2-node pool can't show). On this cluster the **JobSet and Kueue CRDs are not installed** (both `NotFound`), so lab-13a needs those controllers stood up first — an infra change on the shared, scarce-Flex cluster that is **flagged for an explicit decision** rather than done implicitly. lab-13b above needs no new CRDs and is captured today.
+**Objective:** Admit a **24-GPU non-power-of-2 gang** as a single Kueue Workload, place it **one 8-GPU pod per node across all three nodes**, run a real 24-rank all-reduce to completion, and prove the quota gate by submitting a **32-GPU** gang that Kueue refuses to admit.
+
+> **Why 3 nodes?** 24 is not a power of two and does not fit in a 16-GPU/2-node pool at all. The interesting scheduling behaviour — *all-or-nothing* admission of a gang that must land on **three** nodes simultaneously, and a quota boundary (24) that sits **exactly** at the full pool — only exists at N ≥ 3. A 2-node pool can neither express the 24-way gang nor demonstrate the 3-node atomic placement.
+
+```bash
+bash labs/lab-13-topology-resilience/run_gang.sh
+```
+
+The runner uses the same guarded borrow window (scale `gpu-holder` 3→0; the gang pods *are* the occupancy; EXIT trap deletes the JobSet/queues and re-arms the holder to 3). It applies a 24-GPU `ClusterQueue`/`LocalQueue` ([`manifests/kueue-gpu-queues-24.yaml`](../../manifests/kueue-gpu-queues-24.yaml)) and a 3-replica JobSet ([`manifests/jobset-nccl-24.yaml`](../../manifests/jobset-nccl-24.yaml)), then a 4-replica (32-GPU) copy to hit the quota gate.
+
+**Prerequisites (one-time infra):** the **JobSet** (v0.12.0) and **Kueue** (v0.18.3) controllers, installed on `asia-east1-c` on 2026-07-24 to match the `us-central1` lab-08 versions.
+
+> **hostNetwork gotcha (why this needs the downward API).** The pods run `hostNetwork: true`, so inside a pod `hostname` returns the **node** name, not the pod name — there is no way to recover "which replica am I" from the hostname. The node-rank is instead read from the JobSet-injected **`jobset.sigs.k8s.io/job-index` annotation** via the downward API (with a pod-name parse as fallback). Each pod then launches 8 local ranks with manual `RANK=$((NODE_RANK*8+i))` env — the same c10d bypass lab-06/12/13b use, avoiding torchrun's fragile multi-pod rendezvous.
+
+### What was measured (real output)
+
+**1. Gang admitted as ONE Workload — `assets/lab-13/gang_admission.txt`**
+
+```
+NAME                     QUEUE       RESERVED IN   ADMITTED   FINISHED   AGE
+jobset-nccl-gang-51855   gpu-lq-24   gpu-cq-24     True                  11s
+  jobset-nccl-gang-51855: cq=gpu-cq-24 conds=[('QuotaReserved','True'),('Admitted','True')]
+```
+
+The entire 3-Job JobSet is a **single** Kueue Workload — Kueue reserves all 24 GPUs together (`QuotaReserved=True`) and admits atomically (captured 11 s in, before the run finished). That is the gang guarantee: all 24 or none.
+
+**2. One 8-GPU pod per node, all three nodes — `assets/lab-13/gang_placement.txt`**
+
+```
+NAME                         NODE
+nccl-gang-worker-0-0-…       …-q0qn
+nccl-gang-worker-1-0-…       …-d7j7
+nccl-gang-worker-2-0-…       …-lq6m     ← 3 pods, 3 distinct nodes, 8 GPU each
+```
+
+**3. The 24-rank all-reduce completes — `assets/lab-13/gang_allreduce_result.txt`**
+
+```
+host=…-q0qn node_rank=0 master=nccl-gang-worker-0-0.nccl-gang world=24
+GANG all_reduce OK value=24.0 (expect 24.0) world_size=24
+node_rank=0 done rc=0
+… node_rank=1 done rc=0 … node_rank=2 done rc=0
+```
+
+All 24 ranks rendezvous on the JobSet headless service, run a 1 GiB all-reduce, and the reduced value is exactly `24.0` (sum of 24 all-ones tensors). The JobSet reaches `Completed=True`.
+
+**4. A 32-GPU gang is gang-GATED — `assets/lab-13/gang_overquota_gate.txt`**
+
+```
+workload: jobset-nccl-gang-overquota-…  conds=[('QuotaReserved','False','Pending')]
+### pods for over-quota jobset (expect NONE):
+No resources found in default namespace.
+```
+
+Bumping the JobSet to 4 replicas (32 GPU) exceeds the 24-GPU `ClusterQueue` quota, so Kueue holds the Workload `Pending` with `QuotaReserved=False` and **creates zero pods** — the gang waits as a unit rather than partially scheduling. This is the all-or-nothing quota boundary that a 24-GPU quota on a 24-GPU pool makes crisp.
+
+### What lab-13a does **not** claim
+
+- It does **not** use GPUDirect-TCPX/RDMA — same plain-TCP/gVNIC fabric as the rest of the guide; this lab is about **scheduling/placement**, not fabric bandwidth.
+- The 32-GPU gate is a **quota** gate (24-GPU `ClusterQueue`), demonstrated on a 24-GPU pool; it is not a claim about physical capacity beyond 24 GPUs.
 
 ---
 

@@ -1,0 +1,6 @@
+# cmd: bash -c $'echo \'### Kueue Workload for the gang (expect Admitted / QuotaReserved=True, 24 GPU)\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o wide; echo; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o json | python3 -c \'import json,sys\nfor w in json.load(sys.stdin)["items"]:\n    n=w["metadata"]["name"]; conds=[(c["type"],c["status"]) for c in w.get("status",{}).get("conditions",[])]\n    adm=w.get("status",{}).get("admission",{}).get("clusterQueue","-")\n    print(f"  {n}: cq={adm} conds={conds}")\''
+### Kueue Workload for the gang (expect Admitted / QuotaReserved=True, 24 GPU)
+NAME                     QUEUE       RESERVED IN   ADMITTED   FINISHED   AGE
+jobset-nccl-gang-51855   gpu-lq-24   gpu-cq-24     True                  11s
+
+  jobset-nccl-gang-51855: cq=gpu-cq-24 conds=[('QuotaReserved', 'True'), ('Admitted', 'True')]

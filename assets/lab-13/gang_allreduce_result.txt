@@ -1,0 +1,12 @@
+# cmd: bash -c echo\ \'###\ per-worker\ log\ \(expect\ rank-0\ line:\ GANG\ all_reduce\ OK\ value=24.0\)\'\;\ for\ p\ in\ \$\(kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ pods\ -l\ jobset.sigs.k8s.io/jobset-name=nccl-gang\ -o\ name\ 2\>/dev/null\)\;\ do\ echo\ \"--\ \$p\ --\"\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ logs\ \$p\ 2\>\&1\ \|\ grep\ -E\ \'GANG\|node_rank\|host=\|FATAL\|Error\|error\'\ \|\ tail\ -6\ \|\|\ echo\ \'\(no\ log\)\'\;\ done
+### per-worker log (expect rank-0 line: GANG all_reduce OK value=24.0)
+-- pod/nccl-gang-worker-0-0-q8jl8 --
+host=gke-hypercomputer-a3-a3-high-flex-poo-27562461-q0qn node_rank=0 master=nccl-gang-worker-0-0.nccl-gang world=24
+GANG all_reduce OK value=24.0 (expect 24.0) world_size=24
+node_rank=0 done rc=0
+-- pod/nccl-gang-worker-1-0-dhf7x --
+host=gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 node_rank=1 master=nccl-gang-worker-0-0.nccl-gang world=24
+node_rank=1 done rc=0
+-- pod/nccl-gang-worker-2-0-nj5tp --
+host=gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m node_rank=2 master=nccl-gang-worker-0-0.nccl-gang world=24
+node_rank=2 done rc=0

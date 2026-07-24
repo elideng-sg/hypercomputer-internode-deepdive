@@ -18,9 +18,9 @@ Every mechanism and tool is paired with a lab capturing **actual measured data**
 >
 > **Newly captured (3-node scaling, `asia-east1-c`):** **lab-12** (12a/b/c) + **doc-15** — the 8/16/24-GPU all-reduce **curve** (peak busbw 465 → 23.7 → 14.95 GB/s across 1/2/3 nodes: the inter-node number is a *descending curve*, not a floor); ring-vs-tree (Tree beats Ring at every message size once ≥3 nodes; NCCL's default under-picks); and DDP/FSDP **scaling-efficiency collapse** (100% → 15.5% → 8.2% weak DDP — a slope one point can't show).
 >
-> **Also newly captured (3-node resilience):** **lab-13b** — a Flex-safe **job-level node-loss** test: a 24-GPU job runs, one node's ranks are killed mid-run, and the surviving 16 ranks surface a diagnosable fault signature (`ncclRemoteError` in seconds, not a silent hang) before a **16-GPU/2-node survivor set** reruns an all-reduce to completion — the survivor story two nodes can't tell.
+> **Also newly captured (3-node resilience + gang placement):** **lab-13b** — a Flex-safe **job-level node-loss** test: a 24-GPU job runs, one node's ranks are killed mid-run, and the surviving 16 ranks surface a diagnosable fault signature (`ncclRemoteError` in seconds, not a silent hang) before a **16-GPU/2-node survivor set** reruns an all-reduce to completion — the survivor story two nodes can't tell. **lab-13a** — a **24-GPU non-power-of-2 gang** admitted by **JobSet + Kueue** as one Workload and placed **one 8-GPU pod per node across all three nodes** (24-rank all-reduce → `value=24.0`), while a **32-GPU** gang is gang-**gated** to zero pods by the 24-GPU quota — an all-or-nothing placement a 2-node pool can't express.
 >
-> **Specced and in build (labs 13a, 14–21, Parts V–VI):** lab-13a (24-GPU JobSet+Kueue gang placement — gated on installing those controllers on the shared Flex cluster); **Part V** operations, diagnostics & troubleshooting (labs 14–17, docs 16–20); **Part VI** architecture & GCP integration (labs 18–21, docs 21–24), including a **live GPUDirect-TCPX before/after**. Design specs live in [`docs/superpowers/specs/`](docs/superpowers/specs/); the three tracks are coordinated by the [integration roadmap](docs/superpowers/specs/2026-07-23-integration-roadmap.md). These are **planned/in-progress and are labelled as such below** until their data is captured.
+> **Specced and in build (labs 14–21, Parts V–VI):** **Part V** operations, diagnostics & troubleshooting (labs 14–17, docs 16–20); **Part VI** architecture & GCP integration (labs 18–21, docs 21–24), including a **live GPUDirect-TCPX before/after**. Design specs live in [`docs/superpowers/specs/`](docs/superpowers/specs/); the three tracks are coordinated by the [integration roadmap](docs/superpowers/specs/2026-07-23-integration-roadmap.md). These are **planned/in-progress and are labelled as such below** until their data is captured.
 >
 > No fabric or measurement is ever claimed that wasn't read off a live cluster — see [`VERIFICATION.md`](VERIFICATION.md).
 
@@ -77,7 +77,7 @@ Two nodes prove a *cliff*; they cannot show a *curve*. On the 3-node (24 × H100
 | # | Focus | Lab | Why 2 nodes can't show it |
 | :-- | :--- | :--- | :--- |
 | 12 | **Captured:** 8/16/24-GPU all-reduce curve (busbw 465→23.7→14.95 GB/s) + ring-vs-tree (Tree beats Ring at every size at 3 nodes) + DDP/FSDP scaling efficiency (100%→15.5%→8.2%) | `lab-12` scaling sweep | The inter-node number is a *descending curve*, not a floor; efficiency is a slope one point can't show |
-| 13 | **Captured (13b):** Flex-safe job-level node-loss — killed one node's ranks mid-run, caught the survivor fault signature (`ncclRemoteError` in seconds, not the 90 s hang) + reran a 16-GPU/2-node **survivor set** to completion. 24-GPU JobSet+Kueue gang placement (13a) gated on a controller install | `lab-13` topology & resilience | Lose 1 of 2 → 0 survivors; the survivor/elastic story needs N≥3 |
+| 13 | **Captured (13a+13b):** (13a) 24-GPU non-power-of-2 **gang** admitted by JobSet+Kueue as one Workload, placed 1 pod/node across all 3 nodes (all-reduce `value=24.0`), 32-GPU gang gated to zero pods; (13b) Flex-safe job-level node-loss — killed one node's ranks mid-run, caught the survivor fault signature (`ncclRemoteError` in seconds, not the 90 s hang) + reran a 16-GPU/2-node **survivor set** to completion | `lab-13` topology & resilience | Lose 1 of 2 → 0 survivors, and 24 GPUs won't fit a 2-node pool; the gang/survivor story needs N≥3 |
 | doc-15 | **Captured:** "Scaling: the shape of the cliff" — the 8/16/24 busbw+latency curve, ring/tree finding, DDP/FSDP efficiency collapse, cross-cluster caveat | connective doc | — |
 
 ### Part V — Operations, Diagnostics & Troubleshooting  *(scenario-based; specced, in build)*
@@ -132,7 +132,7 @@ docs/
   part5-operations-diagnostics/   Diagnostic method, single-GPU health, comms/cluster/job triage, day-2 ops (in build)
   part6-architecture-gcp-integration/  GKE network design, storage/data path, e2e pipeline, inference serving (in build)
   superpowers/specs/              Design specs + integration roadmap
-labs/        Step-by-step practice; one dir per lab, with real captured output (lab-01..12 + lab-13b live; lab-13a + lab-14..21 in build)
+labs/        Step-by-step practice; one dir per lab, with real captured output (lab-01..13 live; lab-14..21 in build)
 manifests/   Reusable, verified Kubernetes YAML (incl. dcgm-exporter, fault injectors, tcpx/storage/serving)
 scripts/     Runner + capture/parse scripts (lib_capture.sh, provision_tcpx_pool.sh)
 assets/      Captured real outputs: logs, CSVs, plots, profiler timelines, diagrams
