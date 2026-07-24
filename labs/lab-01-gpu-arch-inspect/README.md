@@ -140,6 +140,8 @@ Device 0: "NVIDIA H100 80GB HBM3"
 - **Registers per Block:** 65536
 - **Max Threads per SM:** 2048 (allowing high occupancy for latency hiding)
 
+> ⚠️ **A caught bad reading — cross-check your tools.** The `Total amount of global memory` line reads `3242481418240 MBytes (3399988126892949503 bytes)` — physically impossible for an 80 GB card (that "bytes" value is ~3.4 exabytes). This is a **real, reproduced artifact**, left in verbatim on purpose: the statically-linked `deviceQuery` in this container misreads `cudaDeviceProp.totalGlobalMem` (a `size_t` printed with the wrong width/units), a known glitch on some CUDA/driver combos. It is *not* a hardware fault. The lesson is the discipline: **never trust a single tool's number in isolation.** The authoritative memory figure is `nvidia-smi`'s **81559 MiB (~80 GB)** from `smi.txt`/`smi-q.txt` above, which matches the H100 80GB spec. When two tools disagree, the anomaly is a reading bug until proven otherwise — reconcile before you report.
+
 #### `assets/lab-01/topo.txt` — Topology matrix
 
 ```

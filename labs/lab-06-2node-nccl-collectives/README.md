@@ -90,6 +90,12 @@ NCCL INFO Channel 00/16 :  0  7  6  5  4  3  2  1  8 15 14 13 12 11 10  9
 
 **≈ 17× slower** the instant the ring crosses the node boundary. This is *the* number Part II exists to explain — and the reason GPUDirect-TCPX/TCPXO (A3 High/Mega), GPUDirect-RDMA/RoCE (A3 Ultra/A4), and InfiniBand+SHARP (reference platforms) exist. On this cluster none of those are enabled, so we measure the honest floor: plain TCP.
 
+### From cliff to curve (the third data point)
+
+Two points prove the cliff *exists*; they cannot show its **shape**. [lab-12](../lab-12-scaling-sweep/) adds a **third** node (24 GPUs on the `asia-east1-c` cluster) and finds the inter-node number is a **descending curve**, not a floor: peak busbw drops a *further* ~37% (2→3 nodes) as the ring gains a third serial TCP hop, and the latency floor keeps climbing. See [doc-15: shape of the cliff](../../docs/15-scaling-shape-of-the-cliff.md).
+
+> **Cross-cluster caveat:** lab-06's ~28.6 GB/s is on `us-central1`; lab-12's 2-node point is 23.70 GB/s on `asia-east1-c`. Same fabric *class* (TCP/gVNIC), different cluster — a ~20% cross-cluster artifact, **not** a point on any single scaling curve. lab-12's curve stays entirely on one cluster.
+
 ---
 
 ## What this lab does **not** claim
