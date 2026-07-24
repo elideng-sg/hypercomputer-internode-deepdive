@@ -2,7 +2,7 @@
 
 XID errors are diagnostic codes emitted by the NVIDIA driver to the kernel log when a GPU fault or anomaly is detected. This reference table maps XID codes to their meanings, typical causes, and recommended actions.
 
-The table will be populated with verified XID codes as they are encountered and documented in the labs, particularly in Lab 02 (driver/CUDA health and diagnostics).
+It is the decode target for **[lab-14](../labs/lab-14-single-gpu-health-triage/)** (single-GPU health triage) and **[doc-17](../docs/part5-operations-diagnostics/17-single-gpu-node-health.md)** (single-GPU & node health), which show **where XIDs actually surface on managed GKE** — Node Problem Detector → Cloud Logging and `DCGM_FI_DEV_XID_ERRORS`, since containers can't read `dmesg` (see notes below).
 
 ---
 
@@ -20,6 +20,6 @@ The table will be populated with verified XID codes as they are encountered and 
 | **95** | Uncontained ECC Error | ECC error propagated to system (may affect kernel or other processes) | **Severe.** Check for memory corruption, verify system stability, RMA GPU if errors continue |
 
 **Notes:**
-- XIDs are logged to kernel ring buffer (`dmesg | grep NVRM`), syslog (`/var/log/syslog`), and DCGM (`dcgmi dmon -e`).
-- On GKE Container-Optimized OS, `dmesg` may be restricted in containers; use `kubectl get events` or node-level debugging pods for XID visibility.
-- This table is populated based on NVIDIA driver documentation (NVML/DCGM reference). Lab 02 verified the diagnostic tooling; Lab 10 will demonstrate fleet-scale XID monitoring.
+- On bare metal / DGX, XIDs land in the kernel ring buffer (`dmesg | grep NVRM`), syslog (`/var/log/syslog`), and DCGM (`dcgmi dmon -e 230` → `DCGM_FI_DEV_XID_ERRORS`).
+- **On managed GKE (Container-Optimized OS) containers cannot read `dmesg`** — that restriction is itself the lesson. XIDs surface instead via **Node Problem Detector → Cloud Logging** (query the node's log for `NVRM: Xid`) and the **`DCGM_FI_DEV_XID_ERRORS`** metric scraped by `dcgm-exporter` (the lab-10 fleet pipeline); `kubectl get events` on the node catches the NPD-raised condition. lab-14 walks the GKE-native path end to end.
+- Severity shorthand above (**Critical/Fatal/Severe**) follows the NVIDIA driver (NVML/DCGM) reference. Codes **48/63/64/79/94/95** are the hardware-fault family that is **unsafe to inject live** on held Flex capacity — lab-14 decodes them from **curated, clearly-labeled** captured signatures, while throttle/thermal (a benign, reversible load) is reproduced for real.
