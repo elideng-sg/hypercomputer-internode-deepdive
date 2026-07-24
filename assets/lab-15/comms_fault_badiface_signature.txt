@@ -1,0 +1,7 @@
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7:936:936 [0] NCCL INFO NCCL_SOCKET_IFNAME set to nonexistent0
+gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7:936:936 [0] bootstrap.cc:48 NCCL WARN Bootstrap : no socket interface found
+[rank0]: torch.distributed.DistBackendError: NCCL error in: /opt/pytorch/pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2261, internal error - please report this issue to the NCCL developers, NCCL version 2.22.3
+[rank0]: ncclInternalError: Internal check failed.
+[rank0]: Last error:
+[rank0]: Bootstrap : no socket interface found
+[rank0]:[W724 08:32:55.957111069 ProcessGroupNCCL.cpp:1262] Warning: WARNING: process group has NOT been destroyed before we destruct ProcessGroupNCCL. On normal program exit, the application should call destroy_process_group to ensure that any pending NCCL operations have finished in this process. In rare cases this process can exit before this point and block the progress of another member of the process group. This constraint has always been present,  but this warning has only been added since PyTorch 2.4 (function operator())

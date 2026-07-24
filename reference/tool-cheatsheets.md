@@ -103,10 +103,10 @@ ib_write_bw -d mlx5_0 -i 1 -F --report_gbits <server-ip> # client
 
 **Purpose:** Ethernet NIC statistics/config — link speed, MTU, offload, RoCE counters, drops.
 
-> **Named-but-not-run on these clusters.** No lab invokes `ethtool`; lab-05 (network-path inspection) reads NIC inventory from `/sys/class/net` + `/proc/net/dev` and node annotations instead (the `networkstatic/iperf3` image ships no `iproute2`/`ethtool`). It is documented in [T5](../docs/toolkit/T5-networking-fabric-tools.md); the live `ethtool -S` drop/counter deltas are a **lab-15** target (inter-node comms debug). Reference form:
+> **Named-but-not-run on these clusters.** No lab invokes `ethtool`; lab-05 (network-path inspection) reads NIC inventory from `/sys/class/net` + `/proc/net/dev` and node annotations instead (the `networkstatic/iperf3` image ships no `iproute2`/`ethtool`). **lab-15** localizes inter-node comms faults through **`NCCL_DEBUG=INFO`** (the transport/algo/channels NCCL chose) rather than NIC counters, so `ethtool` stays named-but-not-run; it is documented in [T5](../docs/toolkit/T5-networking-fabric-tools.md) as the host-side complement (`ethtool -S` drop/counter deltas) for a slow-but-alive collective. Reference form:
 
 ```bash
-# reference — NIC identity and counters (introduced live in lab-15):
+# reference — NIC identity and counters (host-side complement to NCCL_DEBUG):
 ethtool -i eth0                                          # driver (expect: gve), firmware, bus-info
 ethtool -S eth0                                          # per-queue rx/tx, drops, errors
 ```
