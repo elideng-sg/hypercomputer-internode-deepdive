@@ -1,0 +1,44 @@
+# lab-17 perf monitoring & day-2 ops — real capture, cluster asia-east1-c
+# borrowed node: gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   holder end=3/3
+
+## A. fleet baseline (GMP PromQL, idle — every GPU at the 345 MHz floor):
+### Fleet baseline (idle) read straight from Google Managed Prometheus:
+## SM clock (MHz):
+# GMP instant query: DCGM_FI_DEV_SM_CLOCK
+# status=success  series=56
+  hv7m gpu 0  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 1  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 2  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 3  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 4  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 5  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 6  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 7  DCGM_FI_DEV_SM_CLOCK = 345
+
+## B. dcgmi in anger (health + dmon, DCGM container):
+| Overall Health            | Healthy                                                  |
+GPU 0      345          70.125            0                 N/A          N/A          N/A          
+GPU 0      345          70.113            0                 0.000        0.000        0.000        
+GPU 0      345          70.104            0                 0.000        0.000        0.000        
+   ... (15-sample dmon time series in dcgmi_dmon_health.txt; dcgmproftester no-op'd -> GPU idle)
+
+## C. silent throttle DETECTED from GMP (gpu0 [bench] capped vs gpu1 [bench] control):
+# Silent-throttle signature (gpu0 [bench]): engine stays HIGH (=1.0) while SM clock COLLAPSES 1980->345 and power PINS at ~215W (the cap).
+# Contrast gpu1 [bench]: same load, clock holds ~1365MHz, power ~700W — healthy.
+  lq6m gpu0 [bench]: 14:32:17=345 14:32:32=345 14:32:47=1980 14:33:02=1980 14:33:17=1350 14:33:32=1350 14:33:47=345 14:34:02=345 14:34:17=345 14:34:32=345 14:34:47=345 14:35:02=345 14:35:17=345 14:35:32=345 14:35:47=1350 14:36:02=1350 14:36:17=1380 14:36:32=1380 14:36:47=345
+  lq6m gpu1 [bench]: 14:32:17=345 14:32:32=345 14:32:47=1980 14:33:02=1980 14:33:17=1395 14:33:32=1395 14:33:47=1365 14:34:02=1365 14:34:17=1365 14:34:32=1365 14:34:47=1365 14:35:02=1365 14:35:17=1380 14:35:32=1380 14:35:47=1380 14:36:02=1380 14:36:17=1350 14:36:32=1350 14:36:47=345
+  lq6m gpu0 [bench]: 14:32:17=71 14:32:32=71 14:32:47=120 14:33:02=120 14:33:17=700 14:33:32=700 14:33:47=215 14:34:02=215 14:34:17=215 14:34:32=215 14:34:47=214 14:35:02=214 14:35:17=214 14:35:32=214 14:35:47=703 14:36:02=703 14:36:17=700 14:36:32=700 14:36:47=72
+  lq6m gpu1 [bench]: 14:32:17=73 14:32:32=73 14:32:47=130 14:33:02=130 14:33:17=696 14:33:32=696 14:33:47=708 14:34:02=708 14:34:17=701 14:34:32=701 14:34:47=699 14:35:02=699 14:35:17=704 14:35:32=704 14:35:47=701 14:36:02=701 14:36:17=700 14:36:32=700 14:36:47=74
+  lq6m gpu0 [bench]: 14:32:17=0 14:32:32=0 14:32:47=0 14:33:02=0 14:33:17=1 14:33:32=1 14:33:47=1 14:34:02=1 14:34:17=1 14:34:32=1 14:34:47=1 14:35:02=1 14:35:17=1 14:35:32=1 14:35:47=1 14:36:02=1 14:36:17=1 14:36:32=1 14:36:47=0
+  lq6m gpu1 [bench]: 14:32:17=0 14:32:32=0 14:32:47=0 14:33:02=0 14:33:17=1 14:33:32=1 14:33:47=1 14:34:02=1 14:34:17=1 14:34:32=1 14:34:47=1 14:35:02=1 14:35:17=1 14:35:32=1 14:35:47=1 14:36:02=1 14:36:17=1 14:36:32=1 14:36:47=0
+
+## D. HTA on the 7-rank profiled DDP run:
+### communication vs computation overlap (%):
+   rank  comp_comm_overlap_pctg
+0     0                   28.39
+1     1                   28.78
+2     2                   28.12
+3     3                   28.53
+4     4                   28.39
+5     5                   28.45
+6     6                   28.88

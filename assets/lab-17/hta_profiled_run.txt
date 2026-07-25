@@ -1,0 +1,8 @@
+
+gpu-mon-wb:712:758 [5] proxy.cc:1521 NCCL WARN [Proxy Service 5] Failed to execute operation Close from rank 5, retcode 3
+
+gpu-mon-wb:713:767 [6] proxy.cc:1458 NCCL WARN [Service thread] Accept failed Resource temporarily unavailable
+
+gpu-mon-wb:713:767 [6] proxy.cc:1497 NCCL WARN [Service thread] Could not receive type from localRank 6, res=3, closed=0
+
+gpu-mon-wb:713:767 [6] proxy.cc:1521 NCCL WARN [Proxy Service 6] Failed to execute operation Close from rank 6, retcode 3

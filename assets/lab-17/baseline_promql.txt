@@ -1,0 +1,44 @@
+### Fleet baseline (idle) read straight from Google Managed Prometheus:
+## SM clock (MHz):
+# GMP instant query: DCGM_FI_DEV_SM_CLOCK
+# status=success  series=56
+  hv7m gpu 0  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 1  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 2  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 3  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 4  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 5  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 6  DCGM_FI_DEV_SM_CLOCK = 345
+  hv7m gpu 7  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 0  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 1  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 2  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 3  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 4  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 5  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 6  DCGM_FI_DEV_SM_CLOCK = 345
+  d7j7 gpu 7  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 0  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 0  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 1  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 1  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 2  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 2  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 3  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 3  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 4  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 4  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 5  DCGM_FI_DEV_SM_CLOCK = 345
+  lq6m gpu 5  DCGM_FI_DEV_SM_CLOCK = 345
+
+## Power draw (W):
+# GMP instant query: DCGM_FI_DEV_POWER_USAGE
+# status=success  series=56
+  hv7m gpu 0  DCGM_FI_DEV_POWER_USAGE = 71.039
+  hv7m gpu 1  DCGM_FI_DEV_POWER_USAGE = 71.965
+
+## GR engine active:
+# GMP instant query: DCGM_FI_PROF_GR_ENGINE_ACTIVE
+# status=success  series=56
+  hv7m gpu 0  DCGM_FI_PROF_GR_ENGINE_ACTIVE = 0
+  hv7m gpu 1  DCGM_FI_PROF_GR_ENGINE_ACTIVE = 0

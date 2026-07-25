@@ -20,7 +20,7 @@ Every mechanism and tool is paired with a lab capturing **actual measured data**
 >
 > **Also newly captured (3-node resilience + gang placement):** **lab-13b** — a Flex-safe **job-level node-loss** test: a 24-GPU job runs, one node's ranks are killed mid-run, and the surviving 16 ranks surface a diagnosable fault signature (`ncclRemoteError` in seconds, not a silent hang) before a **16-GPU/2-node survivor set** reruns an all-reduce to completion — the survivor story two nodes can't tell. **lab-13a** — a **24-GPU non-power-of-2 gang** admitted by **JobSet + Kueue** as one Workload and placed **one 8-GPU pod per node across all three nodes** (24-rank all-reduce → `value=24.0`), while a **32-GPU** gang is gang-**gated** to zero pods by the 24-GPU quota — an all-or-nothing placement a 2-node pool can't express.
 >
-> **Specced and in build (labs 14–21, Parts V–VI):** **Part V** operations, diagnostics & troubleshooting (labs 14–17, docs 16–20); **Part VI** architecture & GCP integration (labs 18–21, docs 21–24), including a **live GPUDirect-TCPX before/after**. Design specs live in [`docs/superpowers/specs/`](docs/superpowers/specs/); the three tracks are coordinated by the [integration roadmap](docs/superpowers/specs/2026-07-23-integration-roadmap.md). These are **planned/in-progress and are labelled as such below** until their data is captured.
+> **Now live — Part V operations, diagnostics & troubleshooting (labs 14–17, docs 16–20):** the scenario-based triage track — single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 ops — all **captured on the 3-node `asia-east1-c` cluster** (silent-throttle detection off Google Managed Prometheus, a real HTA comm/compute-overlap pass, five reproduced job-lifecycle failures, and more). **Specced and in build (labs 18–21, Part VI):** architecture & GCP integration (docs 21–24), including a **live GPUDirect-TCPX before/after**. Design specs live in [`docs/superpowers/specs/`](docs/superpowers/specs/); the tracks are coordinated by the [integration roadmap](docs/superpowers/specs/2026-07-23-integration-roadmap.md). Part VI is **planned/in-progress and labelled as such below** until its data is captured.
 >
 > No fabric or measurement is ever claimed that wasn't read off a live cluster — see [`VERIFICATION.md`](VERIFICATION.md).
 
@@ -80,7 +80,7 @@ Two nodes prove a *cliff*; they cannot show a *curve*. On the 3-node (24 × H100
 | 13 | **Captured (13a+13b):** (13a) 24-GPU non-power-of-2 **gang** admitted by JobSet+Kueue as one Workload, placed 1 pod/node across all 3 nodes (all-reduce `value=24.0`), 32-GPU gang gated to zero pods; (13b) Flex-safe job-level node-loss — killed one node's ranks mid-run, caught the survivor fault signature (`ncclRemoteError` in seconds, not the 90 s hang) + reran a 16-GPU/2-node **survivor set** to completion | `lab-13` topology & resilience | Lose 1 of 2 → 0 survivors, and 24 GPUs won't fit a 2-node pool; the gang/survivor story needs N≥3 |
 | doc-15 | **Captured:** "Scaling: the shape of the cliff" — the 8/16/24 busbw+latency curve, ring/tree finding, DDP/FSDP efficiency collapse, cross-cluster caveat | connective doc | — |
 
-### Part V — Operations, Diagnostics & Troubleshooting  *(scenario-based; specced, in build)*
+### Part V — Operations, Diagnostics & Troubleshooting  *(scenario-based; **live** — captured on the 3-node cluster)*
 Every existing lab walks the *healthy path*. Part V is the missing skill: **symptom → hypothesis → tool → read the output → root cause → fix**.
 | # | Layer | Lab (scenario) |
 | :-- | :--- | :--- |
@@ -129,10 +129,10 @@ docs/
   part3-clustering-execution/     GKE scheduling, JobSet/Kueue, DDP/FSDP+profiling, fleet observability
   part4-platform-reference-arch/  DGX/HGX, BlueField/DOCA, Spectrum-X, DGX SuperPOD
   15-scaling-shape-of-the-cliff.md   Scaling bridge: 8/16/24-GPU curve + ring/tree (captured)
-  part5-operations-diagnostics/   Diagnostic method, single-GPU health, comms/cluster/job triage, day-2 ops (in build)
+  part5-operations-diagnostics/   Diagnostic method, single-GPU health, comms/cluster/job triage, day-2 ops (live)
   part6-architecture-gcp-integration/  GKE network design, storage/data path, e2e pipeline, inference serving (in build)
   superpowers/specs/              Design specs + integration roadmap
-labs/        Step-by-step practice; one dir per lab, with real captured output (lab-01..13 live; lab-14..21 in build)
+labs/        Step-by-step practice; one dir per lab, with real captured output (lab-01..17 live; lab-18..21 in build)
 manifests/   Reusable, verified Kubernetes YAML (incl. dcgm-exporter, fault injectors, tcpx/storage/serving)
 scripts/     Runner + capture/parse scripts (lib_capture.sh, provision_tcpx_pool.sh)
 assets/      Captured real outputs: logs, CSVs, plots, profiler timelines, diagrams

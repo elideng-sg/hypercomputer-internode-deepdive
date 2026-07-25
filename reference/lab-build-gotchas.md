@@ -209,4 +209,38 @@ wait_pod_state() {
 
 ---
 
-*(Appended as labs are built. Next: lab-17 day-2 perf monitoring — see below once captured.)*
+## G15 — backslash-escaped quotes inside an f-string expression break `python3 -c` (lab-17)
+
+**Symptom.** Every PromQL query in `run_monitoring.sh` printed, instead of data:
+
+```
+  File "<string>", line 3
+    print(f"# status={d.get(\"status\")}  series={len(r)}")
+                             ^
+SyntaxError: unexpected character after line continuation character
+```
+
+Both the instant-query and range-query helpers were affected, so Phase A (baseline) and Phase C (regression) produced *only* the traceback — the crux captures of the lab.
+
+**Root cause.** The Python was passed as `python3 -c 'CODE'` (single-quoted in bash), and `CODE` contained an f-string whose **replacement field** used escaped double quotes: `f"...{ d.get(\"status\") }..."`. On Python **< 3.12**, backslashes are not allowed inside the expression part of an f-string — the parser reads the `\"` as a stray line-continuation and dies. It is a *parse* error, so it fires before any query runs. (3.12+ relaxed this via PEP 701, but the container/host Python here is 3.10.)
+
+**Fix.** Keep backslashes out of f-string expressions. Either (a) build the string with plain concatenation, or (b) hoist the format literal into a named variable:
+
+```python
+print("# status=" + str(d.get("status")) + "  series=" + str(len(r)))   # (a)
+FMT = "%H:%M:%S"; ts = datetime.datetime.fromtimestamp(t, datetime.timezone.utc).strftime(FMT)  # (b)
+```
+
+**Recovery without re-running the lab.** GMP/Cloud Monitoring **retains** the ingested series, so the throttle window was re-queryable after the fact: re-issue the same `query_range` with the corrected parser over the original `[start,end]` epochs (captured in the run log) and you get the identical data back — no need to re-borrow a node. (Also swapped the deprecated `datetime.utcfromtimestamp()` for a tz-aware `fromtimestamp(..., timezone.utc)`.)
+
+## G16 — `dcgmproftester` is a no-op in the DCGM 4.4.0 image on R580 (lab-17)
+
+In Phase B the DCGM Job ran `dcgmproftester --no-dcgm-validation -t 1004 -d 25` in the background to give `dcgmi dmon` a real tensor load to show. It produced **no load**: `dcgmi dmon` reported `SMACT=0.000 TENSO=0.000` and `SMCLK=345` (idle floor) for all 15 samples. `dcgmi discovery -l` and `dcgmi health -c` (→ `Overall Health: Healthy`) worked fine, so the tool wiring is sound — `dcgmproftester` just silently fails to generate work in this image/driver combo (same cuda13-plugin family as the `dcgmi diag` gap, G13). **Takeaway:** don't rely on `dcgmproftester` to create load on R580; drive load with a real CUDA workload (the lab's `load_gpu.py` fp16 GEMM) and read DCGM either via `dcgmi dmon` against that, or — as lab-17 does for the regression — straight off the monitoring pipeline. The `dcgmi dmon` field-set demo still stands on its own (it shows the tool and its field IDs), so the capture was kept as-is with an honest note.
+
+## Insight (not a bug) — managed DCGM series carry per-pod attribution; a borrowed GPU shows *two* series
+
+When Phase C range-queried the borrowed node, each GPU returned **two** time series for the same metric, distinguished only by the `container`/`pod` labels: one `container=bench` (the lab-17 workbench `gpu-mon-wb` that actually held the GPU under load) and one `container=holder` (the `gpu-holder` pod that **reclaimed** the node after the EXIT trap and now sits idle). GMP inherits the DCGM device-plugin's Kubernetes attribution, so the "who owns this GPU right now" changes across the borrow/return, and a naive `metric{gpu="0"}` returns both the loaded history *and* the idle-after aftermath. **Filter by `container`/`pod`** (or `pod=~"gpu-mon-wb"`) to isolate the workload you care about — otherwise the idle reclaimer's flatline muddies the signal. This is also *useful*: `DCGM_FI_*{pod="..."}` lets you attribute throttle/OOM/utilisation to a specific workload, which is exactly what the `GPUIdleButAllocated` cost alert keys on.
+
+---
+
+*(Appended as labs are built. Part V complete through lab-17. Next: Part VI architecture labs.)*
