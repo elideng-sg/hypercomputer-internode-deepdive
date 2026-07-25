@@ -1,0 +1,13 @@
+# cmd: bash -c echo\ \'###\ Job\ status\ \(expect\ Failed\,\ reason\ BackoffLimitExceeded\,\ 3\ failed\ attempts\):\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ job\ retry-fault\ -o\ wide\;\ echo\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ job\ retry-fault\ -o\ jsonpath=\'\{range\ .status.conditions\[\*\]\}\{.type\}=\{.status\}\ reason=\{.reason\}\ msg=\{.message\}\{\"\\n\"\}\{end\}\'\;\ echo\;\ echo\ \'###\ one\ pod\ per\ attempt\ \(all\ Error\):\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ pods\ -l\ job-name=retry-fault\ -o\ wide
+### Job status (expect Failed, reason BackoffLimitExceeded, 3 failed attempts):
+NAME          STATUS   COMPLETIONS   DURATION   AGE   CONTAINERS   IMAGES                             SELECTOR
+retry-fault   Failed   0/1           43s        43s   flaky        nvcr.io/nvidia/pytorch:24.10-py3   batch.kubernetes.io/controller-uid=112c7069-86a1-47a7-8d36-99060f3921af
+
+FailureTarget=True reason=BackoffLimitExceeded msg=Job has reached the specified backoff limit
+Failed=True reason=BackoffLimitExceeded msg=Job has reached the specified backoff limit
+
+### one pod per attempt (all Error):
+NAME                READY   STATUS   RESTARTS   AGE   IP           NODE                                                  NOMINATED NODE   READINESS GATES
+retry-fault-6t47q   0/1     Error    0          43s   10.48.5.17   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>
+retry-fault-gqzm5   0/1     Error    0          30s   10.48.6.10   gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7   <none>           <none>
+retry-fault-xx6gg   0/1     Error    0          8s    10.48.5.18   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>

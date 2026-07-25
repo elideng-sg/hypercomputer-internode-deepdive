@@ -1,0 +1,10 @@
+# cmd: bash -c $'echo \'### Kueue Workload for the 32-GPU gang (expect QuotaReserved/Admitted = False):\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o wide; echo; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o json | python3 -c \'import json,sys\nfor w in json.load(sys.stdin)["items"]:\n    n=w["metadata"]["name"]\n    if "lab16-overquota-32" in n:\n        conds=[(c["type"],c["status"],c.get("reason",""),c.get("message","")[:90]) for c in w.get("status",{}).get("conditions",[])]\n        print("  workload:", n)\n        [print("   ",c) for c in conds]\'; echo; echo \'### pods for the gated JobSet (expect NONE created):\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get pods -l jobset.sigs.k8s.io/jobset-name=lab16-overquota-32 2>&1 | tail -2'
+### Kueue Workload for the 32-GPU gang (expect QuotaReserved/Admitted = False):
+NAME                              QUEUE       RESERVED IN   ADMITTED   FINISHED   AGE
+jobset-lab16-overquota-32-5f7a6   gpu-lq-24                                       12s
+
+  workload: jobset-lab16-overquota-32-5f7a6
+    ('QuotaReserved', 'False', 'Pending', "couldn't assign flavors to pod set worker: insufficient quota for nvidia.com/gpu in flavor")
+
+### pods for the gated JobSet (expect NONE created):
+No resources found in default namespace.

@@ -1,0 +1,7 @@
+Pods Statuses:    0 Active (0 Ready) / 0 Succeeded / 3 Failed
+Pod Template:
+--
+  Type     Reason                Age   From            Message
+  ----     ------                ----  ----            -------
+--
+  Warning  BackoffLimitExceeded  3s    job-controller  Job has reached the specified backoff limit

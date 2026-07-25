@@ -1,0 +1,58 @@
+# lab-16 cluster & job failure triage — 2026-07-25T14:06:02Z
+# cluster asia-east1-c   gpu-holder start=3/3 end=3/3   (NO borrow window: holder untouched)
+
+## A. OOMKilled (exit 137):
+      Reason:       OOMKilled
+      Exit Code:    137
+      Started:      Sat, 25 Jul 2026 14:04:07 +0000
+      Finished:     Sat, 25 Jul 2026 14:04:08 +0000
+
+## B. CrashLoopBackOff:
+# get (note RESTARTS climbing, STATUS CrashLoopBackOff):
+# cmd: kubectl get pod crashloop-fault -o wide
+NAME              READY   STATUS             RESTARTS      AGE   IP           NODE                                                  NOMINATED NODE   READINESS GATES
+crashloop-fault   0/1     CrashLoopBackOff   1 (15s ago)   20s   10.48.5.16   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>
+
+# describe — last state + backoff event:
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+
+## C. Unschedulable:
+# get (STATUS should be Pending):
+# cmd: kubectl get pod unschedulable-fault -o wide
+NAME                  READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+unschedulable-fault   0/1     Pending   0          20s   <none>   <none>   <none>           <none>
+
+# FailedScheduling event(s):
+# cmd: kubectl describe pod unschedulable-fault
+Name:             unschedulable-fault
+Namespace:        default
+--
+
+## D. Kueue-inadmissible gang (32>24):
+# cmd: bash -c $'echo \'### Kueue Workload for the 32-GPU gang (expect QuotaReserved/Admitted = False):\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o wide; echo; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads -n default -o json | python3 -c \'import json,sys\nfor w in json.load(sys.stdin)["items"]:\n    n=w["metadata"]["name"]\n    if "lab16-overquota-32" in n:\n        conds=[(c["type"],c["status"],c.get("reason",""),c.get("message","")[:90]) for c in w.get("status",{}).get("conditions",[])]\n        print("  workload:", n)\n        [print("   ",c) for c in conds]\'; echo; echo \'### pods for the gated JobSet (expect NONE created):\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get pods -l jobset.sigs.k8s.io/jobset-name=lab16-overquota-32 2>&1 | tail -2'
+### Kueue Workload for the 32-GPU gang (expect QuotaReserved/Admitted = False):
+NAME                              QUEUE       RESERVED IN   ADMITTED   FINISHED   AGE
+jobset-lab16-overquota-32-5f7a6   gpu-lq-24                                       12s
+
+  workload: jobset-lab16-overquota-32-5f7a6
+    ('QuotaReserved', 'False', 'Pending', "couldn't assign flavors to pod set worker: insufficient quota for nvidia.com/gpu in flavor")
+
+### pods for the gated JobSet (expect NONE created):
+No resources found in default namespace.
+
+## E. Job retry -> BackoffLimitExceeded:
+### Job status (expect Failed, reason BackoffLimitExceeded, 3 failed attempts):
+NAME          STATUS   COMPLETIONS   DURATION   AGE   CONTAINERS   IMAGES                             SELECTOR
+retry-fault   Failed   0/1           43s        43s   flaky        nvcr.io/nvidia/pytorch:24.10-py3   batch.kubernetes.io/controller-uid=112c7069-86a1-47a7-8d36-99060f3921af
+
+FailureTarget=True reason=BackoffLimitExceeded msg=Job has reached the specified backoff limit
+Failed=True reason=BackoffLimitExceeded msg=Job has reached the specified backoff limit
+
+### one pod per attempt (all Error):
+NAME                READY   STATUS   RESTARTS   AGE   IP           NODE                                                  NOMINATED NODE   READINESS GATES
+retry-fault-6t47q   0/1     Error    0          43s   10.48.5.17   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>
+retry-fault-gqzm5   0/1     Error    0          30s   10.48.6.10   gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7   <none>           <none>
+retry-fault-xx6gg   0/1     Error    0          8s    10.48.5.18   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>

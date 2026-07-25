@@ -1,0 +1,5 @@
+# cmd: bash -c echo\ \'###\ the\ 24-GPU\ ClusterQueue\ \(nominalQuota\ nvidia.com/gpu\ =\ 24\):\'\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ clusterqueue\ gpu-cq-24\ -o\ wide\;\ kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ get\ clusterqueue\ gpu-cq-24\ -o\ jsonpath=\'\{.spec.resourceGroups\[0\].flavors\[0\].resources\}\'\;\ echo
+### the 24-GPU ClusterQueue (nominalQuota nvidia.com/gpu = 24):
+NAME        COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+gpu-cq-24            BestEffortFIFO   0                   0
+[{"name":"cpu","nominalQuota":"96"},{"name":"memory","nominalQuota":"384Gi"},{"name":"nvidia.com/gpu","nominalQuota":"24"}]

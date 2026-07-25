@@ -1,0 +1,3 @@
+# cmd: kubectl get pod oom-fault -o wide
+NAME        READY   STATUS      RESTARTS   AGE   IP           NODE                                                  NOMINATED NODE   READINESS GATES
+oom-fault   0/1     OOMKilled   0          4s    10.48.5.15   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>

@@ -1,0 +1,64 @@
+# cmd: kubectl describe pod oom-fault
+Name:             oom-fault
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m/10.140.0.11
+Start Time:       Sat, 25 Jul 2026 14:04:06 +0000
+Labels:           app=lab16
+Annotations:      <none>
+Status:           Failed
+IP:               10.48.5.15
+IPs:
+  IP:  10.48.5.15
+Containers:
+  hog:
+    Container ID:  containerd://3cfcce3544174547484f7a68e480d4ba5014fd41b8f8e1b48175ff0c91edcd38
+    Image:         nvcr.io/nvidia/pytorch:24.10-py3
+    Image ID:      nvcr.io/nvidia/pytorch@sha256:36555b43d382425a4281ecfbcb41de2f95fb542ca8e531c5486be10df8026f9d
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      python3
+      -c
+      import time; print('# allocating 4 GiB under a 256Mi limit', flush=True); x=bytearray(4*1024**3); time.sleep(5)
+    State:          Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+      Started:      Sat, 25 Jul 2026 14:04:07 +0000
+      Finished:     Sat, 25 Jul 2026 14:04:08 +0000
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:        500m
+      memory:     256Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-t4kr9 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   False 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-t4kr9:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 op=Exists
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  4s    default-scheduler  Successfully assigned default/oom-fault to gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m
+  Normal  Pulled     3s    kubelet            spec.containers{hog}: Container image "nvcr.io/nvidia/pytorch:24.10-py3" already present on machine
+  Normal  Created    3s    kubelet            spec.containers{hog}: Created container: hog
+  Normal  Started    3s    kubelet            spec.containers{hog}: Started container hog

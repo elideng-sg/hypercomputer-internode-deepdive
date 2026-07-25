@@ -1,0 +1,12 @@
+# get (STATUS should be Pending):
+# cmd: kubectl get pod unschedulable-fault -o wide
+NAME                  READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+unschedulable-fault   0/1     Pending   0          20s   <none>   <none>   <none>           <none>
+
+# FailedScheduling event(s):
+# cmd: kubectl describe pod unschedulable-fault
+Name:             unschedulable-fault
+Namespace:        default
+--
+  Warning  FailedScheduling   20s   default-scheduler   0/4 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 3 Insufficient nvidia.com/gpu. no new claims to deallocate, preemption: 0/4 nodes are available: 4 Preemption is not helpful for scheduling.
+  Normal   NotTriggerScaleUp  20s   cluster-autoscaler  Pod didn't trigger scale-up: 1 max node group size reached

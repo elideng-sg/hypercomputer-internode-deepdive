@@ -1,0 +1,45 @@
+# cmd: kubectl describe job retry-fault
+Name:             retry-fault
+Namespace:        default
+Selector:         batch.kubernetes.io/controller-uid=112c7069-86a1-47a7-8d36-99060f3921af
+Labels:           app=lab16
+Annotations:      <none>
+Parallelism:      1
+Completions:      1
+Completion Mode:  NonIndexed
+Suspend:          false
+Backoff Limit:    2
+Start Time:       Sat, 25 Jul 2026 14:05:18 +0000
+Pods Statuses:    0 Active (0 Ready) / 0 Succeeded / 3 Failed
+Pod Template:
+  Labels:  batch.kubernetes.io/controller-uid=112c7069-86a1-47a7-8d36-99060f3921af
+           batch.kubernetes.io/job-name=retry-fault
+           controller-uid=112c7069-86a1-47a7-8d36-99060f3921af
+           job-name=retry-fault
+  Containers:
+   flaky:
+    Image:      nvcr.io/nvidia/pytorch:24.10-py3
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      bash
+      -lc
+      echo '# attempt: failing (exit 1)'; sleep 2; exit 1
+    Limits:
+      cpu:     250m
+      memory:  256Mi
+    Requests:
+      cpu:         250m
+      memory:      128Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     op=Exists
+Events:
+  Type     Reason                Age   From            Message
+  ----     ------                ----  ----            -------
+  Normal   SuccessfulCreate      43s   job-controller  Created pod: retry-fault-6t47q
+  Normal   SuccessfulCreate      30s   job-controller  Created pod: retry-fault-gqzm5
+  Normal   SuccessfulCreate      8s    job-controller  Created pod: retry-fault-xx6gg
+  Warning  BackoffLimitExceeded  3s    job-controller  Job has reached the specified backoff limit
