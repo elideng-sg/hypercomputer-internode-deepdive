@@ -1,0 +1,64 @@
+# lab-17 — GPU day-2 alerting rules (portable Prometheus / GMP format)
+#
+# Grounded in the fields the GKE-managed dcgm-exporter ACTUALLY exports (the
+# DCGM_FI_* set captured live in assets/lab-17/dcgm_prof_fields.txt — 21 fields:
+# 10 DCGM_FI_DEV_* + 11 DCGM_FI_PROF_*) — deliberately
+# NOT DCGM_FI_DEV_XID_ERRORS or ECC, which the managed exporter does not carry
+# (gotcha G11; XID surfaces via NPD -> Cloud Logging instead — see doc-19/doc-17).
+# Labels available on every series: gpu, Hostname (see assets/lab-17/*promql*).
+#
+# Deploy either way:
+#   * Self-hosted Prometheus: reference this file from `rule_files:` in prometheus.yml.
+#   * Google Managed Prometheus: wrap under a `Rules` CR
+#       (apiVersion: monitoring.googleapis.com/v1, kind: Rules, spec.groups = below).
+#
+# The marquee rule is GPUSilentThrottle: the exact signature lab-17 induces and
+# reads back from the pipeline in Phase C — SMs busy but clocks collapsed. It is
+# the "catch it on the dashboard before it becomes a crash / SLO miss" alert.
+groups:
+- name: gpu-health.rules
+  rules:
+  - alert: GPUSilentThrottle
+    # Engine busy (real work) but SM clock collapsed to near the idle floor:
+    # a power/thermal cap silently halving throughput. lab-17 Phase C induces
+    # this with a 700->200 W cap and this rule fires on the GMP time series.
+    expr: (DCGM_FI_PROF_GR_ENGINE_ACTIVE > 0.5) and (DCGM_FI_DEV_SM_CLOCK < 1000)
+    for: 2m
+    labels: { severity: warning, layer: gpu-die }
+    annotations:
+      summary: "GPU {{ $labels.gpu }} on {{ $labels.Hostname }} is throttling under load"
+      description: "GR engine active >50% but SM clock <1000 MHz for 2m — power/thermal cap, not idle. Check DCGM_FI_DEV_POWER_USAGE and Current Power Limit."
+
+  - alert: GPUThermalRisk
+    expr: DCGM_FI_DEV_GPU_TEMP > 85 or DCGM_FI_DEV_MEMORY_TEMP > 95
+    for: 1m
+    labels: { severity: critical, layer: node }
+    annotations:
+      summary: "GPU {{ $labels.gpu }} on {{ $labels.Hostname }} thermal risk"
+      description: "GPU temp >85 C (or HBM >95 C) — approaching HW thermal slowdown. Check node/rack cooling."
+
+  - alert: GPUMemoryNearFull
+    expr: (DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL) > 0.95
+    for: 5m
+    labels: { severity: warning, layer: framework }
+    annotations:
+      summary: "GPU {{ $labels.gpu }} on {{ $labels.Hostname }} framebuffer >95% full"
+      description: "HBM nearly exhausted for 5m — an OOMKilled (exit 137) is imminent for this workload (see doc-19)."
+
+  - alert: GPUIdleButAllocated
+    # Day-2 COST signature: a held/allocated GPU doing no work. Catches the
+    # wasted-capacity case the always-hold posture must guard against.
+    expr: (DCGM_FI_PROF_GR_ENGINE_ACTIVE < 0.02) and (DCGM_FI_DEV_FB_USED > 1024)
+    for: 30m
+    labels: { severity: info, layer: scheduler }
+    annotations:
+      summary: "GPU {{ $labels.gpu }} on {{ $labels.Hostname }} allocated but idle"
+      description: "Engine <2% active yet FB in use for 30m — a stranded/allocated-but-unused GPU. Reclaim or investigate the workload."
+
+  - alert: DCGMExporterDown
+    expr: up{job="gke-managed-dcgm-exporter"} == 0
+    for: 5m
+    labels: { severity: critical, layer: observability }
+    annotations:
+      summary: "dcgm-exporter target down on a GPU node"
+      description: "No DCGM metrics scraped for 5m — the fleet is flying blind. Check the dcgm-exporter DaemonSet in gke-managed-system."

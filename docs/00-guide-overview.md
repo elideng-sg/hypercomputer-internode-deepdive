@@ -39,7 +39,7 @@ flowchart TD
 
 4. **Part IV — Platform and reference architectures:** How NVIDIA builds AI factories — DGX/HGX systems and system-level troubleshooting (NVSM, Fabric Manager), BlueField DPUs and DOCA, Spectrum-X Ethernet vs. Quantum InfiniBand vs. cloud fabrics, and the DGX SuperPOD reference architecture. Each component is contrasted with what the GCP A3 lab demonstrates, clearly separating measured facts (from the live cluster) from reference-architecture knowledge.
 
-5. **Part V — Operations, diagnostics & troubleshooting** *(scenario-based; specced, in build):* the skill Parts I–IV don't teach — **symptom → hypothesis → tool → read the output → root cause → fix**. A triage-method hub (doc-16), single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 operations, with the NVIDIA tools (`ncu`, `dcgmi dmon`, `nccl-tests`, `ethtool`, HTA, PromQL/Grafana) finally run *in anger*.
+5. **Part V — Operations, diagnostics & troubleshooting** *(scenario-based; **live** — captured on the 3-node cluster):* the skill Parts I–IV don't teach — **symptom → hypothesis → tool → read the output → root cause → fix**. A triage-method hub (doc-16), single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 operations, with the NVIDIA tools (`ncu`, `dcgmi dmon`, `nccl-tests`, `ethtool`, HTA, PromQL/Grafana) finally run *in anger*.
 
 6. **Part VI — Architecture & GCP integration** *(design-first use-cases; specced, in build):* how a GPU workload is actually architected and deployed on GCP — GKE network design as a decision (with a **live GPUDirect-TCPX before/after** that measures the cliff closing), the storage/data path, an end-to-end training pipeline, and inference serving + MLOps.
 
@@ -201,7 +201,7 @@ Each layer of the guide is built on a **three-way spine** that connects conceptu
 - Practice: `labs/lab-11-platform-compare/` (observe-and-compare exercises, contrasting the A3 lab with DGX/SuperPOD)
 - Proceed through sections 12 (BlueField DPUs), 13 (Spectrum-X fabrics), and 14 (DGX SuperPOD)
 
-**Part V — Operations, Diagnostics & Troubleshooting** *(scenario-based; in build):*
+**Part V — Operations, Diagnostics & Troubleshooting** *(scenario-based; **live** — captured on the 3-node cluster):*
 - Start at the triage hub: `docs/part5-operations-diagnostics/16-diagnostic-method.md`
 - Practice each scenario: `labs/lab-14-single-gpu-health-triage/`, `lab-15-internode-comms-debug/`, `lab-16-cluster-job-failure-triage/`, `lab-17-perf-monitoring-day2-ops/`
 - Docs 17–20 pair with those labs; every scenario ends in a root cause or an operational decision
