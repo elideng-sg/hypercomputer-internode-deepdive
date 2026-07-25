@@ -1,0 +1,67 @@
+# cmd: kubectl describe pod crashloop-fault
+Name:             crashloop-fault
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m/10.140.0.11
+Start Time:       Sat, 25 Jul 2026 14:04:18 +0000
+Labels:           app=lab16
+Annotations:      <none>
+Status:           Running
+IP:               10.48.5.16
+IPs:
+  IP:  10.48.5.16
+Containers:
+  flaky:
+    Container ID:  containerd://e64f15448caf268602bd45cf9adae5d213dc463d3f1a80906582b9ac1d8ff84d
+    Image:         nvcr.io/nvidia/pytorch:24.10-py3
+    Image ID:      nvcr.io/nvidia/pytorch@sha256:36555b43d382425a4281ecfbcb41de2f95fb542ca8e531c5486be10df8026f9d
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      bash
+      -lc
+      echo '# starting, will exit 1 in 2s (simulated startup crash)'; sleep 2; exit 1
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Sat, 25 Jul 2026 14:04:21 +0000
+      Finished:     Sat, 25 Jul 2026 14:04:23 +0000
+    Ready:          False
+    Restart Count:  1
+    Limits:
+      cpu:     250m
+      memory:  256Mi
+    Requests:
+      cpu:        250m
+      memory:     128Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-4cn8s (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-4cn8s:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 op=Exists
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  20s               default-scheduler  Successfully assigned default/crashloop-fault to gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m
+  Warning  BackOff    14s               kubelet            spec.containers{flaky}: Back-off restarting failed container flaky in pod crashloop-fault_default(6d9699a1-ccb4-4dfd-bae9-399c778a2072)
+  Normal   Pulled     0s (x3 over 19s)  kubelet            spec.containers{flaky}: Container image "nvcr.io/nvidia/pytorch:24.10-py3" already present on machine
+  Normal   Created    0s (x3 over 19s)  kubelet            spec.containers{flaky}: Created container: flaky
+  Normal   Started    0s (x3 over 19s)  kubelet            spec.containers{flaky}: Started container flaky

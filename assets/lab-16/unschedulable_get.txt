@@ -1,0 +1,3 @@
+# cmd: kubectl get pod unschedulable-fault -o wide
+NAME                  READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+unschedulable-fault   0/1     Pending   0          20s   <none>   <none>   <none>           <none>

@@ -1,0 +1,14 @@
+# get (note RESTARTS climbing, STATUS CrashLoopBackOff):
+# cmd: kubectl get pod crashloop-fault -o wide
+NAME              READY   STATUS             RESTARTS      AGE   IP           NODE                                                  NOMINATED NODE   READINESS GATES
+crashloop-fault   0/1     CrashLoopBackOff   1 (15s ago)   20s   10.48.5.16   gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m   <none>           <none>
+
+# describe — last state + backoff event:
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Sat, 25 Jul 2026 14:04:21 +0000
+--
+  Warning  BackOff    14s               kubelet            spec.containers{flaky}: Back-off restarting failed container flaky in pod crashloop-fault_default(6d9699a1-ccb4-4dfd-bae9-399c778a2072)
+  Normal   Pulled     0s (x3 over 19s)  kubelet            spec.containers{flaky}: Container image "nvcr.io/nvidia/pytorch:24.10-py3" already present on machine

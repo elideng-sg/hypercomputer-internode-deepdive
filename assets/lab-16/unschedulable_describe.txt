@@ -1,0 +1,47 @@
+# cmd: kubectl describe pod unschedulable-fault
+Name:             unschedulable-fault
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=lab16
+Annotations:      cloud.google.com/cluster_autoscaler_unhelpable_since: 2026-07-25T14:04:39+0000
+                  cloud.google.com/cluster_autoscaler_unhelpable_until: Inf
+Status:           Pending
+IP:               
+IPs:              <none>
+Containers:
+  greedy:
+    Image:      nvcr.io/nvidia/pytorch:24.10-py3
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      bash
+      -lc
+      echo should-never-run; sleep 30
+    Limits:
+      nvidia.com/gpu:  9
+    Requests:
+      nvidia.com/gpu:  9
+    Environment:       <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-xtnb6 (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-xtnb6:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              cloud.google.com/gke-nodepool=a3-high-flex-pool
+Tolerations:                 op=Exists
+                             nvidia.com/gpu:NoSchedule op=Exists
+Events:
+  Type     Reason             Age   From                Message
+  ----     ------             ----  ----                -------
+  Warning  FailedScheduling   20s   default-scheduler   0/4 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 3 Insufficient nvidia.com/gpu. no new claims to deallocate, preemption: 0/4 nodes are available: 4 Preemption is not helpful for scheduling.
+  Normal   NotTriggerScaleUp  20s   cluster-autoscaler  Pod didn't trigger scale-up: 1 max node group size reached

@@ -174,4 +174,39 @@ Error: Cannot load plugins. Unable to change to the plugin dir
 
 ---
 
-*(Appended as labs are built. Next: lab-16/lab-17 cluster & day-2 triage — see below once captured.)*
+## Cluster & job failure triage (lab-16)
+
+### G14 — `set -u` + a single-line `local` that uses one of its own just-declared vars in arithmetic
+
+**Symptom (lab-16, run 1).** The runner aborted immediately with:
+
+```
+run_failures.sh: line 66: max: unbound variable
+```
+
+on this helper — even though `max` is *assigned* on the very same line:
+
+```bash
+wait_pod_state() {
+  local pod="$1" want="$2" max="${3:-60}" end=$((SECONDS + max))   # <-- "max: unbound variable"
+  ...
+```
+
+**Root cause.** Bash evaluates the initializers in a single `local a=… b=… c=…` statement, but under `set -u` the names are **not yet in scope for each other** during that statement's own evaluation — `local` makes them local, then assigns. So the `$((SECONDS + max))` initializer references `max` before the shell considers it declared, and `set -u` (inherited from `scripts/lib_capture.sh`, gotcha G1) turns the unset read into a fatal error. Outside a `local` line the same code is fine, which is what makes it surprising.
+
+**Fix.** Split the arithmetic that depends on a same-statement var into its **own** `local` (or plain assignment) line:
+
+```bash
+wait_pod_state() {
+  local pod="$1" want="$2" max="${3:-60}"
+  local end=$((SECONDS + max))     # max is now fully in scope
+  ...
+```
+
+**Generalizes to:** any `local x=<expr-using-y> y=…` — declare in dependency order, one statement per dependent expression. Same class as G1/G8: a `set -euo pipefail` inherited from the capture lib turning an otherwise-silent shell quirk into a hard abort. (The EXIT trap fired correctly and cleaned up the one pod already created; the holder was never touched.)
+
+*(No GPU/driver gotchas in lab-16 — by design it runs entirely in the scheduler/quota/framework layer with zero GPU-borrow, so its failure signatures live in `kubectl`/Kueue/JobSet state, not on the device.)*
+
+---
+
+*(Appended as labs are built. Next: lab-17 day-2 perf monitoring — see below once captured.)*
