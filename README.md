@@ -20,7 +20,9 @@ Every mechanism and tool is paired with a lab capturing **actual measured data**
 >
 > **Also newly captured (3-node resilience + gang placement):** **lab-13b** — a Flex-safe **job-level node-loss** test: a 24-GPU job runs, one node's ranks are killed mid-run, and the surviving 16 ranks surface a diagnosable fault signature (`ncclRemoteError` in seconds, not a silent hang) before a **16-GPU/2-node survivor set** reruns an all-reduce to completion — the survivor story two nodes can't tell. **lab-13a** — a **24-GPU non-power-of-2 gang** admitted by **JobSet + Kueue** as one Workload and placed **one 8-GPU pod per node across all three nodes** (24-rank all-reduce → `value=24.0`), while a **32-GPU** gang is gang-**gated** to zero pods by the 24-GPU quota — an all-or-nothing placement a 2-node pool can't express.
 >
-> **Now live — Part V operations, diagnostics & troubleshooting (labs 14–17, docs 16–20):** the scenario-based triage track — single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 ops — all **captured on the 3-node `asia-east1-c` cluster** (silent-throttle detection off Google Managed Prometheus, a real HTA comm/compute-overlap pass, five reproduced job-lifecycle failures, and more). **Specced and in build (labs 18–21, Part VI):** architecture & GCP integration (docs 21–24), including a **live GPUDirect-TCPX before/after**. Design specs live in [`docs/superpowers/specs/`](docs/superpowers/specs/); the tracks are coordinated by the [integration roadmap](docs/superpowers/specs/2026-07-23-integration-roadmap.md). Part VI is **planned/in-progress and labelled as such below** until its data is captured.
+> **Now live — Part V operations, diagnostics & troubleshooting (labs 14–17, docs 16–20):** the scenario-based triage track — single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 ops — all **captured on the 3-node `asia-east1-c` cluster** (silent-throttle detection off Google Managed Prometheus, a real HTA comm/compute-overlap pass, five reproduced job-lifecycle failures, and more).
+>
+> **Now live — Part VI architecture & GCP integration (docs 21–24, labs 19–21):** the data path (**lab-19** — GCS via GCSFuse, a real starved-vs-fed GPU swing: 11.8% vs 100% busy), an **end-to-end training pipeline** (**lab-20** — a 2-node/16-GPU JobSet gang training on GCS data, loss 263 → 0.008, checkpoints back to GCS, cross-checked on DCGM), and **inference serving & autoscale** (**lab-21** — the serving saturation knee + **near-linear 1→8-GPU throughput scaling (7.24×)**, with the honest finding that the latency knee is the *serving stack*, not the GPU). **lab-18 (GPUDirect-TCPX)** is **staged**: the before (single-gVNIC) is measured, the after is blocked on a new multi-network pool (Dataplane V2 + scarce A3 Flex capacity) and shipped as a provisioning path + reference. Design specs live in [`docs/superpowers/specs/`](docs/superpowers/specs/); tracks are coordinated by the [integration roadmap](docs/superpowers/specs/2026-07-23-integration-roadmap.md).
 >
 > No fabric or measurement is ever claimed that wasn't read off a live cluster — see [`VERIFICATION.md`](VERIFICATION.md).
 
@@ -90,14 +92,14 @@ Every existing lab walks the *healthy path*. Part V is the missing skill: **symp
 | 19 | Cluster & job failure triage (OOM, crashloop, stuck gang, Kueue inadmissible) | `lab-16` cluster/job failure triage |
 | 20 | Performance monitoring & day-2 ops (baselines, Grafana/PromQL, regression detection) | `lab-17` perf monitoring & day-2 ops |
 
-### Part VI — Architecture & GCP Integration  *(design-first use-cases; specced, in build)*
+### Part VI — Architecture & GCP Integration  *(design-first use-cases; docs 21–24 + labs 19–21 live, lab-18 staged)*
 How a GPU workload is actually **architected and deployed** on GCP — the design skill.
 | # | Layer | Lab (design & stand up, then measure) |
 | :-- | :--- | :--- |
-| 21 | GKE network design (single-gVNIC vs TCPX vs TCPXO vs RDMA as a decision) | `lab-18` **enable GPUDirect-TCPX** — live gVNIC→TCPX before/after (flagship) |
-| 22 | Storage & the data path (GCSFuse, Parallelstore, Hyperdisk ML; the starved-GPU) | `lab-19` storage & data-path throughput |
-| 23 | End-to-end training pipeline (data → JobSet → checkpoints → metrics; WIF, Artifact Registry) | `lab-20` e2e training pipeline |
-| 24 | Inference serving & MLOps (Inference Gateway, autoscale on DCGM metrics, Vertex AI contrast) | `lab-21` inference serving + autoscale |
+| 21 | GKE network design (single-gVNIC vs TCPX vs TCPXO vs RDMA as a decision) | `lab-18` **enable GPUDirect-TCPX** — before (single-gVNIC) measured; after **staged** (new multi-network pool blocked on Dataplane V2 + Flex capacity) |
+| 22 | Storage & the data path (GCSFuse, Parallelstore, Hyperdisk ML; the starved-GPU) | `lab-19` storage & data-path throughput — **live** (starved 11.8% vs fed 100% busy) |
+| 23 | End-to-end training pipeline (data → JobSet → checkpoints → metrics; WIF, Artifact Registry) | `lab-20` e2e training pipeline — **live** (2-node/16-GPU gang, loss 263→0.008, ckpts to GCS) |
+| 24 | Inference serving & MLOps (Inference Gateway, autoscale on DCGM metrics, Vertex AI contrast) | `lab-21` inference serving + autoscale — **live** (knee + 1→8-GPU 7.24× scaling; autoscale topology as reference) |
 
 ## The lab environment
 
@@ -130,9 +132,9 @@ docs/
   part4-platform-reference-arch/  DGX/HGX, BlueField/DOCA, Spectrum-X, DGX SuperPOD
   15-scaling-shape-of-the-cliff.md   Scaling bridge: 8/16/24-GPU curve + ring/tree (captured)
   part5-operations-diagnostics/   Diagnostic method, single-GPU health, comms/cluster/job triage, day-2 ops (live)
-  part6-architecture-gcp-integration/  GKE network design, storage/data path, e2e pipeline, inference serving (in build)
+  part6-architecture-gcp-integration/  GKE network design, storage/data path, e2e pipeline, inference serving (docs live; lab-19..21 live, lab-18 staged)
   superpowers/specs/              Design specs + integration roadmap
-labs/        Step-by-step practice; one dir per lab, with real captured output (lab-01..17 live; lab-18..21 in build)
+labs/        Step-by-step practice; one dir per lab, with real captured output (lab-01..17 + lab-19..21 live; lab-18 staged)
 manifests/   Reusable, verified Kubernetes YAML (incl. dcgm-exporter, fault injectors, tcpx/storage/serving)
 scripts/     Runner + capture/parse scripts (lib_capture.sh, provision_tcpx_pool.sh)
 assets/      Captured real outputs: logs, CSVs, plots, profiler timelines, diagrams
