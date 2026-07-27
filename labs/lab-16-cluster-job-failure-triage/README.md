@@ -22,6 +22,33 @@ This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/1
 
 ---
 
+## Where this runs (the environment)
+
+*Unlike every other Part V lab, this one **borrows nothing** — the `gpu-holder` stays **3/3** the whole time (grey, untouched). The failures live in the **scheduler / autoscaler / Kueue** control plane and on **spare CPU** of the GPU nodes (0-GPU fault pods) — never on a GPU. Blue = what this lab exercises; grey = held/untouched.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>run_failures.sh (inline manifests)"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NH["3 held nodes · gpu-holder 3/3<br/>(NEVER scaled — no borrow)"]
+      SP["spare CPU on GPU nodes<br/>0-GPU fault pods (A/B/E)"]
+    end
+    SCH["kube-scheduler + cluster-autoscaler<br/>FailedScheduling · NotTriggerScaleUp (C)"]
+    KQ["Kueue v0.18 · gpu-cq-24 quota<br/>gang-gates 32-GPU JobSet (D)"]
+  end
+  CLI -->|"apply failing objects"| SP
+  SP -.->|"C: 9-GPU pod unschedulable"| SCH
+  CLI -->|"D: 32-GPU gang"| KQ
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class SP,SCH,KQ meas; class NH,CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -36,21 +63,35 @@ The runner is self-contained (inline manifests). It sources `scripts/lib_capture
 - `run_failures.sh` — the five phases + timeline; distils each into `assets/lab-16/`
 - assets: `oom_*` (OOMKilled + `oom_fixed_get.txt`), `crashloop_*`, `unschedulable_*`, `quota_clusterqueue.txt` + `gang_inadmissible.txt` (the Kueue-gated gang), `retry_*`, `failures_timeline.txt`
 
-### GPU safety — no borrow at all (Flex-safe)
+### The five faults, mapped onto the environment (no borrow)
+
+*The five faults overlaid on the environment — **no borrow bracket**, because the `gpu-holder` is never scaled (grey, untouched throughout). A/B/E are 0-GPU pods on spare CPU; C/D never reach a GPU (scheduler and Kueue gate them). A ends green (the fix runs to `Completed`); the rest stay red. The run order is A→B→C→D→E, crossing between the CPU-pod zone and the scheduler/Kueue zone.*
 
 ```mermaid
-flowchart LR
-  H0["gpu-holder = 3/3<br/>(24 GPUs held —<br/>NEVER scaled)"] --- L["lab-16 runs alongside,<br/>on spare CPU / unsatisfiable requests"]
-  L --> A["A: OOMKilled (0 GPU)<br/>+ fix → Completed"]
-  A --> B["B: CrashLoopBackOff (0 GPU)"]
-  B --> C["C: unschedulable<br/>req 9 GPU > 8/node<br/>(Pending, no scale-up)"]
-  C --> D["D: 32-GPU gang vs 24 quota<br/>Kueue-gated, 0 pods"]
-  D --> E["E: Job retry →<br/>BackoffLimitExceeded (0 GPU)"]
-  E -->|"EXIT trap:<br/>delete all objects"| R["gpu-holder = 3/3<br/>(untouched)"]
+flowchart TB
+  H0["gpu-holder = 3/3 · 24 GPUs held — NEVER scaled (no borrow)"]
+  subgraph CPUZ["spare CPU on GPU nodes · 0-GPU fault pods"]
+    direction TB
+    A["A: OOMKilled exit 137<br/>+ fix (6Gi) → Completed"]
+    B["B: CrashLoopBackOff<br/>exit 1 · back-off restarts"]
+    E["E: Job backoffLimit 2 →<br/>BackoffLimitExceeded (3 Error pods)"]
+  end
+  subgraph SCHZ["scheduler / autoscaler / Kueue (never reaches a GPU)"]
+    direction TB
+    C["C: 9-GPU pod > 8/node<br/>FailedScheduling · NotTriggerScaleUp"]
+    D["D: 32-GPU gang vs gpu-cq-24<br/>QuotaReserved=False · 0 pods"]
+  end
+  H0 -. holder untouched throughout .-> A
+  A --> B
+  B ==> C
+  C ==> D
+  D --> E
+  E -->|"EXIT trap: delete all objects"| R["gpu-holder = 3/3 · untouched"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
   classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
-  class H0,L,R ctx; class A good; class B,C,D,E crit;
+  class H0 ctx; class A good; class B,E crit; class C,D crit; class R ctx;
 ```
 
 ---

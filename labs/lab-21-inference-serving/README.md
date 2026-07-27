@@ -16,6 +16,38 @@ The production **autoscale topology** (HPA-on-DCGM, cluster-autoscaler node scal
 
 ---
 
+## Where this runs (the environment)
+
+*The serving workload runs **live** on one borrowed A3 node (blue = the 8-GPU ResNet-50 server + the DCGM signal an HPA would scale on); the full **autoscale topology** (amber) is **dry-run only** — the always-hold rule + Flex cap-of-3 leave no spare GPU to scale into. Grey = held/context.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>loadgen + PromQL"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["borrowed node · 8× H100<br/>ResNet-50 serve.py (dynamic batching)"]
+      NH["2 held nodes<br/>gpu-holder (always-hold)"]
+    end
+    EXP["managed dcgm-exporter"]
+    REF["reference autoscale (dry-run)<br/>HPA-on-DCGM · cluster-autoscaler · Gateway"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_PROF_GR_ENGINE_ACTIVE"]
+  end
+  CLI -->|"closed-loop load"| NB
+  NB -->|"scrape"| EXP --> SER --> CLI
+  REF -.->|"pending: no spare GPU (cap-3 + always-hold)"| NB
+  CLI -.->|"borrow · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class NB,SER meas; class NH,EXP,CLI ctx; class REF accent;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -31,6 +63,35 @@ Borrows one node (holder 3→2), pins a pod holding all 8 GPUs, then: Phase A (s
 - `throughput_scale.py` — multiprocess 1→8-GPU throughput probe (horizontal scaling)
 - `../../manifests/serving/inference-autoscale.yaml` — **reference** Deployment + HPA-on-DCGM + Gateway/HTTPRoute (not applied live)
 - assets: `latency_vs_concurrency.txt`, `throughput_scaling.txt`, `dcgm_under_load.txt`, `reference_autoscale_dryrun.txt`
+
+### The phases, overlaid on the node (Flex-safe borrow)
+
+*serve.py starts, the concurrency sweep finds the **knee** (red — p99 explodes to ~1 s), 90 s of sustained load reads engine-active off GMP (blue — only ~17%, so the knee is the **server**, not the GPU), and the 1→8-GPU scaling proves near-linear replica headroom (green). The autoscale manifest is **dry-run only** (amber). Bracketed by the borrow (`gpu-holder` 3→2) and the EXIT-trap re-arm to 3.*
+
+```mermaid
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→2"| SS
+  subgraph NODE["borrowed A3 node · 8× H100 (fully held)"]
+    direction TB
+    SS["start serve.py (ResNet-50, dynamic batch ≤16)"]
+    A["A knee sweep: loadgen conc 1→64<br/>throughput plateaus ~1.16k req/s, p99 → ~1 s"]
+    C["C 90 s sustained CONC=64"]
+    B["B scaling: throughput_scale.py W=1→8<br/>5,720 → 41,438 img/s (7.24×)"]
+    SS --> A --> C --> B
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    XC["engine-active ~0.17 under load<br/>→ knee is the server, NOT the GPU"]
+  end
+  C ==>|"read off pipeline"| XC
+  B --> DR["reference autoscale manifest: server dry-run<br/>(HPA/Deployment validate · Gateway CRDs absent)"]
+  DR -->|"EXIT trap: restore holder"| R["gpu-holder = 3 · re-armed"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class H0 ctx; class SS,C,B good; class A crit; class XC meas; class DR accent; class R good;
+```
 
 ---
 

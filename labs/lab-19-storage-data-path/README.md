@@ -49,6 +49,37 @@ The **cross-check** (`dcgm_crosscheck.txt`) reads `DCGM_FI_PROF_GR_ENGINE_ACTIVE
 
 `run_storage.sh` assumes the bucket data + `lab19-gcs-key` Secret exist; it installs userspace gcsfuse into the pod itself.
 
+## Where this runs (the environment)
+
+*The lab drives **one borrowed A3 node**, but the story is the edge between **GCS and the GPU**. Blue = what this lab touches (the bucket shards, the workbench GPU, and the DCGM engine-active series it cross-checks on GMP); grey = held/context. Note the GCSFuse mount is **userspace** (GSA-key auth, no node change) — the managed CSI path is node-gated (G20).*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>PromQL via access-token"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["borrowed node<br/>8-GPU GCSFuse workbench"]
+      NH["2 held nodes<br/>gpu-holder (always-hold)"]
+    end
+    EXP["managed dcgm-exporter"]
+  end
+  subgraph GCS["GCS · gs://hdlab-elideng-lab-data-asiaeast1"]
+    SH["16× 128 MB shards in<br/>checkpoint out"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_PROF_GR_ENGINE_ACTIVE"]
+  end
+  SH -->|"userspace GCSFuse (GSA key)"| NB
+  NB -->|"scrape"| EXP --> SER
+  SER -->|"PromQL"| CLI
+  CLI -.->|"borrow · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NB,SH,SER meas; class NH,EXP,CLI ctx;
+```
+
 ## Run
 
 ```bash
@@ -63,6 +94,40 @@ The script borrows one node (holder 3→2), applies the [GCSFuse workbench](../.
 - `run_storage.sh` — borrow-window orchestrator (mount proof → read throughput → starved → fed → checkpoint write → DCGM crosscheck)
 - `../../manifests/storage/gcsfuse-workbench.yaml` — reference pod (GCSFuse CSI inline volume + WIF KSA)
 - assets: `mount_proof.txt`, `gcsfuse_read_throughput.txt`, `dataloader_starved.txt`, `dataloader_fed.txt`, `dcgm_crosscheck.txt`, `checkpoint_write.txt`, `checkpoint_verify.txt`
+
+### The phases, overlaid on the data path (Flex-safe borrow)
+
+*The five phases (0/A/B/C/E) run on the borrowed node reading from / writing to GCS. The headline is the same GEMM two ways: **STARVED** (red — GPU idles on I/O) vs **FED** (green — compute-bound), and the verdict is confirmed independently on the GMP pipeline (blue). Bracketed by the guarded borrow (`gpu-holder` 3→2) and the EXIT-trap re-arm to 3.*
+
+```mermaid
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→2"| S0
+  subgraph NODE["borrowed A3 node · 8-GPU GCSFuse workbench (fully held)"]
+    direction TB
+    S0["0 mount proof: fuse.gcsfuse /data<br/>16 shards visible"]
+    SA["A read throughput: seq cat<br/>4866 MiB/s peak"]
+    SB["B STARVED: read 8 shards/step<br/>→ GPU-busy 11.8%, 88% io"]
+    SC["C FED: bytes resident<br/>→ GPU-busy 100%, compute-bound"]
+    SE["E checkpoint: torch.save 0.5 GiB → GCS<br/>87.7 MiB/s"]
+    S0 --> SA --> SB --> SC --> SE
+  end
+  subgraph GCS["GCS bucket (the data path)"]
+    OBJ["shards in · checkpoint out"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    XC["gpu0 engine-active<br/>~0.12 starved → 1.000 fed"]
+  end
+  OBJ -->|"userspace GCSFuse"| S0
+  SB -.->|"scrape"| XC
+  SC ==>|"cross-check off pipeline"| XC
+  SE --> OBJ
+  SE -->|"EXIT trap: restore holder"| R["gpu-holder = 3 · re-armed"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class H0 ctx; class S0,SA good; class SB crit; class SC,SE good; class XC meas; class OBJ ctx; class R good;
+```
 
 ---
 

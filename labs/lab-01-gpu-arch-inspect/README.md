@@ -9,35 +9,59 @@
 
 ---
 
+## Where this runs (the environment)
+
+*One debug pod claims a single H100 (1 of 8) on a DWS node in `hypercomputer-a3-cluster`; only that GPU and the pod are exercised (blue) — the other 7 GPUs stay idle.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>run.sh"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · a3-h100-dws-pool (DWS)"]
+    subgraph NODE["A3 node · a3-highgpu-8g · 8× H100 80GB"]
+      POD["gpu-debug pod<br/>PyTorch 24.10 image"]
+      G0["GPU0 (1 of 8)<br/>H100 Hopper · 132 SM"]
+      G7["GPUs 1–7<br/>(not allocated)"]
+    end
+  end
+  CLI -->|"kubectl apply gpu_pod.yaml<br/>(DWS toleration)"| POD
+  POD -->|"nvidia-smi · deviceQuery"| G0
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class POD,G0 meas; class G7,CLI ctx;
+```
+
+---
+
 ## Steps
 
 ### 1. Deploy the debug pod
 
 The lab script deploys a single-GPU pod (`scripts/gpu_pod.yaml`) to a DWS (Dynamic Workload Scheduler) H100 node. The pod uses NVIDIA's PyTorch container image, which includes CUDA toolkit, nvidia-smi, and deviceQuery.
 
-*Figure: one `run.sh` invocation fans out into four captured artifacts, then logs provenance.*
+*Figure: the lab's phases overlaid on where they act — capture runs on the borrowed H100 (blue), then the deviceQuery memory glitch is reconciled against nvidia-smi (red) before provenance is logged (green).*
 
 ```mermaid
-flowchart TD
-    R["run.sh"] --> A["kubectl apply<br/>gpu_pod.yaml (DWS toleration)"]
-    A --> P["pod Ready<br/>(H100 node)"]
-    P --> C{"capture 4<br/>artifacts"}
-    C --> S1["smi.txt<br/>GPU inventory"]
-    C --> S2["smi-q.txt<br/>detailed props"]
-    C --> S3["topo.txt<br/>topology matrix"]
-    C --> S4["devquery.txt<br/>CUDA props"]
-    S1 --> V["append<br/>VERIFICATION.md"]
-    S2 --> V
-    S3 --> V
-    S4 --> V
-    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
-    classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
-    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
-    class A ctx;
-    class P meas;
-    class C accent;
-    class V good;
+flowchart TB
+  subgraph NODE["A3 node · gpu-debug pod on 1× H100 (of 8)"]
+    direction TB
+    S1["① kubectl apply gpu_pod.yaml<br/>(DWS toleration) → pod Ready"]
+    S2["② capture smi.txt · smi-q.txt<br/>topo.txt · devquery.txt"]
+    S1 --> S2
+  end
+  subgraph LOCAL["your shell · records"]
+    direction TB
+    S3["③ cross-reference vs Hopper spec<br/>reconcile deviceQuery memory glitch<br/>(~3.4 EB) against nvidia-smi 81559 MiB"]
+    S4["append VERIFICATION.md"]
+    S3 --> S4
+  end
+  S2 -->|"4 artifacts → assets/lab-01"| S3
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class S1 ctx; class S2 meas; class S3 crit; class S4 good;
 ```
 
 ```bash

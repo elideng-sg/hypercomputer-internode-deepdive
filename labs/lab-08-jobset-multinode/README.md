@@ -21,6 +21,33 @@ kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases
 
 Both land as `1/1` controller Deployments in `jobset-system` / `kueue-system` and register their CRDs (`assets/lab-08/controllers.txt`). They consume **no GPU**.
 
+## Where this runs (the environment)
+
+*The additive Kueue + JobSet control plane on the 2-node us-central1 cluster; the admitted 4-GPU JobSet lands only in hhp6's free headroom — the DWS-held node hv7m and qwen3-vllm are never touched.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl apply / get"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph CTRL["additive controllers · 0 GPU"]
+      KU["Kueue v0.18.3<br/>ResourceFlavor→ClusterQueue→LocalQueue"]
+      JS["JobSet v0.12.0<br/>replicatedJob + headless Service"]
+    end
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g"]
+      N1["node hhp6<br/>4 free GPUs used · qwen3-vllm (2 GPU)"]
+      N2["node hv7m<br/>held (untouched)"]
+    end
+  end
+  CLI -->|"apply JobSet (label → gpu-lq)"| KU
+  KU -->|"admit → quota reserved"| JS
+  JS -->|"place 4 worker pods"| N1
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class KU,JS,N1 meas; class N2,CLI ctx;
+```
+
 ## Run
 
 ```bash
@@ -35,6 +62,33 @@ The runner:
 5. Waits for completion and captures the **4-rank all-reduce result** (`allreduce-result.txt`) and the JobSet's **terminal state** (`jobset-final.txt`).
 6. Applies the **over-quota JobSet** (`manifests/jobset-overquota.yaml`), captures the **gate** (`overquota-gate.txt`), then deletes it.
 7. (Separately) the admitted JobSet is torn down after capture.
+
+*The flow across two zones: the controller plane admits (or refuses ⑥, red) the job, and only after admission are worker pods placed on hhp6 to run the real collective (⑤, green success value=4.0).*
+
+```mermaid
+flowchart TB
+  subgraph CTRL["Kueue + JobSet controllers · 0 GPU"]
+    direction TB
+    S1["① capture controllers + 5 CRDs<br/>JobSet v0.12.0 · Kueue v0.18.3"]
+    S2["② apply Kueue quota<br/>gpu-cq nominal nvidia.com/gpu:4"]
+    S3["③ apply in-quota JobSet → admit<br/>QuotaReserved=True · Admitted=True"]
+    S6["⑥ over-quota JobSet (8 GPU) → gate<br/>QuotaReserved=False · 0 pods → delete"]
+    S1 --> S2 --> S3
+  end
+  subgraph NODE["node hhp6 · 4 free GPUs (hv7m held, untouched)"]
+    direction TB
+    S4["④ JobSet structure<br/>4 child Jobs · headless Svc · pods on hhp6"]
+    S5["⑤ 4-rank all-reduce value=4.0<br/>Completed · succeeded:4"]
+    S4 --> S5
+  end
+  S3 -->|"pods created only after admission"| S4
+  S3 -.->|"then test refusal"| S6
+  S5 -->|"teardown JobSet + queues"| R["cluster back to baseline<br/>holder + vLLM undisturbed"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class S1,S2,S4,S5 good; class S3 meas; class S6 crit; class R good;
+```
 
 ---
 

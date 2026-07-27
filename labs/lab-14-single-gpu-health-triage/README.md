@@ -22,6 +22,38 @@ This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/1
 
 ---
 
+## Where this runs (the environment)
+
+*This lab works on **one borrowed node** (7-GPU privileged workbench + 1-GPU DCGM job; the other two stay held), reading the device with the local lenses — `nvidia-smi`, `dcgmi`, `ncu`, privileged `dmesg`. The one side system it touches is the **GKE-native XID surface** (NPD → Cloud Logging) — because the managed `dcgm-exporter` carries no XID field (G11). Blue = what this lab exercises; grey = held/context.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>nvidia-smi / dcgmi / ncu via pod"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["borrowed node<br/>7-GPU privileged workbench + 1-GPU DCGM job"]
+      NH["2 held nodes<br/>gpu-holder (always-hold)"]
+    end
+    NPD["Node Problem Detector<br/>(NVRM: Xid)"]
+    EXP["managed dcgm-exporter<br/>(no XID field — G11)"]
+  end
+  subgraph LOG["Cloud Logging"]
+    XL["Xid log lines +<br/>NPD node conditions/events"]
+  end
+  NB -->|"privileged dmesg / dcgmi / ncu"| CLI
+  NB --> NPD
+  NPD -->|"XID surface"| XL
+  NB -.->|"scrape (no XID)"| EXP
+  CLI -.->|"borrow · cap · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NB,XL meas; class NH,NPD,EXP,CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -37,21 +69,34 @@ The runner opens a **guarded, gap-free borrow window**: it scales `gpu-holder` 3
 - `load_gpu.py` — sustained fp16 GEMM on `cuda:0` (device selected via `CUDA_VISIBLE_DEVICES`, so one process per device loads the whole node)
 - assets: `health_idle_*` / `health_load_*` (idle→load delta), `dmon_under_load.txt`, `throttle_powercap_*` (the induced throttle + `throttle_powercap_restored.txt`), `dcgm_diag_r3.txt` (version-matching gotcha), `ncu_privileged_full.txt` / `ncu_privileged_metrics.txt` (completes lab-03), `dmesg_nvrm.txt`, `dcgm_xid_metric.txt`, `node_events_xid.txt`, `health_timeline.txt`
 
-### GPU safety — a guarded, gap-free single-node borrow (Flex-safe)
+### The six phases, mapped onto the environment (Flex-safe borrow)
+
+*The run's phases overlaid on the environment: A/B/C/E drive the borrowed node's GPUs (③ caps GPU0 700→200 W — the induced throttle, red), the DCGM Job runs D (the R580 version-matching wall, amber), and F reads the **GKE-native XID surface** (NPD → Cloud Logging). The whole run is bracketed by the single-node borrow (`gpu-holder` 3→2) and the `EXIT`-trap re-arm to 3.*
 
 ```mermaid
-flowchart LR
-  H0["gpu-holder = 3<br/>(24 GPUs held)"] -->|"scale 3→2"| W["1 node freed:<br/>7-GPU workbench<br/>+ 1-GPU DCGM job<br/>(node fully held)"]
-  W --> PA["A: idle baseline"]
-  PA --> PB["B: under-load delta<br/>(SW Power Cap Active)"]
-  PB --> PC["C: cap 700→200 W<br/>SM 1365→345 MHz<br/>then restore"]
-  PC --> PE["E: privileged ncu<br/>(no ERR_NVGPUCTRPERM)"]
-  PE --> PF["F: XID surface<br/>(NPD / dmesg)"]
-  PF -->|"EXIT trap:<br/>restore PL + del pods"| R["gpu-holder = 3<br/>(re-armed)"]
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→2"| S1
+  subgraph NODE["borrowed A3 node · 7-GPU workbench + 1-GPU DCGM job (fully held)"]
+    direction TB
+    S1["A: idle baseline (nvidia-smi -q)"]
+    S2["B: under-load delta<br/>SW Power Cap Active · SM 1365 MHz"]
+    S3["C: cap GPU0 700→200W<br/>SM 1365→345 MHz · then restore"]
+    S4["E: privileged ncu<br/>(no ERR_NVGPUCTRPERM — completes lab-03)"]
+    D["D: dcgmi diag -r3 (DCGM Job)<br/>version-matching wall on R580"]
+    S1 --> S2 --> S3 --> S4
+  end
+  subgraph LOG["Cloud Logging / NPD (GKE-native XID surface)"]
+    direction TB
+    F["F: NPD → Cloud Logging query<br/>(NVRM: Xid) · none — healthy node"]
+  end
+  S4 -->|"F: check XID surface"| F
+  F -->|"EXIT trap: restore PL + del pods"| R["gpu-holder = 3 · re-armed"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
   classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
-  class H0,W ctx; class PA,PB,PE,PF good; class PC crit; class R good;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class H0 ctx; class S1,S2,S4 good; class S3 crit; class D accent; class F meas; class R good;
 ```
 
 ---

@@ -11,6 +11,32 @@
 
 ---
 
+## Where this runs (the environment)
+
+*This lab exercises the whole node's interconnect (blue): an 8-GPU workbench pod driving all 8 H100 through the on-baseboard NVSwitch fabric — the NV18 all-to-all mesh itself is diagrammed in [doc-04](../../docs/part1-single-node/04-intranode-nvlink-nvswitch-hgx.md), not duplicated here.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl exec<br/>run.sh (LAB04_POD)"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · a3-h100-dws-pool"]
+    subgraph NODE["A3 node · HGX H100 baseboard"]
+      POD["nccl-workbench-a pod<br/>8-GPU · nccl-tests"]
+      GPUS["8× H100 80GB"]
+      NVS["NVSwitch fabric<br/>NV18 all-to-all · FM: Success"]
+    end
+  end
+  CLI -->|"exec: topo · nvlink · all_reduce_perf"| POD
+  POD --> GPUS
+  GPUS -->|"18× NVLink4 @ 26.562 GB/s"| NVS
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class GPUS,NVS meas; class POD,CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -18,6 +44,26 @@ LAB04_POD=nccl-workbench-a bash labs/lab-04-intranode-nvlink-hgx/run.sh
 ```
 
 **GPU safety:** the script does not allocate GPUs itself — it `kubectl exec`s into a pod you already have holding 8 GPUs. In this environment `hv7m` is normally held by a DWS capacity holder; the full 8-GPU run was performed during a planned holder-repurpose window and the holder was re-armed immediately afterward.
+
+*Figure: the four measurements overlaid on where they act, bracketed by the holder-repurpose safety window — topology/link/fabric checks then the all-reduce sweep on the 8-GPU pod (blue), holder re-armed immediately after (green).*
+
+```mermaid
+flowchart TB
+  H0["DWS capacity holder on hv7m"] -->|"planned holder-repurpose window"| S1
+  subgraph NODE["8-GPU pod nccl-workbench-a · HGX H100 baseboard"]
+    direction TB
+    S1["① nvidia-smi topo -m<br/>NV18 all-to-all (8×8)"]
+    S2["② nvidia-smi nvlink --status<br/>18 links × 26.562 → ~956 GB/s bidir"]
+    S3["③ fabric-state: Completed / Success"]
+    S4["④ all_reduce_perf 8B→8G, g=8<br/>peak busbw ~480 GB/s @ 8 GiB"]
+    S1 --> S2 --> S3 --> S4
+  end
+  S4 -->|"holder re-armed immediately"| R["DWS holder restored on hv7m"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class H0 ctx; class S1,S2,S3,S4 meas; class R good;
+```
 
 ---
 

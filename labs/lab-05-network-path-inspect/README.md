@@ -10,10 +10,67 @@
 
 ---
 
+## Where this runs (the environment)
+
+*A 0-GPU lab across two `a3-h100-dws-pool` nodes: `hostNetwork` probe pods measure the one path that exists — a single `eth0` gVNIC per node (blue) — with no GPU-NIC rails present.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl<br/>run.sh"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · a3-h100-dws-pool"]
+    subgraph N0["A3 node 0"]
+      P0["net-probe-0<br/>hostNetwork · 0-GPU"]
+      E0["eth0 gVNIC<br/>200 Gbit · MTU 1460 · gve"]
+    end
+    subgraph N1["A3 node 1"]
+      P1["net-probe-1<br/>hostNetwork · 0-GPU"]
+      E1["eth0 gVNIC<br/>200 Gbit · MTU 1460 · gve"]
+    end
+  end
+  CLI --> P0
+  CLI --> P1
+  P0 --- E0
+  P1 --- E1
+  E0 <-->|"iperf3 TCP<br/>1 & 8 streams"| E1
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class E0,E1 meas; class P0,P1,CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
 bash labs/lab-05-network-path-inspect/run.sh
+```
+
+*Figure: the runner's phases overlaid on where they act — control-plane queries prove no GPU-NIC/plugin exists, then the hostNetwork probes measure the single gVNIC (blue) before teardown (green).*
+
+```mermaid
+flowchart TB
+  subgraph API["kubectl / cluster API (control plane)"]
+    direction TB
+    S1["① enumerate 2× a3-h100-dws-pool nodes"]
+    S2["② node NIC/GPUDirect annotations"]
+    S3["③ allocatable: only nvidia.com/gpu:8<br/>(no GPU-NIC resource)"]
+    S4["④ net DaemonSets: fastsocket/dra dormant<br/>(no tcpx/tcpxo)"]
+    S1 --> S2 --> S3 --> S4
+  end
+  subgraph NODES["2× A3 node · hostNetwork probes (0-GPU)"]
+    direction TB
+    S5["⑤ NIC inventory: single eth0 gVNIC<br/>200 Gbit · MTU 1460"]
+    S6["⑥ iperf3: 1-stream 22.3 → 8-stream ~163 Gbit/s"]
+    S5 --> S6
+  end
+  S4 --> S5
+  S6 --> T["⑦ teardown probes · VERIFICATION row"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class S1 ctx; class S2,S3,S4,S5,S6 meas; class T good;
 ```
 
 The runner:

@@ -13,6 +13,34 @@
 
 ---
 
+## Where this runs (the environment)
+
+*This lab borrows **all three** nodes at once (holder 3→0) and drives the all-reduce across them — so the star of the environment is the **inter-node fabric**: a single gVNIC `eth0` carrying plain TCP (no TCPX/RDMA). Blue = what this lab exercises; grey = context. The scaling curve is read off exactly this fabric as the ring grows from 1 to 3 nodes.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>run.sh · borrow window"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N0["node njnx<br/>8× H100 NVLink island"]
+      N1["node nmrc<br/>8× H100 NVLink island"]
+      N2["node zcn4<br/>8× H100 NVLink island"]
+    end
+    FAB["single gVNIC eth0<br/>plain TCP · no TCPX/RDMA"]
+  end
+  N0 ---|"ring hop"| FAB
+  N1 ---|"ring hop"| FAB
+  N2 ---|"ring hop"| FAB
+  CLI -.->|"borrow: holder 3→0 · restore"| N0
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N0,N1,N2,FAB meas; class CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -32,25 +60,33 @@ bash labs/lab-12-scaling-sweep/run_ringtree.sh   # 12b: ring vs tree at 24 GPUs
 bash labs/lab-12-scaling-sweep/run_training.sh   # 12c: DDP/FSDP scaling efficiency
 ```
 
-### GPU safety — a guarded, gap-free hold handoff
+### The sweep phases, mapped onto the environment (Flex-safe borrow)
 
-This cluster's 24 H100s are normally fully held by the `gpu-holder` Deployment (3 × 8), honoring the standing *always hold the GPU* posture (Flex capacity is scarce). The lab **borrows** them and **always gives them back**:
+This cluster's 24 H100s are normally fully held by the `gpu-holder` Deployment (3 × 8), honoring the standing *always hold the GPU* posture (Flex capacity is scarce). The lab **borrows** them and **always gives them back**.
 
-*Figure: the borrow window — the holder is scaled to zero, three workbench pods occupy the freed GPUs for the sweep, then the holder is re-armed. An `EXIT` trap guarantees restoration even if the sweep fails midway. No node is ever drained or deleted (Flex-safe).*
+*The same architecture as above, now with the run's steps overlaid. The three sub-labs (12a/b/c) drive the borrowed 3-node pool, while the scaling curve is **read off the plain-TCP fabric** (the thick edge). The whole run is bracketed by the guarded borrow (`gpu-holder` 3→0) and the `EXIT`-trap re-arm to 3.*
 
 ```mermaid
-flowchart LR
-  H0["gpu-holder = 3<br/>(24 GPUs held)"] -->|"scale 3→0"| F["24 GPUs free"]
-  F -->|"create 3<br/>workbench pods"| W["nccl-wb-{a,b,c}<br/>occupy the GPUs"]
-  W --> S["run 8/16/24<br/>sweeps"]
-  S -->|"EXIT trap:<br/>delete pods"| R["gpu-holder = 3<br/>(re-armed)"]
-  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→0"| S1
+  subgraph POOL["3 borrowed A3 nodes · nccl-wb-{a,b,c} occupy 24 GPUs (fully held)"]
+    direction TB
+    S1["12a: all-reduce sweep<br/>8 / 16 / 24 GPUs"]
+    S2["12b: NCCL_ALGO Ring vs Tree<br/>at 24 GPUs"]
+    S3["12c: DDP/FSDP weak & strong<br/>scaling at 8/16/24"]
+    S1 --> S2 --> S3
+  end
+  subgraph FABZ["single gVNIC eth0 · plain TCP (the fabric under test)"]
+    direction TB
+    C["scaling curve: 465 → 23.7 → 14.95 GB/s<br/>ring crosses 3 TCP hops at 24 GPU"]
+  end
+  S1 ==>|"busbw read off the wire"| C
+  S3 -->|"EXIT trap: delete wb pods"| R["gpu-holder = 3 · re-armed"]
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
   classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
-  class H0,F ctx;
-  class W,S meas;
-  class R good;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class H0 ctx; class S1,S2,S3 good; class C meas; class R good;
 ```
 
 The workbench pods *are* the occupancy during the window — the nodes are never idle. The `EXIT` trap deletes the workbenches and scales `gpu-holder` back to 3 on any exit path, so the hold is re-armed whether the run succeeds, fails, or is interrupted.

@@ -26,9 +26,61 @@ This lab demonstrates **single-GPU benchmarking and profiling** on an NVIDIA H10
 
 ---
 
+## Where this runs (the environment)
+
+*The benchmark, profiler, and counter probe all run inside one debug pod on a single H100 (blue) of node `…-hhp6`; plots are rendered back on your shell.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl<br/>parse.py (plot)"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · a3-h100-dws-pool"]
+    subgraph NODE["node …-hhp6 · a3-highgpu-8g"]
+      POD["gpu-debug pod<br/>gemm.py + nsys + ncu"]
+      G0["1× H100 80GB<br/>(single-GPU alloc)"]
+    end
+  end
+  CLI -->|"kubectl cp · exec"| POD
+  POD -->|"GEMM · PCIe · profile"| G0
+  POD -->|"gemm.csv · nsys-stats · nvbandwidth"| CLI
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class POD,G0 meas; class CLI ctx;
+```
+
+---
+
 ## Execution (Automated)
 
 The benchmark has already been executed. Results are in `../../assets/lab-03/`.
+
+*Figure: the lab's phases overlaid on where they run — benchmark + profile on the borrowed H100 (blue), the ncu counter probe blocked on COS (red), then plot + teardown from your shell (green).*
+
+```mermaid
+flowchart TB
+  subgraph NODE["node …-hhp6 · gpu-debug pod on 1× H100"]
+    direction TB
+    S1["① deploy 1-GPU pod + copy gemm.py"]
+    S2["② GEMM sweep → gemm.csv<br/>740–765 TFLOPs (76% of peak)"]
+    S3["③ PCIe H2D 27.6 / D2H ~1.9 GB/s"]
+    S4["④ nsys -t cuda,nvtx<br/>99.7% GPU util · nvjet kernels"]
+    S5["⑤ ncu --set full<br/>ERR_NVGPUCTRPERM (COS-restricted)"]
+    S1 --> S2 --> S3 --> S4 --> S5
+  end
+  subgraph LOCAL["your shell · records"]
+    direction TB
+    P["⑥ parse.py → gemm_tflops.png"]
+    T["⑦ teardown: delete pod"]
+    P --> T
+  end
+  S4 -->|"gemm.csv · nsys-stats · nvbandwidth"| P
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class S1 ctx; class S2,S3,S4 meas; class S5 crit; class P,T good;
+```
 
 **To re-run:**
 
