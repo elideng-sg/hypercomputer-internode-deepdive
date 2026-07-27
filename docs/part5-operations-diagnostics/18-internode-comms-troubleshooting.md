@@ -19,6 +19,33 @@ When a distributed job is **slow or hung**, the cause is very often *between* th
 
 ---
 
+## Where this fits (the environment)
+
+*The NIC/fabric layer this doc localizes: 24 GPUs across 3 nodes of the asia-east1-c cluster, wired only by single-gVNIC `eth0`. Blue = the inter-node hop this doc reads off `NCCL_DEBUG=INFO` — plain TCP sockets (`NET/Socket`), no TCPX/RDMA, capped at the ~28.6 GB/s floor. Grey = your shell reading rank-0's log.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl · launch 24-GPU job<br/>NCCL_DEBUG=INFO → rank-0 log"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N0["node 0 · 8×H100"]
+      N1["node 1 · 8×H100"]
+      N2["node 2 · 8×H100"]
+    end
+  end
+  CLI -->|"run · read log"| N0
+  N0 <-->|"eth0 · NET/Socket TCP<br/>no TCPX/RDMA · ~28.6 GB/s"| N1
+  N1 <-->|"eth0 · NET/Socket TCP"| N2
+  N0 <-->|"eth0 · NET/Socket TCP"| N2
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N0,N1,N2 meas; class CLI ctx;
+```
+
+---
+
 ## Step 1 — Read what NCCL chose (`NCCL_DEBUG=INFO`)
 
 Before hypothesizing, capture the reality. Set these on every rank and read **rank 0**'s log:

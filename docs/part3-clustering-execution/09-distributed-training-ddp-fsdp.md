@@ -17,6 +17,32 @@ Parts I–II built the picture of the fabric; this is where a real workload runs
 
 ---
 
+## Where this fits (the environment)
+
+*Figure: where this fits — the same 16-GPU job runs across two A3 nodes; DDP and FSDP differ only in how much traffic crosses the ~28 GB/s inter-node link (red), which the profiler shows is 89.63% of the DDP step.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["torchrun / kubectl<br/>launch DDP + FSDP · torch.profiler"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g = 16× H100"]
+      NA["node A · ranks 0–7<br/>8× H100 (NVLink intra-node)"]
+      NB["node B · ranks 8–15<br/>8× H100 (NVLink intra-node)"]
+    end
+    WIRE["inter-node all-reduce<br/>single gVNIC eth0 · ~28 GB/s TCP floor<br/>= 89.63% of the DDP step"]
+  end
+  NA --- WIRE --- NB
+  CLI -.->|"launch 16-rank job"| NA
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NA,NB meas; class WIRE crit; class CLI ctx;
+```
+
+---
+
 ## Two ways to go data-parallel
 
 Both DDP and FSDP process different data on each rank and keep the model mathematically synchronized. They differ in **what lives on each GPU**:

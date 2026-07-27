@@ -19,6 +19,39 @@ The through-line is doc-16's **two lenses**, but reframed for steady state. The 
 
 ---
 
+## Where this fits (the environment)
+
+*The day-2 monitoring environment on the 3-node asia-east1-c cluster. Blue = the pipeline lens this doc lives in: per-node managed `dcgm-exporter` → GMP `DCGM_FI_*` series → dashboards + alert rules (and PromQL from your shell). Grey = the local lens (`nvidia-smi`/`dcgmi`/HTA) you drop to only after the pipeline names which node. Step 0 details this same path as a tree.*
+
+```mermaid
+flowchart LR
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NODES["fleet nodes<br/>device-0 capped vs device-1 control"]
+    end
+    EXP["managed dcgm-exporter<br/>ClusterPodMonitoring · 21 fields · no XID/ECC"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_* series<br/>keyed gpu · Hostname · pod"]
+  end
+  subgraph OUT["day-2 outputs"]
+    DASH["Grafana dashboard (7 panels)"]
+    ALERT["alert rules (5)"]
+  end
+  CLI["your shell<br/>PromQL · nvidia-smi/dcgmi/HTA (local lens)"]
+  NODES -->|"scrape 30s"| EXP
+  EXP -->|"~30s ingest"| SER
+  SER --> DASH
+  SER --> ALERT
+  SER -->|"PromQL"| CLI
+  CLI -.->|"confirm on node"| NODES
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NODES,EXP,SER,DASH,ALERT meas; class CLI ctx;
+```
+
+---
+
 ## Step 0 — The pipeline, and what it actually exports
 
 On managed GKE the metrics path is mostly turnkey, and knowing its shape tells you what you *can* alert on:

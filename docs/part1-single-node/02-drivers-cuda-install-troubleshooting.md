@@ -13,6 +13,36 @@ All examples are validated against live diagnostics from a GKE **A3 High** (`a3-
 
 ---
 
+## Where this fits (the environment)
+
+*Where this fits: the GKE-managed driver stack on one A3 node — a device-plugin DaemonSet installs driver 535.309.01 on the COS host, and this doc's diagnostics (`nvidia-smi`, DCGM, `gpu-burn`) run as containers/Jobs against it.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell"]
+    CLI["kubectl<br/>nvidia-smi · dcgmi · gpu-burn"]
+  end
+  subgraph CLUSTER["GKE · A3 High (a3-highgpu-8g)"]
+    DP["device-plugin DaemonSet<br/>nvidia-gpu-device-plugin-large-cos"]
+    subgraph NODE["one A3 node · COS host"]
+      DRV["host driver 535.309.01<br/>nvidia.ko · libcuda 12.2"]
+      GPUS["8x H100 80GB HBM3"]
+      DIAG["diagnostic Jobs (containers)<br/>dcgm-diag · gpu-burn · CUDA rt 12.6"]
+    end
+  end
+  CLI --> DP
+  CLI -->|"apply / logs"| DIAG
+  DP -->|"installs · nvidia.com/gpu"| DRV
+  DRV --> GPUS
+  DIAG --> DRV
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class DRV,DP,DIAG meas;
+  class CLI,GPUS ctx;
+```
+
+---
+
 ## Driver Branches and Version Selection
 
 NVIDIA provides three driver branches with different support lifecycles and update cadences. Choosing the right branch is critical for production stability.

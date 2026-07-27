@@ -61,6 +61,35 @@ Labs run on **two live GKE A3 High (H100) clusters** in project `hdlab-elideng`.
 
 Each node = an HGX H100 8-GPU baseboard, exposing `nvidia.com/gpu: 8`. Auxiliary `default-pool` (e2-standard-4) carries control/CPU workloads.
 
+*Figure: where the guide's labs run — two live GKE A3 H100 clusters (16- and 24-GPU), both on a single-gVNIC/TCP fabric (no TCPX/RDMA today), feeding Google Managed Prometheus and reading/writing GCS, all driven from your shell.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>PromQL via access-token"]
+  end
+  subgraph C2["GKE · hypercomputer-a3-cluster · us-central1"]
+    P2["a3-h100-dws-pool (DWS)<br/>2× a3-highgpu-8g = 16× H100"]
+  end
+  subgraph C3["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    P3["a3-high-flex-pool (Flex)<br/>3× a3-highgpu-8g = 24× H100"]
+  end
+  FAB["single-gVNIC eth0 / VPC TCP<br/>~28.6 GB/s floor · no TCPX/RDMA"]
+  GMP["Google Managed Prometheus<br/>+ managed dcgm-exporter"]
+  GCS["GCS buckets<br/>lab data / checkpoints"]
+  CLI -->|"borrow · cap · restore"| P2
+  CLI -->|"borrow · cap · restore"| P3
+  P2 --- FAB
+  P3 --- FAB
+  P2 -->|"scrape"| GMP
+  P3 -->|"scrape"| GMP
+  P2 --- GCS
+  P3 --- GCS
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class P2,P3 meas; class CLI,FAB,GMP,GCS ctx;
+```
+
 Key facts verified during execution:
 - **Both clusters are single-gVNIC / TCP today** — inter-node NCCL traverses the standard gVNIC/VPC TCP path (~28.6 GB/s floor), *not* GPUDirect. No multi-network CRDs, no TCPX/TCPXO/RDMA DaemonSets. Characterizing this actual path is a core Part II thread; **Part VI `lab-18` provisions a new multi-network node pool to enable GPUDirect-TCPX and measure the before/after**.
 - No tenant-visible BlueField DPU, Spectrum-X SuperNIC, or DGX Fabric Manager is present on either cluster (this contrast is explored in Part IV).

@@ -19,6 +19,36 @@ This guide covers the **CUDA execution model** — how GPU kernels are launched,
 
 ---
 
+## Where this fits (the environment)
+
+*Where this fits: lab-03 drives one H100 of an A3 node from a PyTorch container — host↔device over PCIe (H2D ~27, D2H ~2 GB/s measured), with `nsys` tracing (CUPTI, works on a standard pod) while `ncu`'s counters stay blocked on GKE COS.*
+
+```mermaid
+flowchart LR
+  subgraph NODE["GKE · A3 High node (a3-highgpu-8g)"]
+    subgraph POD["CUDA container · pytorch 24.10 (standard pod)"]
+      HOST["host CPU<br/>Python · torch.mm · pinned buffers"]
+      NSYS["nsys<br/>CUPTI trace — works"]
+      NCU["ncu<br/>perf counters — blocked (ERR_NVGPUCTRPERM)"]
+    end
+    GPU["1x H100 80GB HBM3<br/>GEMM 740-765 TFLOPs"]
+  end
+  HOST ==>|"H2D ~27 GB/s"| GPU
+  GPU -.->|"D2H ~2 GB/s"| HOST
+  NSYS -->|"traces"| GPU
+  NCU -.->|"CAP_SYS_ADMIN needed"| GPU
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class GPU meas;
+  class HOST ctx;
+  class NSYS accent;
+  class NCU crit;
+```
+
+---
+
 ## The CUDA Execution Model
 
 ### Host-Device Interaction

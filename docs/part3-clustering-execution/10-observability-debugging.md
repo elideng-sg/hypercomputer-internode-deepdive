@@ -20,6 +20,37 @@ Every fault below was run for real on the free GPUs of one node (`hhp6`), captur
 
 ---
 
+## Where this fits (the environment)
+
+*Figure: where this fits — all four faults are injected on `hhp6`'s free GPUs (highlighted) and read back through the managed DCGM + GMP pipeline; the DWS holder on `hv7m` and the `qwen3-vllm` workload are never touched.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl + PromQL/MQL<br/>inject 4 reversible faults"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g = 16× H100"]
+      NA["node hhp6<br/>faults on FREE GPUs<br/>(qwen3-vllm on GPUs 5–6, untouched)"]
+      NB["node hv7m<br/>8× H100 · DWS holder (untouched)"]
+    end
+    MON["managed dcgm-exporter + GMP<br/>gke-managed-system / gmp-system"]
+  end
+  subgraph CM["Cloud Monitoring"]
+    DASH["DCGM series + NCCL logs<br/>dashboards · alerts"]
+  end
+  NA -->|"scrape (30s)"| MON
+  NB -->|"scrape (30s)"| MON
+  MON --> DASH
+  DASH -->|"PromQL / MQL"| CLI
+  CLI -.->|"kill rank · mismatch · NIC saturation"| NA
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NA,MON meas; class NB,DASH,CLI ctx;
+```
+
+---
+
 ## The GKE-managed metrics pipeline
 
 You do **not** deploy Prometheus + Grafana + a DCGM exporter yourself on GKE. The platform runs them for you: a DCGM exporter DaemonSet in `gke-managed-system` scrapes every GPU on every node, and GMP collectors in `gmp-system` pull that exporter and ship it to Cloud Monitoring.
