@@ -1,0 +1,88 @@
+# Lab 18: Enable GPUDirect-TCPX — *close the cliff* (flagship, before/after)
+
+**Objective:** Every earlier inter-node measurement in this guide rides the **single-gVNIC / TCP** path and honestly reports the **~28.6 GB/s** floor (lab-06) and the descending **465 → 23.7 → 14.95 GB/s** 1/2/3-node curve (lab-12). That floor is not physics — it's an *architecture choice*. This lab is the **design counterpart**: provision the **multi-network GPUDirect-TCPX** fabric that A3 High was built for, re-run the same NCCL all-reduce, and read the transport change off the wire — **`NET/Socket` → `NET/GPUDirectTCPX`**, GPU Direct enabled. It is the one lab that changes the *fabric*, not the workload.
+
+> ### ⚠️ Status: BEFORE captured live · AFTER pending a TCPX cluster (honest)
+> The **before** (gVNIC) half is **already measured live** — reused from [lab-06](../lab-06-2node-nccl-collectives/) and [lab-12](../lab-12-scaling-sweep/), not re-run. The **after** (TCPX) half is **not yet captured**, and this lab does **not** fabricate it. Why it's pending, captured as evidence in [`assets/lab-18/blocker_dataplane_v2.txt`](../../assets/lab-18/blocker_dataplane_v2.txt):
+> - GKE GPUDirect-TCPX needs **multi-networking**, which needs **Dataplane V2**, which is a **create-time-only** cluster setting. The existing `hypercomputer-a3-asiaeast1` cluster was created without it (`networkConfig.datapathProvider` empty; no anetd/cilium DaemonSet), so **TCPX cannot be added to it** — it requires a **new cluster**.
+> - The project has **no on-demand H100 quota** (the existing 3 A3 nodes came via scarce **Flex-start**); a new 2-node TCPX pool is capacity-gated.
+>
+> Everything needed to run the **after** the moment a TCPX cluster exists is built and validated here: [`scripts/provision_tcpx_pool.sh`](../../scripts/provision_tcpx_pool.sh) (reversible new-cluster + VPCs + pool + plugin), the [`manifests/tcpx/`](../../manifests/tcpx/) CRDs/installer/workbench, and [`run_tcpx_beforeafter.sh`](./run_tcpx_beforeafter.sh). This is the design + provisioning skill; the number lands when capacity does.
+
+This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/16-diagnostic-method.md) inverted into a **design decision**, written up in [doc-21](../../docs/part6-architecture-gcp-integration/21-gke-network-design.md).
+
+---
+
+## What "enabling TCPX" actually means (the three deltas from gVNIC)
+
+The gVNIC baseline Pod (lab-06) is an ordinary Pod: one `eth0`, no annotations, and NCCL falls back to `NET/Socket`. A **TCPX** Pod differs in exactly three places — captured in [`manifests/tcpx/workbench-tcpx.yaml`](../../manifests/tcpx/workbench-tcpx.yaml):
+
+1. **Four dedicated GPU networks.** `a3-highgpu-8g` exposes **4 GPU NICs**; each binds to its own VPC/subnet at **jumbo MTU 8244**. On GKE these are `Network` + `GKENetworkParamSet` CRDs ([`network-crds.yaml`](../../manifests/tcpx/network-crds.yaml)) attached via the Pod's `networking.gke.io/interfaces` annotation. **This is the create-time gate:** multi-networking ⇒ Dataplane V2 ⇒ a new cluster.
+2. **The receive-datapath sidecar** (`tcpgpudmarxd`) sharing the Pod netns, installed onto the node by the [`nccl-tcpx-installer`](../../manifests/tcpx/nccl-tcpx-installer.yaml) DaemonSet.
+3. **The NCCL plugin selection** — `NCCL_GPUDIRECTTCPX_SOCKET_IFNAME=eth1,eth2,eth3,eth4`, the TX/RX CPU bindings, and the unix-client prefix — which makes NCCL load `libnccl-net-gpudirecttcpx.so` instead of the socket transport.
+
+| | gVNIC baseline (lab-06/12, **measured**) | TCPX (this lab, **pending capacity**) |
+|---|---|---|
+| NICs for GPU traffic | 1 (`eth0`, shared with host) | 4 (`eth1–4`, dedicated, MTU 8244) |
+| NCCL transport | `NET/Socket` | `NET/GPUDirectTCPX` |
+| GPU Direct | `Disabled for HCA 0 'eth0'` | enabled (DMA NIC↔GPU, host bytes bypassed) |
+| Cluster requirement | any | Dataplane V2 + multi-networking (create-time) |
+
+---
+
+## Run
+
+```bash
+# BEFORE — already live; writes the evidence pointer (no cluster needed)
+bash labs/lab-18-enable-gpudirect-tcpx/run_tcpx_beforeafter.sh before
+
+# AFTER — once a TCPX cluster exists:
+scripts/provision_tcpx_pool.sh up          # new cluster (DPv2+multinet) + 4 GPU VPCs + Flex A3 pool + plugin
+KUBE_CONTEXT=gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-tcpx \
+  bash labs/lab-18-enable-gpudirect-tcpx/run_tcpx_beforeafter.sh after
+scripts/provision_tcpx_pool.sh down         # reversible teardown
+```
+
+**Files:**
+- `run_tcpx_beforeafter.sh` — points at the live gVNIC baseline (before) and drives the TCPX transport + busbw capture (after)
+- `../../scripts/provision_tcpx_pool.sh` — reversible: 4 GPU VPCs (MTU 8244) + Dataplane-V2/multi-network cluster + Flex A3 TCPX pool + `nccl-tcpx-installer`; `{up|verify|down}`
+- `../../manifests/tcpx/{network-crds,nccl-tcpx-installer,workbench-tcpx}.yaml`
+- assets: `before_gvnic_summary.txt` (live evidence pointer), `blocker_dataplane_v2.txt` (why after is pending); `after_tcpx_*.txt` land when capacity does
+
+### Provisioning flow (reversible, holder-safe)
+
+```mermaid
+flowchart LR
+  B["BEFORE (live):<br/>gVNIC NET/Socket<br/>~28 GB/s"] --> D{"existing cluster<br/>has Dataplane V2?"}
+  D -->|"NO (verified)"| N["provision NEW cluster<br/>DPv2 + multi-networking"]
+  N --> V["4 GPU VPCs (MTU 8244)<br/>+ Flex A3 pool (≤3)"]
+  V --> P["nccl-tcpx-installer<br/>+ Network CRDs"]
+  P --> A["AFTER (pending cap):<br/>NET/GPUDirectTCPX"]
+  A --> T["teardown: down<br/>(existing clusters untouched)"]
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class B good; class D,N,V,P ctx; class A good; class T ctx;
+```
+
+---
+
+## What was measured (real) vs. what's pending
+
+### BEFORE — the gVNIC floor (live, reused honestly)
+From [`assets/lab-06/nccl_transport.txt`](../../assets/lab-06/nccl_transport.txt): `NET/IB : No device found` → `NET/Socket : Using [0]eth0` → `Using network Socket` → `GPU Direct RDMA Disabled for HCA 0 'eth0'`. Busbw: **~28.6 GB/s** (2-node, lab-06) and the **465 → 23.7 → 14.95 GB/s** 1/2/3-node curve (lab-12). This is the cliff the design closes.
+
+### AFTER — TCPX (pending a TCPX cluster)
+Expected on the enabled fabric (to be captured, not asserted): NCCL logs `NET/GPUDirectTCPX`, the 4 GPU NICs enumerated, and a materially higher inter-node busbw. The provisioning + capture path is scripted and validated; only live A3 Flex capacity + a new DPv2 cluster stand between here and the number. **Cross-tie:** once live, the [lab-12](../lab-12-scaling-sweep/) 8/16/24-GPU sweep re-runs on this pool to produce the *enabled scaling curve*.
+
+---
+
+## Gotchas hit building this lab
+
+In the cross-lab index [reference/lab-build-gotchas.md](../../reference/lab-build-gotchas.md):
+- **G17** — GKE **multi-networking requires Dataplane V2, and both are create-time-only**. You cannot add GPUDirect-TCPX to a cluster that wasn't created with `--enable-dataplane-v2 --enable-multi-networking`; verify with `gcloud container clusters describe … --format='value(networkConfig.datapathProvider)'` (empty = legacy = no TCPX). Provision a new cluster instead.
+- **G18** — A3 High **H100 has no on-demand quota** in this project/region; capacity comes via **Flex-start** (queued, scarce). A new TCPX pool can queue/stock-out; never free capacity by shrinking the holders.
+
+## Cleanup
+
+`scripts/provision_tcpx_pool.sh down` deletes the TCPX pool, cluster, firewall rules, subnets, and VPCs in reverse order. The existing `hypercomputer-a3-*` clusters and their holders are never touched by this lab.

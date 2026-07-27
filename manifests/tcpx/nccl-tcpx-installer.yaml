@@ -1,0 +1,76 @@
+# manifests/tcpx/nccl-tcpx-installer.yaml
+# Installs the GPUDirect-TCPX NCCL plugin + the receive-datapath binaries onto each A3 High
+# node, into a hostPath the workload mounts. This is the GKE-published recipe; the installer
+# image tag moves between GKE minor versions — RE-PIN IT at run time from the current GKE docs
+# ("Maximize GPU network bandwidth with GPUDirect-TCPX"). The digest below is a placeholder.
+#
+# STAGED: validated as YAML; applied live only on the TCPX cluster.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nccl-tcpx-installer
+  namespace: kube-system
+  labels:
+    k8s-app: nccl-tcpx-installer
+spec:
+  selector:
+    matchLabels:
+      k8s-app: nccl-tcpx-installer
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: nccl-tcpx-installer
+        k8s-app: nccl-tcpx-installer
+    spec:
+      priorityClassName: system-node-critical
+      # Only land on the TCPX A3 pool.
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-h100-80gb
+      tolerations:
+        - operator: Exists
+      hostNetwork: true
+      hostPID: true
+      volumes:
+        - name: var-lib
+          hostPath:
+            path: /var/lib
+        - name: tcpx
+          hostPath:
+            path: /var/lib/tcpx
+        - name: library-dir-host
+          hostPath:
+            path: /home/kubernetes/bin/nvidia/lib64
+      initContainers:
+        - name: nccl-tcpx-installer
+          # RE-PIN: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:<current>
+          image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:latest
+          resources:
+            requests:
+              cpu: 150m
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: var-lib
+              mountPath: /var/lib
+            - name: tcpx
+              mountPath: /var/lib/tcpx
+            - name: library-dir-host
+              mountPath: /usr/local/nvidia/lib64
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -ex
+              /scripts/container_entry.sh install --install-nccl
+              cp -r /var/lib/tcpx/lib64/. /usr/local/nvidia/lib64
+      containers:
+        - name: pause
+          image: gcr.io/google-containers/pause:3.9
+          resources:
+            requests:
+              cpu: 10m
+---
+# tcpx-daemon: the receive-datapath manager (runs alongside the workload; also GKE-published).
+# In the standard recipe this is added as a *sidecar* to the GPU workload Pod (see
+# workbench-tcpx.yaml) rather than a DaemonSet, so it shares the Pod's network namespace.

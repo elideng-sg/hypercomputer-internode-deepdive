@@ -1,0 +1,15 @@
+# WHY THE TCPX 'AFTER' IS PENDING (captured 2026-07-27T01:44:58Z, project hdlab-elideng)
+# TCPX needs multi-networking, which needs Dataplane V2 — a CREATE-TIME-ONLY cluster gate.
+
+## existing cluster networkConfig (asia-east1) — datapathProvider is EMPTY = LEGACY, not Dataplane V2:
+  datapathProvider=[]
+
+## Dataplane V2 controller (anetd/cilium) present in-cluster?
+  none (confirms not Dataplane V2)
+
+## VPC networks in project — only 'default' (auto mode); no dedicated GPU VPCs:
+  default	
+
+## H100 on-demand quota in asia-east1: none present (existing A3 pool is Flex-start/DWS).
+## => live TCPX requires: NEW cluster (DPv2 + multi-networking) + 4 GPU VPCs + Flex A3 pool.
+## Provisioning path is scripted & reversible: scripts/provision_tcpx_pool.sh {up|verify|down}

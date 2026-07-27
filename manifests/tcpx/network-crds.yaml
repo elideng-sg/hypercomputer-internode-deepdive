@@ -1,0 +1,86 @@
+# manifests/tcpx/network-crds.yaml
+# The GKE multi-networking CRDs that bind the 4 GPU VPCs (created by provision_tcpx_pool.sh)
+# to Kubernetes Networks a Pod can request. One GKENetworkParamSet + Network per GPU NIC.
+# These require a Dataplane-V2 + multi-networking cluster (create-time gates — see the script).
+#
+# STAGED: validated as YAML; applied live only once the TCPX cluster exists.
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-0
+spec:
+  vpc: tcpx-gpu-net-0
+  vpcSubnet: tcpx-gpu-sub-0
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-0
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-0
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-1
+spec:
+  vpc: tcpx-gpu-net-1
+  vpcSubnet: tcpx-gpu-sub-1
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-1
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-1
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-2
+spec:
+  vpc: tcpx-gpu-net-2
+  vpcSubnet: tcpx-gpu-sub-2
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-2
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-2
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-3
+spec:
+  vpc: tcpx-gpu-net-3
+  vpcSubnet: tcpx-gpu-sub-3
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-3
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-3

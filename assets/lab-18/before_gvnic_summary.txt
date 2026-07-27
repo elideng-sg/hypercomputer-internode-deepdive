@@ -1,0 +1,5 @@
+# BEFORE = single-gVNIC / TCP (captured live, labs 06 & 12)
+# transport (lab-06): NET/IB No device found -> NET/Socket eth0 -> Using network Socket
+# 2-node 16-GPU busbw : ~28.6 GB/s peak (assets/lab-06/allreduce_2node.txt)
+# 8/16/24-GPU busbw   : 465 -> 23.7 -> 14.95 GB/s (assets/lab-12/allreduce_*.txt)
+# GPU Direct RDMA     : Disabled for HCA 0 'eth0'

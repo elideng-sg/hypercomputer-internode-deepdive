@@ -241,6 +241,22 @@ In Phase B the DCGM Job ran `dcgmproftester --no-dcgm-validation -t 1004 -d 25` 
 
 When Phase C range-queried the borrowed node, each GPU returned **two** time series for the same metric, distinguished only by the `container`/`pod` labels: one `container=bench` (the lab-17 workbench `gpu-mon-wb` that actually held the GPU under load) and one `container=holder` (the `gpu-holder` pod that **reclaimed** the node after the EXIT trap and now sits idle). GMP inherits the DCGM device-plugin's Kubernetes attribution, so the "who owns this GPU right now" changes across the borrow/return, and a naive `metric{gpu="0"}` returns both the loaded history *and* the idle-after aftermath. **Filter by `container`/`pod`** (or `pod=~"gpu-mon-wb"`) to isolate the workload you care about — otherwise the idle reclaimer's flatline muddies the signal. This is also *useful*: `DCGM_FI_*{pod="..."}` lets you attribute throttle/OOM/utilisation to a specific workload, which is exactly what the `GPUIdleButAllocated` cost alert keys on.
 
+## G17 — GKE multi-networking (⇒ GPUDirect-TCPX) requires Dataplane V2, and both are create-time-only (lab-18)
+
+Building lab-18 (enable GPUDirect-TCPX) surfaced a hard architecture gate: **you cannot add TCPX to an existing cluster.** GPUDirect-TCPX attaches each of the 4 A3-High GPU NICs to its own Kubernetes `Network`; that multi-networking is only available on clusters with **Dataplane V2** (`--enable-dataplane-v2`) **and** **multi-networking** (`--enable-multi-networking`) — and **both flags are create-time-only.** The lab's `hypercomputer-a3-asiaeast1` was created without them, so it is permanently single-gVNIC. Verify before planning any TCPX work:
+
+```bash
+gcloud container clusters describe "$CLUSTER" --zone "$ZONE" \
+  --format='value(networkConfig.datapathProvider)'
+#   ADVANCED_DATAPATH → Dataplane V2 (multi-networking possible)
+#   <empty>           → LEGACY_DATAPATH → single-gVNIC only, TCPX impossible (the lab cluster)
+```
+Cross-check in-cluster: `kubectl -n kube-system get ds | grep -E 'anetd|cilium'` — absent confirms legacy. **Takeaway:** the inter-node fabric is baked in at cluster creation; enabling TCPX means a **new cluster** (`scripts/provision_tcpx_pool.sh` provisions one reversibly), not an upgrade. This is *why* lab-18's TCPX "after" capture is staged rather than run on the existing cluster.
+
+## G18 — A3 High H100 has no on-demand quota here; capacity is Flex-start only (lab-18)
+
+The project has **no on-demand `NVIDIA_H100_GPUS` / A3 quota** in the lab regions (verified against `gcloud compute regions describe` — the metric isn't even present, i.e. limit 0). The existing 3-node A3 pool exists because it was provisioned via **Flex-start** (DWS queued provisioning), which draws on a separate, scarce capacity path. Consequence for lab-18: a *new* 2-node TCPX pool must also come via `--flex-start` and can **queue indefinitely or stock-out** if the region has no A3 capacity at that moment. **Never** free capacity by shrinking the holders ([[always-hold-gpu-after-work]]); retry later or try another A3 zone. This capacity uncertainty, on top of G17, is why the TCPX after-number is honestly marked pending.
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17. Next: Part VI architecture labs.)*
+*(Appended as labs are built. Part V complete through lab-17; Part VI lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity). Next: labs 19–21.)*
