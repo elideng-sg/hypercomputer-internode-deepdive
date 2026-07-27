@@ -62,12 +62,18 @@ Measured against `main` at `bb5a06a`.
 | `labs/lab-NN-*/README.md` | 21 | Port as lab pages |
 | `reference/*.md` | 7 | Port as appendix |
 | `assets/**` capture files | 174 | Port verbatim |
-| Mermaid blocks across all `.md` | 99 | Pre-render to SVG |
+| Mermaid blocks across all `.md` | 147 | Pre-render to SVG |
 | `docs/superpowers/{specs,plans}` | 6 | **Not ported** |
 | `labs/**/*.{sh,py,yaml,json}`, `manifests/`, `scripts/` | ~50 | **Not ported** — stay in the lab repo as runnable code |
 
-Mermaid diagram types in use: `flowchart` (58), `graph` (28), `xychart-beta`
+Mermaid diagram types in use: `flowchart` (106), `graph` (28), `xychart-beta`
 (8), `sequenceDiagram` (3), `pie` (1), `gantt` (1).
+
+> **Count correction.** An earlier draft of this spec said 99 diagrams. That
+> number came from a stale local `main` ref (`ca76dbe`) that predated the PR #16
+> architecture-overview / step-flow diagram fan-out. Counted against
+> `origin/main` (`bb5a06a`) — which is what this work branches from — the real
+> total is **147**. All verification assertions use 147.
 
 ## Target layout
 
@@ -112,7 +118,7 @@ g3doc/
 ├─ toolkit/                        ← index.md + T1–T6
 ├─ reference/                      ← index.md + 7 appendix pages
 ├─ labs/                           ← index.md + lab-01…lab-21/index.md
-├─ images/                         ← 99 rendered SVG + 6 existing PNG/SVG
+├─ images/                         ← 147 rendered SVG + 6 existing PNG/SVG
 └─ assets/                         ← 174 capture files
 ```
 
@@ -157,9 +163,19 @@ with title text present and `#1a73e8` fills intact.
 block, renders it to `g3doc/images/<page-slug>-<n>.svg`, and replaces the block
 with an image reference in the corresponding `g3doc/` page.
 
-Every diagram in the guide is already preceded by an italic `*Figure: …*`
-caption. That caption becomes the alt text, so the SVGs are described rather
-than bare:
+Alt text comes from the italic caption line that precedes almost every diagram.
+Measured distribution of the 147 blocks:
+
+| Preceding line | Count | Alt-text source |
+| :--- | :--- | :--- |
+| `*Figure: …*` | 98 | the caption, `Figure:` prefix stripped |
+| other italic caption (`*Where this fits: …*`, `*The real place …*`) | 46 | the caption verbatim |
+| no italic caption | 3 | the nearest preceding heading + diagram type |
+
+The three uncaptioned blocks are `16-diagnostic-method.md:83`,
+`18-internode-comms-troubleshooting.md:77`, and
+`lab-19-storage-data-path/README.md:19`. The renderer must not assume a caption
+exists — it falls back to the heading rather than emitting empty alt text.
 
 ```markdown
 ![the 16-rank ring — 14 NVLink hops stay inside each node; the 2 ring hops
@@ -210,7 +226,8 @@ later call.
 
 Before the port is called done:
 
-- All 99 Mermaid blocks produced a non-empty SVG (count asserted, not spot-checked).
+- All 147 Mermaid blocks produced a non-empty SVG (count asserted, not spot-checked).
+- No rendered image has empty alt text.
 - Link checker reports zero unresolved relative targets under `g3doc/`.
 - Page count matches the expected 69.
 - No ` ```mermaid ` block remains in `g3doc/`.
