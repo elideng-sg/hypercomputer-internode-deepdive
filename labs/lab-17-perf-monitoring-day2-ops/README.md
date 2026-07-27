@@ -22,6 +22,38 @@ This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/1
 
 ---
 
+## Where this runs (the environment)
+
+*The lab drives GPUs on **one borrowed A3 node**, but reads them back off the **monitoring plane** — the whole point of day-2 ops. Blue = what this lab touches; grey = held/context. The `dcgm-exporter` scrapes every node whether this lab is driving it or not, which is why the fleet baseline (Phase A) sees all 24 GPUs.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>PromQL via access-token"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["borrowed node<br/>7-GPU workbench + 1-GPU DCGM job"]
+      NH["2 held nodes<br/>gpu-holder (always-hold)"]
+    end
+    EXP["managed dcgm-exporter<br/>(ClusterPodMonitoring)"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_* series<br/>keyed by gpu · Hostname · pod"]
+  end
+  NB -->|"scrape"| EXP
+  NH -->|"scrape"| EXP
+  EXP -->|"~30s ingest"| SER
+  SER -->|"PromQL"| CLI
+  CLI -.->|"borrow · cap · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class NB,SER meas; class NH,EXP,CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -40,20 +72,34 @@ The runner opens a **guarded, gap-free borrow window**: scales `gpu-holder` 3→
 - `prometheus-alert-rules.yaml` — 5 portable alert rules (marquee: `GPUSilentThrottle`)
 - assets: `baseline_promql.txt` (+ `baseline_sm_clock/power/engine.txt`), `dcgm_prof_fields.txt`, `dcgmi_dmon_health.txt`, `throttle_local_crosscheck.txt`, `regression_promql.txt`, `hta_profiled_run.txt`, `hta_trace_files.txt`, `hta_analysis.txt`, `monitoring_timeline.txt`
 
-### GPU safety — a guarded, gap-free single-node borrow (Flex-safe)
+### The four phases, mapped onto the environment (Flex-safe borrow)
+
+*The same architecture as above, now with the run's steps overlaid. The four phases sit **inside the zone they act on** — ①②③④ drive the borrowed node, while the fleet baseline and the silent-throttle verdict are **read off the GMP plane** (the thick edge is the marquee: the throttle is caught on the monitoring plane, not the device). The whole run is bracketed by the guarded borrow (`gpu-holder` 3→2) and the `EXIT`-trap re-arm to 3.*
 
 ```mermaid
-flowchart LR
-  H0["gpu-holder = 3<br/>(24 GPUs held)"] -->|"scale 3→2"| W["1 node freed:<br/>7-GPU workbench<br/>+ 1-GPU DCGM job<br/>(node fully held)"]
-  W --> PA["A: fleet baseline<br/>(GMP PromQL, 24 GPUs)"]
-  PA --> PB["B: dcgmi in anger<br/>(health + dmon)"]
-  PB --> PC["C: cap 700→200 W under load<br/>read silent throttle FROM GMP<br/>then restore"]
-  PC --> PD["D: profiled DDP → HTA<br/>(temporal + comm/comp overlap)"]
-  PD -->|"EXIT trap:<br/>restore PL + del pods"| R["gpu-holder = 3<br/>(re-armed)"]
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→2"| S1
+  subgraph NODE["borrowed A3 node · 7-GPU workbench + 1-GPU DCGM job (fully held)"]
+    direction TB
+    S1["① deploy workbench + DCGM job"]
+    S2["② dcgmi health -c + dmon<br/>(per-node lens)"]
+    S3["③ cap GPU0 700→200W under fp16-GEMM<br/>GPU1 uncapped control"]
+    S4["④ profiled 7-GPU DDP → Kineto traces → HTA"]
+    S1 --> S2 --> S3 --> S4
+  end
+  subgraph GMPZ["Google Managed Prometheus (monitoring plane)"]
+    direction TB
+    A["A: fleet baseline<br/>24 GPUs @ 345 MHz idle floor"]
+    C["silent-throttle signature<br/>engine ~1.0 while SM clock → 345"]
+  end
+  S1 -.->|"scrape"| A
+  S3 ==>|"read FROM pipeline (PromQL)"| C
+  S4 -->|"EXIT trap: restore PL + del pods"| R["gpu-holder = 3 · re-armed"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
   classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
-  class H0,W ctx; class PA,PB,PD good; class PC crit; class R good;
+  class H0 ctx; class S1,S2,S4 good; class S3 crit; class A,C meas; class R good;
 ```
 
 ---
