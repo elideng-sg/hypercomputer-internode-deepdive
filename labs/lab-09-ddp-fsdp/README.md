@@ -10,6 +10,30 @@
 
 ---
 
+## Where this runs (the environment)
+
+*Same two 8-GPU pods as lab-06 on the 2-node us-central1 cluster; each training step's gradient collective crosses the node boundary over the ~28 GB/s TCP/gVNIC path, and rank 0 exports a profiler trace.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl exec · run.sh<br/>c10d env:// · torch.profiler"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g"]
+      PA["node A · nccl-workbench-a<br/>8× H100 · ranks 0-7 (rank0 profiled)"]
+      PB["node B · nccl-workbench-b<br/>8× H100 · ranks 8-15"]
+    end
+  end
+  CLI -->|"launch DDP / FSDP"| PA
+  CLI -->|"launch DDP / FSDP"| PB
+  PA <==>|"eth0 / gVNIC · TCP ~28 GB/s<br/>gradient all-reduce path"| PB
+  PA -->|"rank0 Kineto trace + top-ops"| CLI
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class PA,PB meas; class CLI ctx;
+```
+
 ## Run
 
 ```bash
@@ -21,6 +45,24 @@ LAB09_POD_A=nccl-workbench-a LAB09_POD_B=nccl-workbench-b \
 - `train_ddp_fsdp.py` — `--mode ddp|fsdp`, synthetic data (8× `Block` MLP stack, dim 4096); prints per-step loss/`step_ms`/samples-per-s and a steady-state summary (skips the first 5 steps). `--profile` wraps the loop in `torch.profiler` and, on rank 0, exports a Chrome trace + a top-ops table.
 - Reuses lab-06's `launch_node.sh` via its `BENCH_SCRIPT`/`BENCH_ARGS` hooks — same manual c10d `env://` launch, no MPI/SSH.
 - assets: `ddp_2node.txt`, `fsdp_2node.txt`, `ddp_profiler_top_ops.txt`, `ddp_trace_rank0.json.gz` (open in `chrome://tracing` or Perfetto)
+
+*The lab's phases: run both strategies, then profile the DDP step — the profiler makes the bottleneck unambiguous (red = all-reduce dominates GPU time).*
+
+```mermaid
+flowchart TB
+  subgraph RUN["nccl-workbench-a + -b · 16 ranks over 2 nodes"]
+    direction TB
+    S1["① DDP train<br/>1090.8M/rank · 390 ms/step · 656 samples/s"]
+    S2["② FSDP train (sharded 1/16)<br/>68.2M/rank · 537 ms/step · 476 samples/s"]
+    S3["③ profile DDP step<br/>→ Kineto trace + top-ops table"]
+    S1 --> S2 --> S3
+  end
+  S3 -->|"top-ops by CUDA time"| C["all-reduce = 89.63% of GPU time<br/>compute (aten::mm) = 1.09%"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class S1,S2 good; class S3 meas; class C crit;
+```
 
 ---
 

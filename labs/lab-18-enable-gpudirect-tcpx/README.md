@@ -30,6 +30,37 @@ The gVNIC baseline Pod (lab-06) is an ordinary Pod: one `eth0`, no annotations, 
 
 ---
 
+## Where this runs (the environment)
+
+*This lab changes the **fabric**, not the workload. Blue = the gVNIC path measured live today (reused from lab-06/12); amber = the GPUDirect-TCPX path — fully scripted but **staged**, pending a Dataplane-V2 cluster + A3 Flex capacity. The two rungs live on two different clusters because multi-networking is a create-time-only setting. Everything grey is context.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>NCCL all-reduce + busbw"]
+  end
+  subgraph EXIST["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c (existing)"]
+    subgraph POOLE["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NE["gVNIC pod<br/>1× eth0 (shared host NIC)"]
+    end
+    DPE["no Dataplane V2<br/>(legacy datapath)"]
+  end
+  subgraph NEW["GKE · hypercomputer-a3-tcpx (STAGED — pending capacity)"]
+    subgraph POOLN["Flex A3 TCPX pool (≤3)"]
+      NN["TCPX pod<br/>4× eth1–4 (MTU 8244) + tcpgpudmarxd"]
+    end
+    DPN["Dataplane V2 + multi-networking<br/>(create-time only)"]
+  end
+  CLI -->|"NET/Socket · ~28.6 GB/s (measured)"| NE
+  CLI -.->|"NET/GPUDirectTCPX (pending)"| NN
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class NE meas; class NN,DPN accent; class CLI,DPE ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -49,20 +80,33 @@ scripts/provision_tcpx_pool.sh down         # reversible teardown
 - `../../manifests/tcpx/{network-crds,nccl-tcpx-installer,workbench-tcpx}.yaml`
 - assets: `before_gvnic_summary.txt` (live evidence pointer), `blocker_dataplane_v2.txt` (why after is pending); `after_tcpx_*.txt` land when capacity does
 
-### Provisioning flow (reversible, holder-safe)
+### The before/after, as steps overlaid on the two clusters (reversible, holder-safe)
+
+*The measured rung (blue) is the gVNIC floor read live on the existing cluster; the create-time Dataplane-V2 gate (red) is what forces a **new** cluster for the staged TCPX rung (amber). The `after` number is captured, never asserted — and the whole staged path tears down reversibly, leaving the existing clusters and their holders untouched.*
 
 ```mermaid
-flowchart LR
-  B["BEFORE (live):<br/>gVNIC NET/Socket<br/>~28 GB/s"] --> D{"existing cluster<br/>has Dataplane V2?"}
-  D -->|"NO (verified)"| N["provision NEW cluster<br/>DPv2 + multi-networking"]
-  N --> V["4 GPU VPCs (MTU 8244)<br/>+ Flex A3 pool (≤3)"]
-  V --> P["nccl-tcpx-installer<br/>+ Network CRDs"]
-  P --> A["AFTER (pending cap):<br/>NET/GPUDirectTCPX"]
-  A --> T["teardown: down<br/>(existing clusters untouched)"]
+flowchart TB
+  subgraph EXIST["existing cluster · gVNIC (MEASURED, live)"]
+    direction TB
+    S1["① before: NET/Socket all-reduce<br/>~28.6 GB/s (reused lab-06/12)"]
+    G{"datapathProvider empty?<br/>→ no TCPX on this cluster"}
+    S1 --> G
+  end
+  G -->|"NO (verified) → needs new cluster"| S2
+  subgraph NEW["new cluster · TCPX (STAGED — pending A3 Flex capacity)"]
+    direction TB
+    S2["② provision: DPv2 + multi-networking cluster"]
+    S3["③ 4 GPU VPCs (MTU 8244) + Flex A3 pool (≤3)"]
+    S4["④ nccl-tcpx-installer + Network CRDs + TCPX workbench"]
+    S5["⑤ after: NET/GPUDirectTCPX all-reduce<br/>(to be captured, not asserted)"]
+    S2 --> S3 --> S4 --> S5
+  end
+  S5 -->|"reversible teardown: down"| R["existing clusters + holders untouched"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
-  class B good; class D,N,V,P ctx; class A good; class T ctx;
+  class S1 meas; class G crit; class S2,S3,S4,S5 accent; class R ctx;
 ```
 
 ---

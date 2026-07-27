@@ -19,6 +19,40 @@ The lab so far cheated: it fed the GPUs from `torch.randn` in memory, so the dat
 
 ---
 
+## Where this fits (the environment)
+
+*Figure — where this fits: the data path (blue) is a **GCS bucket → GCSFuse mount → the borrowed A3 node's 8× H100**, cross-checked on the same GMP/DCGM pipeline; the held nodes stay parked under the always-hold rule.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>PromQL via access-token"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["borrowed node …lq6m<br/>GCSFuse /data → 8× H100"]
+      NH["2 held nodes<br/>gpu-holder (always-hold)"]
+    end
+    EXP["managed dcgm-exporter"]
+  end
+  subgraph GCS["gs://hdlab-elideng-lab-data-asiaeast1"]
+    BK["dataset shards<br/>+ checkpoints"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_PROF_GR_ENGINE_ACTIVE"]
+  end
+  BK -->|"GCSFuse CSI · WIF"| NB
+  NB -->|"scrape"| EXP
+  EXP -->|"~30s ingest"| SER
+  SER -->|"PromQL cross-check"| CLI
+  CLI -.->|"borrow · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NB,BK,SER meas; class NH,EXP,CLI ctx;
+```
+
+---
+
 ## Step 0 — The storage ladder (match the tier to the symptom)
 
 There is no single "GPU storage." Each tier fixes a different symptom; picking the wrong one is a common and expensive mistake.

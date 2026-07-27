@@ -19,6 +19,31 @@ We characterize the **actual** path on this cluster with live probes — not wha
 
 ---
 
+## Where this fits (the environment)
+
+*Figure: where this fits — the physical inter-node path on this cluster is the single gVNIC `eth0` (highlighted) each node carries; there are no GPU-NIC rails, so every cross-node byte rides plain TCP.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>read-only probes + iperf3"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g = 16× H100"]
+      NA["node hhp6<br/>8× H100 · qwen3-vllm co-tenant"]
+      NB["node hv7m<br/>8× H100 · DWS holder (held)"]
+    end
+  end
+  NIC["single gVNIC eth0 per node<br/>200 Gbit/s · MTU 1460 · plain TCP<br/>no GPU-NICs · no GPUDirect rail"]
+  NA --- NIC --- NB
+  CLI -.->|"ip link · allocatable · NCCL net-plugin DS · iperf3"| NA
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NIC meas; class NA,NB,CLI ctx;
+```
+
+---
+
 ## The core problem: getting a byte from GPU memory onto the wire
 
 When rank 0 on node A must send a gradient shard to rank 8 on node B, that data starts in **HBM on a GPU** and must end in **HBM on another GPU across the network**. How many times it is copied, and whether a CPU is in the loop, is the whole story of inter-node performance.

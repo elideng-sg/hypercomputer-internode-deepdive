@@ -19,6 +19,31 @@ Unlike the earlier docs, this lab **actually ran a real collective**. A 4-rank N
 
 ---
 
+## Where this fits (the environment)
+
+*Figure: where this fits — Kueue + JobSet controllers (highlighted) gate and shape the gang, which lands on `hhp6`'s free GPUs; the DWS-held node `hv7m` is never touched.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl apply<br/>JobSet + Kueue manifests"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    CTRL["Kueue + JobSet controllers<br/>(Deployments + CRDs)"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g = 16× H100"]
+      NA["node hhp6<br/>free GPUs → 4-rank NCCL job lands here<br/>(qwen3-vllm co-tenant)"]
+      NB["node hv7m<br/>8× H100 · DWS holder (untouched)"]
+    end
+  end
+  CLI -->|"submit labelled JobSet"| CTRL
+  CTRL -->|"gang-admit (quota=4) → place pods"| NA
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class CTRL,NA meas; class CLI,NB ctx;
+```
+
+---
+
 ## The two controllers, and why you need both
 
 Kueue and JobSet solve **orthogonal** problems, which is why they compose so cleanly:

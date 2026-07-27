@@ -19,6 +19,39 @@ The single most important habit it teaches: **localize before you hypothesize.**
 
 ---
 
+## Where this fits (the environment)
+
+*The real place this method runs: your shell reads the 3-node asia-east1-c cluster through two lenses. Blue = the five layers this hub triages (GPU die → node → single-gVNIC `eth0` fabric → scheduler/quota control plane); grey = the lenses/planes you read them through.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl + gcloud<br/>GKE lens · NVIDIA lens"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    CP["control plane<br/>scheduler · Kueue · JobSet · DWS"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N["node → GPU die<br/>kubelet/COS · SM/HBM/ECC/XID"]
+      NIC["single-gVNIC eth0<br/>TCP sockets · no TCPX/RDMA"]
+    end
+  end
+  subgraph OBS["observability planes"]
+    GMP["Google Managed Prometheus<br/>DCGM_FI_* (no XID)"]
+    LOG["Cloud Logging + NPD<br/>NVRM: Xid"]
+  end
+  CLI -->|"admit / schedule"| CP
+  CP --> POOL
+  N <-->|"collectives"| NIC
+  N -->|"scrape"| GMP
+  N -->|"XID"| LOG
+  CLI -->|"PromQL / events / logs"| GMP
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class CP,N,NIC meas; class CLI,GMP,LOG ctx;
+```
+
+---
+
 ## The triage loop
 
 Every scenario in Part V runs the same loop. It is deliberately *not* "read the stack trace and fix the code" — on a distributed GPU job the stack trace is usually a **symptom of a different rank's** problem (see the earliest-exit rule below).

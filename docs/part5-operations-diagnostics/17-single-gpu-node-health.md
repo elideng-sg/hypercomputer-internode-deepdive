@@ -19,6 +19,40 @@ The trap this layer sets is a false alarm. `nvidia-smi` will happily report `SW 
 
 ---
 
+## Where this fits (the environment)
+
+*The GPU-die / node layer of the 3-node asia-east1-c cluster. Blue = what this doc exercises: one borrowed node's device 0 (under fp16-GEMM, the reversible 700→200 W cap) and the real XID surface — NPD → Cloud Logging. Grey = the managed `dcgm-exporter`/GMP pipeline, which carries clocks/power/temp but no XID or ECC field.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl exec → node<br/>nvidia-smi · dcgmi · ncu"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["borrowed node · device 0<br/>fp16-GEMM · 700→200 W cap"]
+      NH["2 held nodes<br/>gpu-holder (always-hold)"]
+    end
+    EXP["managed dcgm-exporter<br/>FB/clock/power/temp — no XID/ECC"]
+    NPD["Node Problem Detector"]
+  end
+  subgraph OBS["observability planes"]
+    GMP["Google Managed Prometheus"]
+    LOG["Cloud Logging<br/>NVRM: Xid"]
+  end
+  CLI -->|"exec (privileged for ncu / dmesg)"| NB
+  NB -->|"scrape"| EXP
+  EXP --> GMP
+  NB --> NPD
+  NPD -->|"XID"| LOG
+  CLI -.->|"borrow · cap · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NB,NPD,LOG,CLI meas; class NH,EXP,GMP ctx;
+```
+
+---
+
 ## Step 1 — Establish the idle baseline (the reference read)
 
 A health number means nothing on its own; it means something *relative to idle*. Capture the baseline first:

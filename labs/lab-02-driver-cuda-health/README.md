@@ -23,30 +23,68 @@ This lab validates the NVIDIA driver and CUDA stack on a live GKE **A3 High** (`
 
 ---
 
-## Lab Steps
+## Where this runs (the environment)
 
-*Figure: the end-to-end diagnostics workflow — the DCGM and gpu-burn checks run as separate Job containers before validate and teardown.*
+*One 1-GPU footprint on node `…-hhp6` is shared by three workloads — the debug pod plus two throwaway Job containers (DCGM diag, gpu-burn); the GPU under test is highlighted (blue), the diagnostic tooling amber.*
 
 ```mermaid
-flowchart TD
-    D["deploy gpu-debug pod<br/>(1-GPU, PyTorch image)"] --> V1["capture<br/>driver / CUDA"]
-    V1 --> Q["nvidia-smi -q<br/>ECC / thermal / power / throttle"]
-    Q --> X["dmesg / XID scan"]
-    X --> DCGM
-    X --> BURN
-    subgraph Jobs["separate Job containers"]
-      DCGM["DCGM diag Job<br/>(dcgm image, -r 2)"]
-      BURN["gpu-burn Job<br/>(60s stress)"]
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl<br/>run.sh"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · a3-h100-dws-pool"]
+    subgraph NODE["node …-hhp6 · a3-highgpu-8g · 8× H100"]
+      POD["gpu-debug pod<br/>(PyTorch 24.10)"]
+      DCGM["dcgm-diag Job<br/>(DCGM 3.3.8 image)"]
+      BURN["gpu-burn-test Job<br/>(60s stress)"]
+      G0["1× H100 80GB<br/>(1-GPU footprint)"]
     end
-    DCGM --> VAL["validate<br/>(PASS / OK)"]
-    BURN --> VAL
-    VAL --> CL["cleanup<br/>delete pod + jobs"]
-    classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
-    classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
-    classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
-    class D meas;
-    class DCGM,BURN accent;
-    class VAL good;
+  end
+  CLI --> POD
+  CLI --> DCGM
+  CLI --> BURN
+  POD --> G0
+  DCGM --> G0
+  BURN --> G0
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class G0 meas; class DCGM,BURN accent; class POD,CLI ctx;
+```
+
+---
+
+## Lab Steps
+
+*Figure: the diagnostics workflow overlaid on where each phase acts — driver/health probes run in the debug pod (blue), the two Job containers stress the GPU (amber), then validate + cleanup happen from your shell (green).*
+
+```mermaid
+flowchart TB
+  subgraph NODE["node …-hhp6 · 1× H100 (1-GPU footprint)"]
+    direction TB
+    S1["① deploy gpu-debug pod"]
+    S2["② capture driver 535.309.01 / CUDA 12.6"]
+    S3["③ nvidia-smi -q<br/>ECC 0 · 33°C · 93W · no throttle"]
+    S4["④ dmesg/XID (COS-restricted)<br/>→ kubectl get events: none"]
+    S1 --> S2 --> S3 --> S4
+    S5["⑤ dcgm-diag Job -r 2"]
+    S6["⑥ gpu-burn Job 60s"]
+    S4 --> S5
+    S4 --> S6
+  end
+  subgraph LOCAL["your shell · records"]
+    direction TB
+    V["⑦ validate PASS/OK<br/>→ VERIFICATION.md"]
+    CL["⑧ cleanup: delete pod + jobs"]
+    V --> CL
+  end
+  S5 -->|"Pass — All"| V
+  S6 -->|"GPU 0: OK"| V
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class S1 ctx; class S2,S3,S4 meas; class S5,S6 accent; class V,CL good;
 ```
 
 ### Step 1: Deploy GPU Debug Pod

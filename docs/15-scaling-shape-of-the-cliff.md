@@ -33,6 +33,35 @@ The 3-node pool is a **different cluster** from the guide's documented 2-node la
 
 ---
 
+## Where this fits (the environment)
+
+*Figure: where the 8/16/24-GPU curve is measured — one 3-node A3 pool (24× H100) on `asia-east1-c`, whose three NVLink islands are joined only by a single-gVNIC TCP fabric (the bottleneck this doc characterizes). The sweep borrows 1, then 2, then 3 nodes on the same cluster and reads the transport off the wire at each step.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>nccl-tests · torchrun sweeps"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N0["node 0<br/>ranks 0-7 (NVLink)"]
+      N1["node 1<br/>ranks 8-15 (NVLink)"]
+      N2["node 2<br/>ranks 16-23 (NVLink)"]
+    end
+  end
+  FAB["single-gVNIC eth0 / VPC TCP<br/>no TCPX · no RDMA"]
+  CLI -->|"sweep 8 / 16 / 24 GPUs"| POOL
+  N0 --- FAB
+  N1 --- FAB
+  N2 --- FAB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N0,N1,N2 meas; class FAB crit; class CLI ctx;
+```
+
+---
+
 ## Transport first: read it, don't assume it
 
 Before any bandwidth number, lab-12 captures the `NCCL_DEBUG=INFO` transport at 24 GPUs. It is the same TCP path as the 2-node lab — no fabric appears with more nodes — but the ring is longer and crosses **three** node boundaries (`assets/lab-12/nccl_transport_24gpu.txt`, verbatim):

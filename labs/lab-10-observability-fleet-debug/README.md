@@ -10,6 +10,34 @@
 
 ---
 
+## Where this runs (the environment)
+
+*The GKE-managed metrics pipeline (DCGM → dcgm-exporter → GMP → Cloud Monitoring) reading the live cluster, plus fault injections confined to hhp6's free GPUs; the DWS-held node hv7m and qwen3-vllm are never touched.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl · port-forward :9400<br/>apply/delete fault workloads"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g"]
+      N1["node hhp6<br/>qwen3-vllm (2 GPU) + ≤4 free for faults"]
+      N2["node hv7m<br/>held (untouched)"]
+    end
+    EXP["dcgm-exporter DaemonSet<br/>4.4.1 · :9400/metrics"]
+  end
+  subgraph GMPZ["Google Managed Prometheus → Cloud Monitoring"]
+    SER["DCGM_FI_* per-GPU series"]
+  end
+  N1 -->|"scrape 30s"| EXP
+  EXP --> SER
+  SER -->|"query"| CLI
+  CLI -.->|"inject → capture → delete faults"| N1
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N1,EXP,SER meas; class N2,CLI ctx;
+```
+
 ## Run
 
 ```bash
@@ -30,6 +58,32 @@ The runner does two parts:
 7. **Fault (b)** — two `hostNetwork` iperf3 probes: a victim flow measured alone, then during a 32-stream saturating load (`fault-nic-saturation.txt`).
 
 > The kill/mismatch faults depend on **timing** (kill a rank mid-collective), so the runner sleeps between apply and kill; the committed asset files are the curated views of those real runs.
+
+*Two phases: read the live metrics baseline (blue), then inject four reversible faults on hhp6 (red), each captured and deleted — returning the cluster to holder + vLLM only.*
+
+```mermaid
+flowchart TB
+  subgraph MON["managed metrics pipeline (read-only)"]
+    direction TB
+    A1["① capture managed stack<br/>dcgm-exporter DS · GMP · scrape CRs"]
+    A2["② scrape :9400 live<br/>UTIL=0 but GPU5-6 busy (trust FB+clk+pwr)"]
+    A1 --> A2
+  end
+  subgraph FAULT["node hhp6 · ≤4 free GPUs (hv7m held, untouched)"]
+    direction TB
+    F1["③ kill rank in JobSet<br/>fail-fast → Failed ~3s"]
+    F2["④ kill rank in raw Pods<br/>ncclRemoteError before 60s timeout"]
+    F3["⑤ mismatched tensor counts<br/>silent wrong value=2 vs crash"]
+    F4["⑥ iperf3 32-stream saturation (0 GPU)<br/>victim 162→23 Gbit/s (~7× collapse)"]
+    F1 --> F2 --> F3 --> F4
+  end
+  A2 -->|"baseline read, then inject"| F1
+  F4 -->|"delete each fault → baseline"| R["holder + vLLM only<br/>managed stack left in place"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class A1 good; class A2 meas; class F1,F2,F3,F4 crit; class R good;
+```
 
 ---
 

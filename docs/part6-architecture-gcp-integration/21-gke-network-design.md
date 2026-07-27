@@ -19,6 +19,35 @@ Parts II–III measured that fabric honestly and found a cliff: NCCL all-reduce 
 
 ---
 
+## Where this fits (the environment)
+
+*Figure — where this fits: the current lab cluster is **single-gVNIC** (`LEGACY_DATAPATH`), so every inter-node all-reduce rides one `eth0` at the **~28.6 GB/s floor** (red); TCPX (grey) can only live in a **NEW Dataplane-V2 cluster** lab-18 provisions — never an in-place upgrade.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud clusters describe<br/>datapathProvider · NCCL NET/* logs"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c · LEGACY_DATAPATH"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N1["node · 8× H100<br/>single gVNIC eth0"]
+      N2["node · 8× H100<br/>single gVNIC eth0"]
+    end
+  end
+  subgraph NEWC["a NEW Dataplane-V2 cluster · lab-18 (pending capacity)"]
+    TPX["TCPX pool<br/>4 GPU VPCs @ MTU 8244"]
+  end
+  N1 <-->|"all-reduce over TCP · ~28.6 GB/s floor<br/>NET/Socket, RDMA disabled"| N2
+  CLI -.->|"read the rung"| N1
+  CLI -.->|"provision the fabric"| TPX
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N1,N2 crit; class TPX ctx; class CLI ctx;
+```
+
+---
+
 ## Step 0 — The GPU-fabric ladder (the decision, in one table)
 
 Every GCP GPU platform sits on a rung of an inter-node fabric ladder. The rung is chosen with the **machine family** and **fixed at pool/cluster creation** — you don't toggle it later.

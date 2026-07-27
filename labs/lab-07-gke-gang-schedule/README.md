@@ -10,6 +10,32 @@
 
 ---
 
+## Where this runs (the environment)
+
+*The scheduling/admission layer of the 2-node us-central1 cluster, surveyed read-only: the device plugin, node taints/topology labels, DWS ProvisioningRequests, and the capacity holders that keep the provisioned nodes held. No GPU is consumed.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl get / describe<br/>(read-only)"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    SCH["kube-scheduler<br/>dual taints + gce-topology labels"]
+    DWS["DWS ProvisioningRequests<br/>zone-a/a2 Provisioned · b/c Pending"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g"]
+      N1["node hhp6<br/>device-plugin · qwen3-vllm (2 GPU)"]
+      N2["node hv7m<br/>held by a3-holder (8 GPU)"]
+    end
+  end
+  CLI -->|"describe"| SCH
+  CLI -->|"get"| DWS
+  DWS -.->|"backs"| POOL
+  SCH -->|"places / gates"| POOL
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class SCH,DWS,N1,N2 meas; class CLI ctx;
+```
+
 ## Run
 
 ```bash
@@ -23,6 +49,25 @@ The runner:
 4. Captures the live **capacity-holder** gang state (`holder-gang-state.txt`).
 5. Applies the **Pending gang demo** Job (2×8 GPU), waits ~15 s, captures the `FailedScheduling` gate (`gang-pending-events.txt`), then **deletes** the Job.
 6. Captures **what is actually scheduled** on the GPU nodes (`gpu-pod-placement.txt`).
+
+*The six steps: five read-only captures plus one apply-and-delete probe (⑤, red) — a 16-GPU gang that cannot fit, so it never runs and is deleted immediately.*
+
+```mermaid
+flowchart TB
+  subgraph READ["read-only survey · kubectl get/describe · 0 GPU consumed"]
+    direction TB
+    S1["① device-plugin DaemonSet<br/>large-cos 2/2 · advertises nvidia.com/gpu:8"]
+    S2["② node topology + dual taints<br/>gce-topology-block differs (not co-located)"]
+    S3["③ DWS ProvisioningRequests<br/>zone-a/a2 Provisioned · b/c Pending"]
+    S4["④ capacity-holder gang state<br/>holder-a2 Running · b/c Pending"]
+    S5["⑤ apply 2×8=16 GPU gang → gate<br/>Insufficient nvidia.com/gpu · NotTriggerScaleUp → delete"]
+    S6["⑥ actual placement<br/>holder 8 GPU + qwen3-vllm 2 GPU"]
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+  end
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class S1,S2,S3,S4,S6 good; class S5 crit;
+```
 
 ---
 

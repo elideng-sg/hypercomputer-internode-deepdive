@@ -19,6 +19,34 @@ This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/1
 
 ---
 
+## Where this runs (the environment)
+
+*This lab borrows **all three** nodes and puts the **inter-node fabric** centre-stage: a single gVNIC `eth0` carrying plain TCP (`NET/Socket`, `GPU Direct RDMA Disabled`) — the exact transport NCCL selects and the layer both faults are localized to. Blue = what this lab exercises; grey = context.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>run_comms.sh · NCCL_DEBUG=INFO"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N0["node d7j7<br/>ranks 0-7"]
+      N1["node lq6m<br/>ranks 8-15"]
+      N2["node q0qn<br/>ranks 16-23 (straggler rank 16)"]
+    end
+    FAB["single gVNIC eth0<br/>NET/Socket · GPU Direct RDMA Disabled"]
+  end
+  N0 ---|"via NET/Socket"| FAB
+  N1 ---|"via NET/Socket"| FAB
+  N2 ---|"via NET/Socket"| FAB
+  CLI -.->|"borrow: holder 3→0 · restore"| N0
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N0,N1,N2,FAB meas; class CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -34,20 +62,33 @@ Every fault is **Flex-safe** — injected as a per-run **env var** (`NCCL_SOCKET
 - `comms_bench.py` — a few fixed-size all-reduces with per-rank `ARRIVE` markers and a **warmup all-reduce** that forms the communicator *before* any straggler sleep (so the straggler stalls a *collective*, not comm init — see the gotcha below); optional `STRAGGLER_RANK`/`STRAGGLER_SLEEP`
 - assets: `comms_healthy_transport.txt` / `comms_healthy_rank0_full.txt` (what NCCL chose), `comms_fault_badiface_signature.txt` (Fault A), `comms_fault_straggler_rank0.txt` (survivor abort) + `comms_fault_straggler_rank16.txt` (the culprit's *remote* error), `comms_timeline.txt`
 
-### GPU safety — a guarded, gap-free hold handoff (Flex-safe)
+### The three phases, mapped onto the environment (Flex-safe borrow)
+
+*The run's phases overlaid on the environment: ①–③ drive the borrowed 3-node pool, while the transport NCCL chose and the two fault signatures are **read off the plain-TCP fabric** (the thick edges). ① is healthy (green); ② and ③ are the injected faults (red). The whole run is bracketed by the guarded borrow (`gpu-holder` 3→0) and the `EXIT`-trap re-arm to 3.*
 
 ```mermaid
-flowchart LR
-  H0["gpu-holder = 3<br/>(24 GPUs held)"] -->|"scale 3→0"| W["nccl-wb-{a,b,c}<br/>occupy 24 GPUs"]
-  W --> P1["Phase 1: healthy<br/>NCCL_DEBUG=INFO<br/>(read transport/algo)"]
-  P1 --> P2["Phase 2: FAULT A<br/>NCCL_SOCKET_IFNAME=<br/>nonexistent0 (init fails)"]
-  P2 --> P3["Phase 3: FAULT B<br/>straggler rank 16<br/>(hang to PG timeout)"]
-  P3 -->|"EXIT trap:<br/>delete pods"| R["gpu-holder = 3<br/>(re-armed)"]
-  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→0"| S1
+  subgraph POOL["3 borrowed A3 nodes · nccl-wb-{a,b,c} occupy 24 GPUs (fully held)"]
+    direction TB
+    S1["① healthy 24-GPU all-reduce<br/>NCCL_DEBUG=INFO (read transport/algo)"]
+    S2["② Fault A: NCCL_SOCKET_IFNAME=nonexistent0<br/>dies at bootstrap/init"]
+    S3["③ Fault B: straggler rank 16 sleeps 70s<br/>survivors hang to PG timeout"]
+    S1 --> S2 --> S3
+  end
+  subgraph FABZ["single gVNIC eth0 · NET/Socket (what NCCL chose — read off the wire)"]
+    direction TB
+    T["healthy: via NET/Socket · RDMA Disabled"]
+    F["fault signatures: 'no socket interface found' (init)<br/>vs 45008ms ≈ Timeout(ms)=45000 (hang)"]
+  end
+  S1 ==>|"read chosen transport"| T
+  S3 ==>|"read timing signature"| F
+  S3 -->|"EXIT trap: delete wb pods"| R["gpu-holder = 3 · re-armed"]
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
-  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
   classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
-  class H0,W ctx; class P1 good; class P2,P3 crit; class R good;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class H0 ctx; class S1 good; class S2,S3 crit; class T meas; class F crit; class R good;
 ```
 
 > **hostNetwork / warmup gotcha (why the bench does a warmup all-reduce first).** NCCL builds the communicator **lazily on the first collective** (`ncclCommInitRank`). If a straggler sleeps before the *first* all-reduce, it stalls comm **init**, which is gated by NCCL's own long bootstrap timeout — *not* the PG-work timeout — so the group just waits the full straggler delay and then proceeds (no abort). `comms_bench.py` therefore runs a **warmup all-reduce with all ranks present** to build the communicator, and only then lets the straggler sleep, so the stall lands on an established collective and the watchdog fires at exactly `PG_TIMEOUT`. This is itself a real lesson: *init hangs and collective hangs have different clocks.*

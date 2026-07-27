@@ -11,6 +11,31 @@
 
 ---
 
+## Where this runs (the environment)
+
+*Where the probed node sits: your shell reaches one A3 node in the 2-node us-central1 cluster; the probe lands on hhp6 (6 free GPUs, borrows 4) while hv7m stays fully held. The DGX-style system-management layer sits below the tenant boundary. (The node's internal 8-GPU baseboard is drawn separately below.)*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl debug node · run.sh<br/>read-only probes"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g"]
+      N1["node hhp6<br/>6 free GPUs · borrows 4 for topo probe"]
+      N2["node hv7m<br/>fully held by capacity holder"]
+    end
+  end
+  subgraph MGT["below tenant boundary — Google-managed"]
+    FM["Fabric Manager / BMC<br/>(not tenant-visible)"]
+  end
+  CLI -->|"lspci · nvidia-smi topo/nvlink/-q"| N1
+  N1 -.->|"opaque"| MGT
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N1 meas; class N2,CLI,FM ctx;
+```
+
 ## Run
 
 ```bash
@@ -18,6 +43,23 @@ bash labs/lab-11-platform-compare/run.sh
 ```
 
 **GPU safety:** the script targets a node with **free** GPUs, borrows **4 GPUs** only to query the NVLink mesh, and **deletes the pod immediately** afterward. It never targets a fully-held capacity-holder node and never evicts a running workload. (In this environment `hv7m` is fully held by a capacity holder and `hhp6` has 6 free GPUs; the probe lands on `hhp6`.)
+
+*The probe sequence: identify the hardware read-only, borrow 4 GPUs to prove the NVLink mesh (then delete the pod), confirm fabric state, and compile the A3-vs-DGX comparison table from measured facts + docs 11–14.*
+
+```mermaid
+flowchart TB
+  subgraph NODE["node hhp6 · read-only probes + 4-GPU borrow (deleted after)"]
+    direction TB
+    S1["① lspci (debug-node chroot, 0 GPU)<br/>8× H100 SXM5 · single gVNIC · no ConnectX/BlueField"]
+    S2["② borrow 4 GPUs · nvidia-smi topo -m<br/>NV18 all-to-all · 18 links @ 26.562 GB/s → del pod"]
+    S3["③ nvidia-smi -q fabric<br/>Completed/Success · FM not tenant-visible"]
+    S1 --> S2 --> S3
+  end
+  S3 -->|"measured facts vs docs 11-14"| C["④ A3-vs-DGX-SuperPOD table<br/>same HGX/NVSwitch · diverge at NIC/DPU/SHARP/orchestration"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class S1,S3 good; class S2 meas; class C good;
+```
 
 ---
 

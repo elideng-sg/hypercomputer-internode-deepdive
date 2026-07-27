@@ -19,6 +19,36 @@ The trap this layer sets is the opposite of doc-17's false alarm: here the loud 
 
 ---
 
+## Where this fits (the environment)
+
+*The scheduler / quota / framework layer — where these failures surface, one layer above the GPU. Blue = the control-plane objects this doc reads (kube-scheduler + autoscaler, Kueue's `ClusterQueue gpu-lq-24` / `Workload`, JobSet/Job/Pod retry state). Grey = the pool: this whole layer reproduces at **zero GPU**, so the `gpu-holder` stays 3/3 and the 24 H100 are never touched.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl get/describe/logs<br/>get workload"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph CP["control plane (where these failures surface)"]
+      SCH["kube-scheduler + autoscaler<br/>FailedScheduling · NotTriggerScaleUp"]
+      KUE["Kueue · ClusterQueue gpu-lq-24<br/>Workload QuotaReserved"]
+      JOB["JobSet / Job / Pod<br/>backoffLimit · restartPolicy · maxRestarts"]
+    end
+    subgraph POOL["a3-high-flex-pool · 24× H100 (untouched)"]
+      NH["3 held nodes · gpu-holder 3/3"]
+    end
+  end
+  CLI -->|"submit / inspect"| CP
+  KUE -->|"admit gang"| SCH
+  JOB --> SCH
+  SCH -.->|"place (only if admitted & fits)"| NH
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class SCH,KUE,JOB,CLI meas; class NH ctx;
+```
+
+---
+
 ## Step 0 — The ordered read (before you touch a GPU)
 
 Every failure below is diagnosed with the same four-command read, in order. You stop at the first one that names the cause:

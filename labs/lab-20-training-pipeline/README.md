@@ -43,6 +43,39 @@ The dataset is **learnable** (`y = X·w* + b* + noise`), so the loss **genuinely
 
 `run_pipeline.sh` stages `train_pipeline.py` into the bucket, applies the Kueue queues, and assumes the dataset + Secret exist.
 
+## Where this runs (the environment)
+
+*One real distributed job on the production shape. **Kueue + JobSet** place a 2-node / 16-GPU gang (amber = the gang machinery), fed from and checkpointing to **GCS** (blue), with **DCGM engine-active** read back off **GMP** (blue). The inter-node gradient all-reduce rides the node's single gVNIC `eth0` (no TCPX — that's lab-18). Grey = the one held node + context.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>PromQL via access-token"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NG["2 borrowed nodes · 16 GPUs<br/>DDP gang · all-reduce over eth0"]
+      NH["1 held node<br/>gpu-holder (always-hold)"]
+    end
+    KJ["Kueue + JobSet<br/>atomic gang admission"]
+    EXP["managed dcgm-exporter"]
+  end
+  subgraph GCS["GCS · gs://…-lab-data-asiaeast1"]
+    DS["8× train shards + code in<br/>checkpoints out (rank 0)"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_PROF_GR_ENGINE_ACTIVE<br/>(both training nodes)"]
+  end
+  KJ -->|"admits gang"| NG
+  DS -->|"userspace GCSFuse"| NG
+  NG -->|"scrape"| EXP --> SER --> CLI
+  CLI -.->|"borrow 3→1 · restore"| NG
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class NG,DS,SER meas; class NH,EXP,CLI ctx; class KJ accent;
+```
+
 ## Run
 
 ```bash
@@ -57,6 +90,38 @@ The script borrows **two** nodes (holder 3→1 frees 16 GPUs), applies the [JobS
 - `run_pipeline.sh` — borrow-window orchestrator (stage code → Kueue → JobSet → training log → DCGM → checkpoints)
 - `../../manifests/pipeline/jobset-train-pipeline.yaml` — the 2-node/16-GPU gang (userspace GCSFuse + Kueue `gpu-lq-24`)
 - assets: `code_and_data_staged.txt`, `gang_admission.txt`, `training_log.txt`, `worker1_rendezvous.txt`, `dcgm_training_active.txt`, `checkpoints_in_gcs.txt`, `jobset_final.txt`
+
+### The pipeline, as run steps overlaid on the environment (Flex-safe borrow)
+
+*Kueue + JobSet admit the gang atomically (amber) on the control plane, the DDP job trains and checkpoints on the two borrowed nodes (green), and GMP confirms a sustained engine-active plateau (blue) — comms-bound on single-gVNIC, not idle. Bracketed by the borrow (`gpu-holder` 3→1 frees 16 GPUs) and the EXIT-trap re-arm to 3.*
+
+```mermaid
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→1 (frees 16 GPUs)"| S1
+  subgraph CP["cluster control plane"]
+    direction TB
+    S1["① stage code+data to GCS · apply Kueue queues"]
+    S2["② JobSet gang admitted atomically (gpu-cq-24)"]
+    S1 --> S2
+  end
+  S2 -->|"places 2 pods × 8 GPUs"| S3
+  subgraph NODES["2 borrowed A3 nodes · 16 GPUs (fully held by the job)"]
+    direction TB
+    S3["③ DDP train: WORLD_SIZE=16<br/>loss 262.95 → 0.0076 @ 4000 steps"]
+    S4["④ rank 0 checkpoints → GCS<br/>264 MiB every 1000 steps"]
+    S3 --> S4
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    XC["⑤ engine-active plateau ~0.32–0.39<br/>(comms-bound on eth0, not idle)"]
+  end
+  S3 -.->|"scrape"| XC
+  S4 -->|"EXIT trap: del JobSet · restore holder"| R["gpu-holder = 3 · re-armed"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class H0 ctx; class S1,S2 accent; class S3,S4 good; class XC meas; class R good;
+```
 
 ---
 

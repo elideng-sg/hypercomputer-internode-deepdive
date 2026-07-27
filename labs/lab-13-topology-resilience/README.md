@@ -25,6 +25,36 @@ This lab has two independent parts, each capturing something a two-node pool phy
 
 ---
 
+## Where this runs (the environment)
+
+*Both parts borrow **all three** nodes (holder 3→0). The two side systems this lab leans on are the **JobSet + Kueue** control plane (13a's gang admission and quota gate) and the **inter-node fabric** on which 13b's survivors read the closed-socket fault. Blue = what this lab exercises; grey = context.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["gcloud + kubectl<br/>run_gang.sh · run_nodeloss.sh"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      N0["node njnx<br/>ranks 0-7"]
+      N1["node nmrc<br/>ranks 8-15"]
+      N2["node zcn4<br/>ranks 16-23 (victim, 13b)"]
+    end
+    KQ["JobSet v0.12 + Kueue v0.18<br/>gang admission · 24-GPU quota"]
+    FAB["single gVNIC eth0<br/>plain TCP · no TCPX/RDMA"]
+  end
+  KQ -->|"gang-admit / gate"| N1
+  N0 ---|"NET/Socket hop"| FAB
+  N1 ---|"NET/Socket hop"| FAB
+  N2 ---|"NET/Socket hop"| FAB
+  CLI -.->|"borrow: holder 3→0 · restore"| N0
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class N0,N1,N2,KQ meas; class FAB ctx; class CLI ctx;
+```
+
+---
+
 ## Run
 
 ```bash
@@ -41,23 +71,33 @@ The script reuses lab-06's **unmodified** `launch_node.sh` to start one process 
 - `nodeloss_bench.py` — long-running fixed-size (268 MB fp32) all-reduce loop with per-node heartbeats and a bounded, async-handled fault path
 - assets: `nodeloss_fault_survivor_rank0.txt` (full survivor NCCL/watchdog trace), `nodeloss_victim_rank16.txt` (victim heartbeats that stop at the kill), `survivor_set_rerun_16gpu.txt` (the 16-GPU rerun sweep → `# done`), `nodeloss_timeline.txt` (distilled timeline)
 
-### GPU safety — a guarded, gap-free hold handoff (Flex-safe)
+### The node-loss phases, mapped onto the environment (Flex-safe borrow)
 
 Identical posture to [lab-12](../lab-12-scaling-sweep/): the 24 H100s are normally fully held by the `gpu-holder` Deployment (3 × 8). The lab **borrows** them, and an `EXIT` trap **always gives them back**. Crucially, the injected fault is **`pkill` of the job's processes on one node — not a node drain, cordon, or delete** — so the node stays held and Flex capacity is never released.
 
+*The 13b steps overlaid on the environment: ①–③ run on the borrowed 3-node pool, while the survivors read the node-loss fault **off the plain-TCP fabric** (the thick edge — a closed peer socket). The whole run is bracketed by the guarded borrow (`gpu-holder` 3→0) and the `EXIT`-trap re-arm to 3.*
+
 ```mermaid
-flowchart LR
-  H0["gpu-holder = 3<br/>(24 GPUs held)"] -->|"scale 3→0"| W["nccl-wb-{a,b,c}<br/>occupy 24 GPUs"]
-  W --> J["24-GPU loop<br/>(3 nodes, healthy)"]
-  J -->|"pkill -9 on<br/>node zcn4 (job only)"| K["16 ranks survive<br/>8 ranks gone"]
-  K --> F["survivors fault<br/>(NCCL remote error)"]
-  F --> RR["16-GPU / 2-node<br/>survivor-set rerun → # done"]
-  RR -->|"EXIT trap:<br/>delete pods"| R["gpu-holder = 3<br/>(re-armed)"]
-  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+flowchart TB
+  H0["gpu-holder = 3 · 24 GPUs held (always-hold)"] -->|"borrow: scale 3→0"| S1
+  subgraph POOL["3 borrowed A3 nodes · nccl-wb-{a,b,c} occupy 24 GPUs (fully held)"]
+    direction TB
+    S1["① launch 24-GPU all-reduce loop<br/>(njnx + nmrc + zcn4, healthy)"]
+    S2["② pkill -9 job on node zcn4<br/>ranks 16-23 vanish (job-level, no drain)"]
+    S3["③ 16-GPU / 2-node survivor set<br/>reruns → # done (20.07 GB/s)"]
+    S1 --> S2 --> S3
+  end
+  subgraph FABZ["single gVNIC eth0 · plain TCP (survivors read the fault off the wire)"]
+    direction TB
+    F["closed socket → ncclRemoteError<br/>→ DistBackendError (aborts in seconds)"]
+  end
+  S2 ==>|"survivors fault on next collective"| F
+  S3 -->|"EXIT trap: delete wb pods"| R["gpu-holder = 3 · re-armed"]
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
-  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
   classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
-  class H0,W ctx; class J,K meas; class F crit; class RR,R good;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class H0 ctx; class S1 good; class S2 crit; class S3 good; class F crit; class R good;
 ```
 
 ---

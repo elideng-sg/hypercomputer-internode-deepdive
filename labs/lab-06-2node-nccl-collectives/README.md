@@ -10,6 +10,29 @@
 
 ---
 
+## Where this runs (the environment)
+
+*Two 8-GPU pods (one per A3 node) on the 2-node us-central1 cluster; the collective crosses the node boundary over the single shared gVNIC `eth0` as plain TCP — no RDMA, no TCPX.*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl exec · run.sh<br/>c10d env:// (no MPI/SSH)"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-cluster · us-central1-a"]
+    subgraph POOL["a3-h100-dws-pool · 2× a3-highgpu-8g"]
+      PA["node A · nccl-workbench-a<br/>8× H100 · ranks 0-7 (hostNetwork)"]
+      PB["node B · nccl-workbench-b<br/>8× H100 · ranks 8-15 (hostNetwork)"]
+    end
+  end
+  CLI -->|"launch 8 procs/node"| PA
+  CLI -->|"launch 8 procs/node"| PB
+  PA <==>|"eth0 / gVNIC · TCP sockets<br/>no RDMA · no TCPX"| PB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class PA,PB meas; class CLI ctx;
+```
+
 ## Run
 
 ```bash
@@ -25,6 +48,24 @@ LAB06_POD_A=nccl-workbench-a LAB06_POD_B=nccl-workbench-b \
 ### Why torch.distributed instead of `mpirun all_reduce_perf`?
 
 The NGC image ships the `nccl-tests` binaries **and** OpenMPI, but **no `sshd`** — a 2-node `mpirun` launch would need SSH plumbing between pods. `torch.distributed`'s c10d `env://` rendezvous needs neither MPI nor SSH, uses the **identical NCCL library**, and computes busbw with the same formula. So the measurement is equivalent to nccl-tests while being robust across two independently-launched Kubernetes pods. (Single-node lab-04 *does* use `all_reduce_perf` directly, since one process with `-g 8` needs no launcher.)
+
+*The lab's phases: launch the collective, prove the transport, sweep bandwidth, then contrast against the single-node NVLink ceiling of lab-04 (red = the cliff this lab exists to quantify).*
+
+```mermaid
+flowchart TB
+  subgraph RUN["nccl-workbench-a + -b · 16 ranks over 2 nodes (a3-h100-dws-pool)"]
+    direction TB
+    S1["① launch c10d env:// · 8 procs/node<br/>no MPI, no SSH"]
+    S2["② capture NCCL transport<br/>NET/Socket eth0 · IB=none · RDMA disabled"]
+    S3["③ all-reduce sweep 8B→1GB<br/>peak busbw ≈ 28.6 GB/s @ 1GiB"]
+    S1 --> S2 --> S3
+  end
+  S3 -->|"vs lab-04 NVLink ~480 GB/s"| C["④ intra-vs-inter cliff<br/>≈ 17× slower across node boundary"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class S1,S2 good; class S3 meas; class C crit;
+```
 
 ---
 

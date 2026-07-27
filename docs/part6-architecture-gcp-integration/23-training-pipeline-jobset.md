@@ -19,6 +19,42 @@ The lab so far cheated twice: it fed the GPUs from `torch.randn` (no data path) 
 
 ---
 
+## Where this fits (the environment)
+
+*Figure — where this fits: Kueue admits a **2-node / 16-GPU JobSet gang** (blue) onto the borrowed A3 nodes; code + data + checkpoints all live in one **GCS bucket**, and the run's DCGM plateau is read back on GMP. The 16 ranks all-reduce over `eth0` — the single-gVNIC fabric that makes the job comms-bound (Step 4).*
+
+```mermaid
+flowchart LR
+  subgraph LOCAL["your shell (local)"]
+    CLI["kubectl + run_pipeline.sh<br/>PromQL via access-token"]
+  end
+  subgraph CLUSTER["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
+    subgraph POOL["a3-high-flex-pool · 3× a3-highgpu-8g = 24× H100"]
+      NB["2 borrowed nodes …d7j7 + …lq6m<br/>JobSet · 16 ranks all-reduce over eth0"]
+      NH["1 held node<br/>gpu-holder (always-hold)"]
+    end
+    KQ["Kueue gpu-lq-24<br/>(atomic gang admission)"]
+    EXP["managed dcgm-exporter"]
+  end
+  subgraph GCS["gs://hdlab-elideng-lab-data-asiaeast1"]
+    BK["code + train shards<br/>+ checkpoints"]
+  end
+  subgraph GMPZ["Google Managed Prometheus"]
+    SER["DCGM_FI_PROF_GR_ENGINE_ACTIVE"]
+  end
+  KQ -->|"admit gang"| NB
+  BK -->|"GCSFuse read/write"| NB
+  NB -->|"scrape"| EXP
+  EXP -->|"~30s ingest"| SER
+  SER -->|"PromQL"| CLI
+  CLI -.->|"borrow 3→1 · restore"| NB
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class NB,BK,SER meas; class NH,EXP,KQ,CLI ctx;
+```
+
+---
+
 ## Step 0 — The anatomy of a training job on GKE
 
 A production training job is five concerns, each solved by a different GKE object. The value is in seeing them as **one stack**, not five features:
