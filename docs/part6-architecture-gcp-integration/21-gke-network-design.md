@@ -10,7 +10,7 @@ Parts II–III measured that fabric honestly and found a cliff: NCCL all-reduce 
 - The **GPU-fabric ladder** on GCP — single-gVNIC → TCPX → TCPXO → RDMA/RoCE — each mapped to its A3/A4 machine family and its measured-or-referenced bandwidth
 - Why the fabric is a **create-time** decision: multi-networking ⇒ Dataplane V2, and the 4-GPU-NIC / jumbo-MTU / `Network`-CRD anatomy of a TCPX pool
 - The surrounding network-design choices a real GPU cluster forces: **VPC-native**, **private cluster + Cloud NAT**, **Shared VPC**, and **compact placement / rail alignment**
-- Where **serving** networking differs from training (Gateway API / Inference Gateway — forward-ref to [doc-24](24-inference-serving-mlops.md))
+- Where **serving** networking differs from training (Gateway API / Inference Gateway — forward-ref to [doc-24](24-inference-serving-autoscale.md))
 - How to read the payoff **on the wire** (`NET/GPUDirectTCPX` vs `NET/Socket`) rather than trusting a spec sheet
 
 **Prerequisites:** [doc-05](../part2-inter-node/05-nic-rdma-gpudirect.md) (NICs/RDMA/GPUDirect mechanism) and [doc-06](../part2-inter-node/06-nccl-collectives.md) (the measured gVNIC curve this closes); helpful: [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md) (read the transport, don't assume it).
@@ -30,6 +30,19 @@ Every GCP GPU platform sits on a rung of an inter-node fabric ladder. The rung i
 | **GPUDirect-TCPXO** | A3 Mega (`a3-megagpu-8g`) | TCPX-optimized over 8 NICs (higher ceiling) | 8 | reference-arch (no A3 Mega on the lab) |
 | **GPUDirect-RDMA / RoCE** | A3 Ultra (`a3-ultragpu-8g`), A4 | RoCEv2 over CX-7, `NET/IB` present | 8 (CX-7) | reference-arch (Part IV fabric contrast) |
 
+*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. Only the red rung is where this cluster sits (measured); TCPX is the rung lab-18 provisions; TCPXO/RDMA are reference.*
+
+```mermaid
+flowchart LR
+  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>~28.6 GB/s — MEASURED"] --> R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 (after pending)"]
+  R1 --> R2["GPUDirect-TCPXO<br/>A3 Mega · 8 NICs<br/>reference"]
+  R2 --> R3["GPUDirect-RDMA / RoCE<br/>A3 Ultra / A4 · CX-7<br/>reference"]
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  class R0 crit; class R1 meas; class R2,R3 ctx;
+```
+
 **The honesty line (inherited from the whole guide):** only the rungs we can run are claimed as measured. This lab's cluster is single-gVNIC; TCPX is the rung we *provision* to close the cliff; **TCPXO and RDMA are reference-architecture** — described as the ladder above TCPX and contrasted, never asserted as run here (they need A3 Mega / A3 Ultra / A4 hardware — see [doc-13](../part4-platform-reference-arch/13-spectrum-x-and-fabrics.md)).
 
 ---
@@ -37,6 +50,22 @@ Every GCP GPU platform sits on a rung of an inter-node fabric ladder. The rung i
 ## Step 1 — Why the fabric is a *create-time* decision
 
 The single most important architecture fact in this doc: **you cannot upgrade a cluster's GPU fabric in place.** GPUDirect-TCPX needs each GPU NIC on its own **network**, and Kubernetes multi-networking on GKE requires **Dataplane V2** (`--enable-dataplane-v2`) **and** multi-networking (`--enable-multi-networking`) — and **both are create-time-only flags.** A cluster created without them (like the lab's `hypercomputer-a3-asiaeast1`) can never host a TCPX pool; the only path to TCPX is a **new cluster**.
+
+*Figure: the create-time gate. The fabric rung is decided when the cluster is born; a cluster without Dataplane V2 can never host a TCPX pool — the only path forward is a new cluster.*
+
+```mermaid
+flowchart TD
+  S["Want GPUDirect-TCPX<br/>on this workload"] --> Q{"cluster created with<br/>Dataplane V2 + multi-networking?"}
+  Q -->|"NO — the lab cluster<br/>(datapathProvider empty)"| NEW["provision a NEW cluster<br/>(both are create-time-only flags)"]
+  Q -->|"YES"| POOL["add a multi-network<br/>TCPX node pool"]
+  NEW --> POOL
+  POOL --> V["4 GPU VPCs @ MTU 8244 (jumbo)<br/>Network + GKENetworkParamSet CRDs<br/>nccl-tcpx-installer DaemonSet"]
+  V --> W["NCCL logs NET/GPUDirectTCPX<br/>inter-node busbw lifts off the floor"]
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class S ctx; class Q ctx; class NEW crit; class POOL,V ctx; class W good;
+```
 
 Verify any cluster's rung in one command (this is the doc-16 "read it, don't assume" discipline applied to the fabric):
 
@@ -89,7 +118,7 @@ The fabric rung is the headline, but a production GPU cluster forces four more d
 - **Shared VPC.** In real orgs the GPU cluster lives in a service project attached to a host-project Shared VPC; the 4 GPU networks and their firewall rules are then a **host-project** concern. Design the subnet/secondary-range layout with the network team before pool creation (it's create-time).
 - **Compact placement & rail alignment.** For inter-node collectives, nodes should be **physically close** (a compact-placement policy / the GKE `topology` scheduling) so the fabric isn't crossing the datacenter — the cloud analogue of DGX SuperPOD **rail alignment** ([doc-14](../part4-platform-reference-arch/14-dgx-superpod.md)). This is why the [lab-13a](../../labs/lab-13-topology-resilience/) gang places one pod per node with topology awareness.
 
-**Serving is a different network problem.** Everything above is **east-west** (GPU↔GPU, bandwidth-bound). Inference is **north-south** (client→model, latency- and routing-bound): a Gateway API / **GKE Inference Gateway** front end, health-based routing, and autoscaling — covered in [doc-24](24-inference-serving-mlops.md) and [lab-21](../../labs/lab-21-inference-serving-autoscale/). Designing one fabric for both is a common mistake; they have opposite optimization targets.
+**Serving is a different network problem.** Everything above is **east-west** (GPU↔GPU, bandwidth-bound). Inference is **north-south** (client→model, latency- and routing-bound): a Gateway API / **GKE Inference Gateway** front end, health-based routing, and autoscaling — covered in [doc-24](24-inference-serving-autoscale.md) and [lab-21](../../labs/lab-21-inference-serving/). Designing one fabric for both is a common mistake; they have opposite optimization targets.
 
 ---
 

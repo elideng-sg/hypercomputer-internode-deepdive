@@ -2,14 +2,21 @@
 
 **Objective:** labs 12/13 proved the **gang** (Kueue + JobSet placing a multi-node job atomically); [lab-19](../lab-19-storage-data-path/) proved the **data path** (GCS via GCSFuse). Every earlier training lab still *faked* two things: it fed the GPUs from in-memory `torch.randn` (no data path) and never checkpointed (no write path). This lab ties them into **one real distributed training run** on the production shape:
 
-```
-data (GCS) ──> distributed training (2 nodes / 16 GPUs, DDP) ──> checkpoints (GCS) ──> metrics (GMP/DCGM)
+```mermaid
+flowchart LR
+  D["data + code<br/>(GCS via GCSFuse)"] --> T["distributed training<br/>2 nodes / 16 GPUs, DDP<br/>gradient all-reduce over eth0"]
+  T --> C["checkpoints<br/>→ GCS (rank 0)"]
+  T --> M["metrics<br/>GMP / DCGM"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef accent fill:#f9ab00,stroke:#b06000,color:#202124;
+  class D,C meas; class T ctx; class M accent;
 ```
 
 The dataset is **learnable** (`y = X·w* + b* + noise`), so the loss **genuinely decreases** — an honest training curve, not a fixed synthetic tensor. Both the **code and the data** are read from the bucket; **rank 0 writes checkpoints back** to the bucket every N steps; and **DCGM engine-active on GMP** confirms the 16 GPUs were actually training. This is [doc-23](../../docs/part6-architecture-gcp-integration/23-training-pipeline-jobset.md) made concrete.
 
 > ### Why fewer GPUs / one node can't show this
-> A training **pipeline** only *exists* across the wire. The gradient **all-reduce** that couples every rank each step, the **shared dataset** every node reads, and the **checkpoint** one rank writes for all are inherently multi-node. On one node (8 GPUs) there is no inter-node all-reduce and no read fan-out; on one GPU there is no pipeline at all. **16 GPUs across 2 nodes** is the smallest thing that is genuinely distributed end-to-end — and, as the metrics below show, at this size the job is already partly **comms-bound on single-gVNIC** (which is exactly why [lab-18](../lab-18-gpu-network-fabric/)'s fabric ladder matters).
+> A training **pipeline** only *exists* across the wire. The gradient **all-reduce** that couples every rank each step, the **shared dataset** every node reads, and the **checkpoint** one rank writes for all are inherently multi-node. On one node (8 GPUs) there is no inter-node all-reduce and no read fan-out; on one GPU there is no pipeline at all. **16 GPUs across 2 nodes** is the smallest thing that is genuinely distributed end-to-end — and, as the metrics below show, at this size the job is already partly **comms-bound on single-gVNIC** (which is exactly why [lab-18](../lab-18-enable-gpudirect-tcpx/)'s fabric ladder matters).
 
 ---
 
@@ -65,6 +72,8 @@ The script borrows **two** nodes (holder 3→1 frees 16 GPUs), applies the [JobS
 
 4000 steps in **165.8s**, sustained **~3.2M samples/s** across the 16 GPUs (`training_log.txt`). The occasional up-spike (e.g. step 650 → 0.316) is ordinary mini-batch noise, not divergence — the trend is monotone toward zero.
 
+![Training loss on a log scale falling from 262.95 at step 1 to 0.0076 at step 4000](../../assets/lab-20/loss_curve.svg)
+
 **Checkpoints landed in GCS** — rank 0 wrote a **264 MiB** state-dict every 1000 steps at **~3.0s** each through the GCSFuse write path (steps 1000/2000/3000/4000), verified as objects in the bucket (`checkpoints_in_gcs.txt`).
 
 **GMP/DCGM confirms the GPUs were busy for the whole run** (`DCGM_FI_PROF_GR_ENGINE_ACTIVE`, 15 samples over the run window):
@@ -76,7 +85,7 @@ The script borrows **two** nodes (holder 3→1 frees 16 GPUs), applies the [JobS
 
 A **sustained plateau**, not a startup blip — the managed pipeline sees the same training the log does.
 
-**The honest read on ~0.4, not ~1.0 (G23):** each step all-reduces a **268 M-param (≈1 GiB) gradient** across 16 ranks over the node's **single gVNIC `eth0`** (this cluster has no TCPX/RDMA — [lab-18](../lab-18-gpu-network-fabric/)). So the step is **compute interleaved with inter-node communication**, and engine-active plateaus below saturation. That's not a flaw to hide — it's the pipeline honestly showing that at 16 GPUs the **fabric** is already a first-order term, exactly the ladder lab-18 climbs.
+**The honest read on ~0.4, not ~1.0 (G23):** each step all-reduces a **268 M-param (≈1 GiB) gradient** across 16 ranks over the node's **single gVNIC `eth0`** (this cluster has no TCPX/RDMA — [lab-18](../lab-18-enable-gpudirect-tcpx/)). So the step is **compute interleaved with inter-node communication**, and engine-active plateaus below saturation. That's not a flaw to hide — it's the pipeline honestly showing that at 16 GPUs the **fabric** is already a first-order term, exactly the ladder lab-18 climbs.
 
 ---
 
@@ -84,7 +93,7 @@ A **sustained plateau**, not a startup blip — the managed pipeline sees the sa
 
 In the cross-lab index [reference/lab-build-gotchas.md](../../reference/lab-build-gotchas.md):
 - **G22** — a **too-short run is invisible to GMP**: the first pass finished in 33s, shorter than GMP's ~30s scrape, so DCGM caught only the tail (mostly zeros). Fix: size the run to **several minutes** (STEPS=4000, ~166s) so the managed pipeline sees a real plateau — the same "GMP scrapes ~30s" lesson as [doc-20](../../docs/part5-operations-diagnostics/20-perf-monitoring-day2.md).
-- **G23** — engine-active **~0.4, not ~1.0**, on a healthy multi-node DDP job: the 1 GiB gradient all-reduce over single-gVNIC interleaves comms with compute. Not a bug — read it alongside the fabric ([lab-18](../lab-18-gpu-network-fabric/)), don't mistake a comms-bound gang for an idle GPU.
+- **G23** — engine-active **~0.4, not ~1.0**, on a healthy multi-node DDP job: the 1 GiB gradient all-reduce over single-gVNIC interleaves comms with compute. Not a bug — read it alongside the fabric ([lab-18](../lab-18-enable-gpudirect-tcpx/)), don't mistake a comms-bound gang for an idle GPU.
 
 ## Cleanup
 

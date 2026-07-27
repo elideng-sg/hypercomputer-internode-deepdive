@@ -16,9 +16,15 @@ This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/1
 
 ## What "the data path" is (and the three things this lab measures)
 
-```
-GCS bucket ──GCSFuse CSI──> /data (pod)  ──loader read──> host RAM ──H2D──> GPU
-   (object store)              (FUSE mount, WIF auth)        ↑ the starve point
+```mermaid
+flowchart LR
+  B["GCS bucket<br/>(object store)"] -->|"GCSFuse CSI<br/>FUSE mount, WIF auth"| M["/data in pod"]
+  M -->|"loader read<br/>← the starve point"| R["host RAM"]
+  R -->|"H2D copy"| G["GPU HBM<br/>compute"]
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class B,R ctx; class M crit; class G good;
 ```
 
 1. **Read throughput** — how fast bytes come off GCSFuse sequentially (`gcsfuse_read_throughput.txt`). This is the ceiling; if a step needs more than this, the GPU waits.
@@ -72,6 +78,8 @@ The headline is the **data-path contrast with identical compute** (8192² fp16 G
 | GMP `DCGM_FI_PROF_GR_ENGINE_ACTIVE` gpu0 | plateau **~0.12** | ramp to **1.000** |
 
 Three independent meters agree — the GPU idles ~88% of the wall while starved, and is fully compute-bound when fed. (`dataloader_starved.txt`, `dataloader_fed.txt`, `dcgm_crosscheck.txt`)
+
+![Starved vs fed GPU-busy fraction: 11.8% vs 100.0% for the identical GEMM](../../assets/lab-19/starved_vs_fed.svg)
 
 Supporting captures:
 - **GCSFuse sequential read** — **4866 MiB/s** peak (single `cat` of all 16 shards; gcsfuse 3.11 parallel downloads, auto-tuned for `a3-highgpu-8g`). Per-step re-reads in the loop sustained ~2.3 GiB/s. (`gcsfuse_read_throughput.txt`)
