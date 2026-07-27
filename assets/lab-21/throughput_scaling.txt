@@ -1,0 +1,5 @@
+# cmd: kubectl exec infer-serve-wb -c bench -- bash -lc for\ W\ in\ 1\ 2\ 4\ 8\;\ do\ WORKERS=\$W\ BATCH=16\ DURATION=8\ python3\ /workspace/throughput_scale.py\;\ done
+WORKERS= 1  aggregate=   5720.0 img/s  per-GPU=  5720.0 img/s  (batch=16)
+WORKERS= 2  aggregate=  10222.0 img/s  per-GPU=  5111.0 img/s  (batch=16)
+WORKERS= 4  aggregate=  21308.0 img/s  per-GPU=  5327.0 img/s  (batch=16)
+WORKERS= 8  aggregate=  41438.0 img/s  per-GPU=  5179.8 img/s  (batch=16)

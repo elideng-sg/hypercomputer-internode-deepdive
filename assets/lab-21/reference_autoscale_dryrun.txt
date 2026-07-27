@@ -1,0 +1,10 @@
+# cmd: bash -lc $'echo \'# NOT applied live (always-hold + Flex leave no capacity to scale into).\';\n   echo \'# Server-side validation that the production topology is well-formed:\';\n   kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 apply --dry-run=server -f /home/ext_elideng_google_com/review-repos/hypercomputer-internode-deepdive/.claude/worktrees/3node-enrichment/manifests/serving/inference-autoscale.yaml 2>&1'
+# NOT applied live (always-hold + Flex leave no capacity to scale into).
+# Server-side validation that the production topology is well-formed:
+deployment.apps/resnet-serve created (server dry run)
+service/resnet-serve created (server dry run)
+horizontalpodautoscaler.autoscaling/resnet-serve created (server dry run)
+resource mapping not found for name: "inference-gw" namespace: "" from "/home/ext_elideng_google_com/review-repos/hypercomputer-internode-deepdive/.claude/worktrees/3node-enrichment/manifests/serving/inference-autoscale.yaml": no matches for kind "Gateway" in version "gateway.networking.k8s.io/v1"
+ensure CRDs are installed first
+resource mapping not found for name: "resnet-route" namespace: "" from "/home/ext_elideng_google_com/review-repos/hypercomputer-internode-deepdive/.claude/worktrees/3node-enrichment/manifests/serving/inference-autoscale.yaml": no matches for kind "HTTPRoute" in version "gateway.networking.k8s.io/v1"
+ensure CRDs are installed first

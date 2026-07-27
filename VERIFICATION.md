@@ -34,3 +34,6 @@ Provenance for every live run. Appended automatically by `scripts/lib_capture.sh
 | 2026-07-27T03:38:39Z | lab-20 | assets/lab-20/training_log.txt | gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m | DDP training loss curve (2 nodes/16 GPUs, data+code+ckpt on GCS) |
 | 2026-07-27T03:38:39Z | lab-20 | assets/lab-20/dcgm_training_active.txt | gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m | GMP DCGM engine-active during training |
 | 2026-07-27T03:38:39Z | lab-20 | assets/lab-20/checkpoints_in_gcs.txt | gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 gke-hypercomputer-a3-a3-high-flex-poo-27562461-lq6m | checkpoints written to GCS |
+| 2026-07-27T05:01:49Z | lab-21 | assets/lab-21/latency_vs_concurrency.txt | gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 | serving saturation knee (latency vs concurrency) |
+| 2026-07-27T05:01:49Z | lab-21 | assets/lab-21/throughput_scaling.txt | gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 | horizontal throughput scaling 1..8 GPUs |
+| 2026-07-27T05:01:49Z | lab-21 | assets/lab-21/dcgm_under_load.txt | gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 | GMP DCGM engine-active under serving load |

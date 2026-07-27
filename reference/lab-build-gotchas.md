@@ -339,6 +339,19 @@ now has **three** distinct causes — throttled, starved, comms-bound — and yo
 reading the whole path (device clocks + io% + fabric), never one meter. It's also the honest
 bridge back to the fabric ladder: at 16 GPUs the network is already first-order.
 
+## G24 — a serving latency knee is NOT a GPU-saturation signal (lab-21)
+
+lab-21's ResNet-50 server hit **p99 ≈ 1 s** under high concurrency while the GPU's
+`DCGM_FI_PROF_GR_ENGINE_ACTIVE` sat at **~0.17** — the H100 was **83% idle** while latency
+was catastrophic. The bottleneck was the **serving stack** (single-thread request dispatch +
+one batching worker + Python), not compute: a single GPU sustained 5,720 img/s with huge
+headroom, and throughput scaled ~linearly to **41,438 img/s across 8 GPUs (7.24×)**. The trap
+is reading only the GPU meter and concluding "need a bigger GPU" — the fix is to **scale the
+serving layer horizontally** (more replicas / better batching), which is exactly what an HPA
+adds. This is the **fourth** distinct reading of a low/mid engine-active signal in the guide —
+throttled (G-lab-17), starved (G21), comms-bound (G23), server-bound (here) — all told apart
+only by reading the rest of the path (latency curve + replica scaling), never the one meter.
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17; Part VI: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), lab-19 + lab-20 captured live (userspace GCSFuse, Flex-safe; lab-20 = 2-node/16-GPU JobSet gang, data+code+ckpt on GCS). Next: lab-21.)*
+*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology.)*

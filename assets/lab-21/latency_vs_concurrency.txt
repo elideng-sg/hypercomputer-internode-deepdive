@@ -1,0 +1,8 @@
+# cmd: kubectl exec infer-serve-wb -c bench -- bash -lc for\ C\ in\ 1\ 2\ 4\ 8\ 16\ 32\ 64\;\ do\ CONC=\$C\ DURATION=8\ python3\ /workspace/loadgen.py\;\ done
+CONC=  1  n=   909     113.5 req/s  p50=    8.7ms  p95=    9.6ms  p99=   10.1ms  mean=    8.8ms
+CONC=  2  n=  1738     217.2 req/s  p50=    9.0ms  p95=   10.1ms  p99=   10.6ms  mean=    9.2ms
+CONC=  4  n=  3312     414.0 req/s  p50=    9.5ms  p95=   10.2ms  p99=   10.6ms  mean=    9.7ms
+CONC=  8  n=  5814     726.6 req/s  p50=   10.6ms  p95=   12.0ms  p99=   12.8ms  mean=   11.0ms
+CONC= 16  n=  7140     800.8 req/s  p50=   11.3ms  p95=   13.9ms  p99=  104.5ms  mean=   18.2ms
+CONC= 32  n=  9757    1094.1 req/s  p50=   12.2ms  p95=   22.3ms  p99= 1027.8ms  mean=   27.0ms
+CONC= 64  n= 10414    1159.8 req/s  p50=   21.2ms  p95=   33.8ms  p99= 1059.4ms  mean=   49.9ms

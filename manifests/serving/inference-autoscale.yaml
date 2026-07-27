@@ -1,0 +1,97 @@
+# lab-21 REFERENCE — the production inference-serving + autoscale topology.
+#
+# ⚠️ NOT APPLIED LIVE in this repo. The always-hold rule keeps all 24 GPUs of the
+# 3-node Flex pool occupied, and the cap-of-3 / Flex-start constraints mean there
+# is NO spare GPU capacity for an HPA to scale INTO and no room for the cluster
+# autoscaler to add a GPU node. So lab-21 MEASURES the serving workload live
+# (latency knee + horizontal throughput scaling + DCGM under load on one borrowed
+# node) and ships this file as the reference autoscale path — the same
+# measured-rung / reference-rung split as lab-18 (fabric) and lab-19 (CSI).
+#
+# The four production pieces:
+#   1. Deployment of the model server (N replicas, 1 GPU each)
+#   2. HPA scaling those replicas on a GPU metric (DCGM engine-active via GMP)
+#   3. Cluster Autoscaler adding GPU NODES when replicas can't fit (the second tier)
+#   4. GKE Inference Gateway / Gateway API routing + model-aware load balancing
+# Vertex AI (managed endpoints + autoscaling) is the fully-managed contrast — see doc-24.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resnet-serve
+  namespace: default
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: resnet-serve } }
+  template:
+    metadata:
+      labels: { app: resnet-serve }
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: a3-high-flex-pool
+      tolerations: [{ operator: Exists }]
+      containers:
+      - name: serve
+        image: nvcr.io/nvidia/pytorch:24.10-py3
+        command: ["bash","-lc","python3 /workspace/serve.py"]
+        ports: [{ containerPort: 8080 }]
+        env:
+        - { name: BATCH_MAX, value: "16" }
+        - { name: BATCH_DELAY_MS, value: "5" }
+        resources:
+          limits: { nvidia.com/gpu: "1" }        # one GPU per replica -> replicas scale horizontally
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resnet-serve
+spec:
+  selector: { app: resnet-serve }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+# HPA on the GPU signal. DCGM_FI_PROF_GR_ENGINE_ACTIVE is exported to Cloud
+# Monitoring by GKE managed collection (GMP); the Custom Metrics Stackdriver
+# Adapter surfaces it to the HPA as an External metric. Scale out when the
+# fleet's GPUs are, on average, busier than the target — the same signal lab-21
+# measures live under load.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: resnet-serve
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: resnet-serve }
+  minReplicas: 1
+  maxReplicas: 8
+  metrics:
+  - type: External
+    external:
+      metric:
+        name: prometheus.googleapis.com|DCGM_FI_PROF_GR_ENGINE_ACTIVE|gauge
+      target:
+        type: AverageValue
+        averageValue: "600m"          # scale so mean engine-active stays ~0.6 per replica
+  behavior:                            # damp flapping — serving load is bursty
+    scaleUp:   { stabilizationWindowSeconds: 30 }
+    scaleDown: { stabilizationWindowSeconds: 120 }
+---
+# Gateway API front door. With the GKE Inference Gateway the HTTPRoute becomes
+# model-aware (route by model name, load-balance on KV-cache / queue depth); a
+# plain Gateway class still gives L7 routing + health checks in front of the Service.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: inference-gw
+spec:
+  gatewayClassName: gke-l7-regional-external-managed
+  listeners:
+  - { name: http, protocol: HTTP, port: 80 }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: resnet-route
+spec:
+  parentRefs: [{ name: inference-gw }]
+  rules:
+  - matches: [{ path: { type: PathPrefix, value: /infer } }]
+    backendRefs: [{ name: resnet-serve, port: 80 }]
