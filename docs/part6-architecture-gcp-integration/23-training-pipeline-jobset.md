@@ -33,6 +33,25 @@ A production training job is five concerns, each solved by a different GKE objec
 
 lab-20 wires all five: a JobSet of 2 replicated Jobs (one pod per node), admitted atomically by Kueue `gpu-lq-24`, each pod mounting the bucket and launching 8 local ranks (WORLD_SIZE=16) that all-reduce over `eth0`, with rank 0 checkpointing to the same bucket.
 
+*Figure: the five concerns are not five features — they are one loop. Kueue admits the gang, JobSet places it, then every step reads → computes → all-reduces → steps, and every N steps writes state back through the same data path.*
+
+```mermaid
+flowchart LR
+  K["Kueue gang<br/>atomic admission"] --> J["JobSet<br/>1 pod/node, stable DNS"]
+  J --> RD["read shard<br/>(GCSFuse /data)"]
+  RD --> FB["forward + backward<br/>(8 local ranks/node)"]
+  FB --> AR["all-reduce gradients<br/>over eth0 (the fabric)"]
+  AR --> ST["optimizer step"]
+  ST -->|"next step"| RD
+  ST -->|"every N steps"| CK["checkpoint state-dict<br/>→ GCS (rank 0)"]
+  classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  class K,J ctx; class RD,CK meas; class FB ctx; class AR crit; class ST ctx;
+```
+
+The **all-reduce** edge is drawn red on purpose: at 16 GPUs over single-gVNIC it is the step's first-order cost (Step 4).
+
 > **Manual ranks, not torchrun.** As in lab-13, each pod sets `RANK/LOCAL_RANK/WORLD_SIZE` by hand and rendezvous on the JobSet's headless DNS (`train-pipeline-worker-0-0.train-pipeline`). This c10d-direct path is more robust across pods than torchrun's multi-node rendezvous, and it makes the rank math explicit: `RANK = NODE_RANK*8 + local`.
 
 ---
@@ -55,7 +74,9 @@ The headline is a genuine training curve on real hardware:
 |---|---|---|---|---|---|---|
 | **loss** | 262.95 | 0.598 | 0.089 | 0.046 | 0.016 | **0.0076** |
 
-**Measured live** (lab-20, nodes `…d7j7` + `…lq6m`, WORLD_SIZE=16): loss falls from **263 → 0.0076** over 4000 steps in **165.8s**, sustaining **~3.2 M samples/s** across the 16 GPUs. Occasional up-spikes are ordinary mini-batch noise, not divergence. This is the thing every earlier lab faked, now real: gradients from 16 GPUs on 2 nodes, all-reduced each step, converging on data read from an object store.
+**Measured live** (lab-20, nodes `…d7j7` + `…lq6m`, WORLD_SIZE=16): loss falls from **263 → 0.0076** over 4000 steps in **165.8s**, sustaining **~3.2 M samples/s** across the 16 GPUs. Occasional up-spikes are ordinary mini-batch noise, not divergence.
+
+![Training loss on a log scale falling from 262.95 at step 1 to 0.0076 at step 4000 — plotted from assets/lab-20/training_log.txt](../../assets/lab-20/loss_curve.svg) This is the thing every earlier lab faked, now real: gradients from 16 GPUs on 2 nodes, all-reduced each step, converging on data read from an object store.
 
 ---
 

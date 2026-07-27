@@ -12,7 +12,7 @@ The production **autoscale topology** (HPA-on-DCGM, cluster-autoscaler node scal
 > The core result — **throughput scales ~linearly with GPU count** (Phase B) — is *by definition* a multi-GPU measurement: one GPU gives you one data point and no slope. And the whole *point* of the lab, autoscaling, is a fleet behaviour: you scale replicas across a node and nodes across a pool. This runs on **one borrowed A3 node (8×H100)** so the 1→8 scaling curve is real; the cross-node/cross-pool tier is the reference topology (see the honest note below).
 
 > ### ⚠️ Why the autoscale topology is reference, not live
-> The **always-hold** rule keeps all 24 GPUs of the 3-node Flex pool occupied, and the **Flex-start cap-of-3** means there is **no spare GPU capacity for an HPA to scale into** and no room for the cluster autoscaler to add a GPU node. So lab-21 **measures the serving workload live** (the knee + the 1→8 scaling + DCGM) and ships the autoscale/gateway path as a **server-validated reference** — the same measured-rung / reference-rung split as [lab-18](../lab-18-gpu-network-fabric/) (fabric) and [lab-19](../lab-19-storage-data-path/) (CSI). Nothing about the fleet behaviour is asserted from a number we didn't read.
+> The **always-hold** rule keeps all 24 GPUs of the 3-node Flex pool occupied, and the **Flex-start cap-of-3** means there is **no spare GPU capacity for an HPA to scale into** and no room for the cluster autoscaler to add a GPU node. So lab-21 **measures the serving workload live** (the knee + the 1→8 scaling + DCGM) and ships the autoscale/gateway path as a **server-validated reference** — the same measured-rung / reference-rung split as [lab-18](../lab-18-enable-gpudirect-tcpx/) (fabric) and [lab-19](../lab-19-storage-data-path/) (CSI). Nothing about the fleet behaviour is asserted from a number we didn't read.
 
 ---
 
@@ -49,6 +49,8 @@ Borrows one node (holder 3→2), pins a pod holding all 8 GPUs, then: Phase A (s
 
 Throughput scales cleanly to ~8 in-flight (flat ~10 ms), then **plateaus at ~1.1k req/s while p99 blows up to ~1 s** — the classic knee. Past the knee you are not serving faster, only queueing longer.
 
+![Serving saturation knee: throughput plateaus at ~1.16k req/s while p99 explodes from ~10 ms to ~1 s past 8 in-flight requests](../../assets/lab-21/knee.svg)
+
 ### B. Horizontal throughput scaling (the multi-GPU result)
 
 | GPUs | aggregate | per-GPU | scaling |
@@ -59,6 +61,8 @@ Throughput scales cleanly to ~8 in-flight (flat ~10 ms), then **plateaus at ~1.1
 | 8 | **41,438 img/s** | 5,180 | **7.24×** |
 
 Per-GPU throughput stays flat as GPUs are added → **near-linear aggregate scaling (7.24× on 8 GPUs)**. This is the empirical justification for replica autoscaling: to serve 8× the load, run 8× the replicas.
+
+![Near-linear horizontal scaling: aggregate throughput 5,720 → 41,438 img/s across 1→8 GPUs (7.24×), tracking the ideal-linear line](../../assets/lab-21/scaling.svg)
 
 ### C. The GPU signal under load — *and the honest lesson*
 

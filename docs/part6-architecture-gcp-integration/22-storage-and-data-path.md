@@ -36,6 +36,19 @@ There is no single "GPU storage." Each tier fixes a different symptom; picking t
 
 ## Step 1 — GCSFuse + Workload Identity: the default data path
 
+*Figure: the read data path, and the one place it starves. Every stage upstream of the GPU is a potential bottleneck; the GCSFuse mount's throughput ceiling is the usual culprit.*
+
+```mermaid
+flowchart LR
+  B["GCS bucket<br/>(object store)"] -->|"GCSFuse CSI<br/>FUSE mount, WIF auth"| M["/data in pod"]
+  M -->|"loader read<br/>← the starve point"| R["host RAM"]
+  R -->|"H2D copy"| G["GPU HBM<br/>compute"]
+  classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
+  classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
+  classDef good fill:#188038,stroke:#0d652d,color:#ffffff;
+  class B,R ctx; class M crit; class G good;
+```
+
 GCSFuse presents a bucket as a POSIX-ish filesystem via a FUSE mount, injected as a **CSI sidecar** into the pod. Two things make it production-shaped rather than a hack:
 
 - **Workload Identity, not keys.** The pod's Kubernetes SA (`lab19-ksa`) is bound to a Google SA (`lab19-gcs@…`) that holds `roles/storage.objectAdmin` on the bucket. No service-account key file ever touches the node — the same WIF mechanism [doc-21](21-gke-network-design.md) calls out as a shared cluster prerequisite. **WIF must be enabled *before* the CSI addon** (lab-19 gotcha G19).
@@ -73,7 +86,9 @@ Same GEMM, same H100. Only the data path differs:
 | GMP `DCGM_FI_PROF_GR_ENGINE_ACTIVE` | **low** — confirms it | **high** |
 | verdict | *storage-bound* | *compute-bound* |
 
-**Measured live** (lab-19, node `…lq6m`, identical 8192² fp16 GEMM, 40 iters/step): GPU-busy fraction **11.8%** starved vs **100.0%** fed; NVML sampled util 12.1% vs 99.6%; GMP `DCGM_FI_PROF_GR_ENGINE_ACTIVE` plateau **~0.12** vs ramp to **1.000**. Three meters, one story — the starved GPU idles ~88% of the wall. The starve here comes from **arithmetic intensity**: each starved step reads 1 GiB before computing, more than even 4.9 GiB/s storage delivers inside the ~60 ms compute window. A *single* 128 MB read would not starve it — which is the honest nuance (lab-19 gotcha G21).
+**Measured live** (lab-19, node `…lq6m`, identical 8192² fp16 GEMM, 40 iters/step): GPU-busy fraction **11.8%** starved vs **100.0%** fed; NVML sampled util 12.1% vs 99.6%; GMP `DCGM_FI_PROF_GR_ENGINE_ACTIVE` plateau **~0.12** vs ramp to **1.000**. Three meters, one story — the starved GPU idles ~88% of the wall.
+
+![Starved vs fed GPU-busy fraction: 11.8% vs 100.0% for the identical GEMM — plotted from assets/lab-19/dataloader_*.txt](../../assets/lab-19/starved_vs_fed.svg) The starve here comes from **arithmetic intensity**: each starved step reads 1 GiB before computing, more than even 4.9 GiB/s storage delivers inside the ~60 ms compute window. A *single* 128 MB read would not starve it — which is the honest nuance (lab-19 gotcha G21).
 
 The value of this is diagnostic discipline. A low `GR_ENGINE_ACTIVE` on a dashboard has **two** causes that look identical — a throttled GPU (lab-17's silent power cap) and a **starved** GPU — and the fix is opposite (fix the device vs fix the loader). lab-19 shows the storage-bound half; you tell them apart by also reading io% and the storage throughput, not just the GPU metric. This is [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md)'s "read the whole path" applied to data.
 

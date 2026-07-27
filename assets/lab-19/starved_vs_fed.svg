@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="300" viewBox="0 0 680 300" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <rect width="680" height="300" fill="#ffffff"/>
+  <text x="24" y="30" font-size="17" font-weight="700" fill="#202124">Same 8192² fp16 GEMM, same H100 — only the data path differs</text>
+  <text x="24" y="50" font-size="12" fill="#5f6368">GPU-busy fraction (compute ÷ wall). Source: assets/lab-19/dataloader_starved.txt, dataloader_fed.txt (node …lq6m, 2026-07-27)</text>
+
+  <!-- axis -->
+  <line x1="150" y1="80" x2="150" y2="250" stroke="#9aa0a6" stroke-width="1"/>
+  <line x1="150" y1="250" x2="620" y2="250" stroke="#9aa0a6" stroke-width="1"/>
+  <!-- gridlines at 25/50/75/100% -->
+  <g font-size="10" fill="#9aa0a6">
+    <line x1="267" y1="80" x2="267" y2="250" stroke="#eceff1" stroke-width="1"/><text x="255" y="268">25%</text>
+    <line x1="384" y1="80" x2="384" y2="250" stroke="#eceff1" stroke-width="1"/><text x="372" y="268">50%</text>
+    <line x1="501" y1="80" x2="501" y2="250" stroke="#eceff1" stroke-width="1"/><text x="489" y="268">75%</text>
+    <line x1="618" y1="80" x2="618" y2="250" stroke="#eceff1" stroke-width="1"/><text x="601" y="268">100%</text>
+  </g>
+
+  <!-- STARVED bar: 11.8% of (150..618 = 468px) => 55px -->
+  <text x="140" y="118" font-size="13" font-weight="600" fill="#202124" text-anchor="end">STARVED</text>
+  <text x="140" y="134" font-size="10" fill="#5f6368" text-anchor="end">read 8 shards/step</text>
+  <rect x="150" y="98" width="55" height="40" fill="#c5221f"/>
+  <text x="215" y="123" font-size="13" font-weight="700" fill="#c5221f">11.8% busy</text>
+  <text x="215" y="138" font-size="10" fill="#5f6368">— 88% of the wall spent waiting on I/O</text>
+
+  <!-- FED bar: 100% => 468px -->
+  <text x="140" y="198" font-size="13" font-weight="600" fill="#202124" text-anchor="end">FED</text>
+  <text x="140" y="214" font-size="10" fill="#5f6368" text-anchor="end">bytes resident</text>
+  <rect x="150" y="178" width="468" height="40" fill="#188038"/>
+  <text x="606" y="203" font-size="13" font-weight="700" fill="#ffffff" text-anchor="end">100.0% busy</text>
+
+  <text x="150" y="292" font-size="11" fill="#5f6368">Cross-checked three ways: NVML util 12.1% vs 99.6% · GMP DCGM_FI_PROF_GR_ENGINE_ACTIVE ~0.12 vs 1.000</text>
+</svg>

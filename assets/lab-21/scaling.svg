@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <rect width="640" height="320" fill="#ffffff"/>
+  <text x="24" y="28" font-size="17" font-weight="700" fill="#202124">Serving scales sideways — near-linear 1→8-GPU throughput</text>
+  <text x="24" y="47" font-size="12" fill="#5f6368">ResNet-50 inference, aggregate img/s. Source: assets/lab-21/throughput_scaling.txt (node …d7j7).</text>
+
+  <!-- y gridlines 0..48000 -->
+  <g font-size="10" fill="#9aa0a6" text-anchor="end">
+    <line x1="90" y1="250" x2="600" y2="250" stroke="#eceff1"/><text x="84" y="254">0</text>
+    <line x1="90" y1="207.5" x2="600" y2="207.5" stroke="#eceff1"/><text x="84" y="211">12k</text>
+    <line x1="90" y1="165" x2="600" y2="165" stroke="#eceff1"/><text x="84" y="169">24k</text>
+    <line x1="90" y1="122.5" x2="600" y2="122.5" stroke="#eceff1"/><text x="84" y="126">36k</text>
+    <line x1="90" y1="80" x2="600" y2="80" stroke="#eceff1"/><text x="84" y="84">48k</text>
+  </g>
+  <line x1="90" y1="80" x2="90" y2="250" stroke="#9aa0a6"/>
+  <line x1="90" y1="250" x2="600" y2="250" stroke="#9aa0a6"/>
+  <text x="34" y="165" font-size="12" fill="#5f6368" transform="rotate(-90 34 165)" text-anchor="middle">aggregate img/s</text>
+
+  <!-- ideal linear line (dashed grey) -->
+  <polyline fill="none" stroke="#9aa0a6" stroke-width="1.5" stroke-dasharray="5 3"
+    points="150,229.7 260,209.5 370,169 480,88"/>
+  <g fill="#9aa0a6"><circle cx="150" cy="229.7" r="2.5"/><circle cx="260" cy="209.5" r="2.5"/><circle cx="370" cy="169" r="2.5"/><circle cx="480" cy="88" r="2.5"/></g>
+  <text x="496" y="86" font-size="10" fill="#9aa0a6">ideal linear (8× = 45.8k)</text>
+
+  <!-- measured bars (green) -->
+  <g fill="#188038">
+    <rect x="125" y="229.7" width="50" height="20.3"/>
+    <rect x="235" y="213.8" width="50" height="36.2"/>
+    <rect x="345" y="174.5" width="50" height="75.5"/>
+    <rect x="455" y="103.3" width="50" height="146.7"/>
+  </g>
+  <!-- value + scaling labels -->
+  <g font-size="10" fill="#202124" text-anchor="middle">
+    <text x="150" y="224">5,720</text><text x="260" y="208">10,222</text><text x="370" y="169">21,308</text><text x="480" y="98">41,438</text>
+  </g>
+  <g font-size="11" font-weight="700" fill="#188038" text-anchor="middle">
+    <text x="150" y="244" fill="#ffffff">1.00×</text><text x="260" y="244" fill="#ffffff">1.79×</text><text x="370" y="244" fill="#ffffff">3.73×</text><text x="480" y="244" fill="#ffffff">7.24×</text>
+  </g>
+
+  <!-- x labels -->
+  <g font-size="11" fill="#5f6368" text-anchor="middle">
+    <text x="150" y="268">1 GPU</text><text x="260" y="268">2 GPUs</text><text x="370" y="268">4 GPUs</text><text x="480" y="268">8 GPUs</text>
+  </g>
+
+  <text x="90" y="292" font-size="11" fill="#5f6368">Per-GPU throughput stays flat (~5.2k img/s) as replicas are added — no all-reduce coupling (contrast the training gang, doc-23).</text>
+  <text x="90" y="310" font-size="11" font-weight="600" fill="#1a73e8">This is why the answer to load is N replicas ≈ N× QPS — the empirical basis for replica autoscaling.</text>
+</svg>
