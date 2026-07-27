@@ -1,17 +1,39 @@
-# Design: g3doc port of the internode-deepdive guide
+# Design: g3doc port to `gpu-ai-infra-field-guide`
 
 **Date:** 2026-07-27
 **Status:** approved
 
 ## Goal
 
-Publish this guide as internal g3doc documentation, without giving up the GitHub
+Publish this guide as internal g3doc documentation, without giving up this
 repo as a working, runnable lab environment.
 
-The deliverable is a self-contained `g3doc/` tree inside this repo. A reader with
-a google3 client copies that one directory into their client and mails a single
-CL. Nothing in the conversion requires google3 access, because this machine has
-none (see Constraints).
+The port lands in a **new, separate GitHub repo — `gpu-ai-infra-field-guide`
+(private)** — not in this one. A reader with a google3 client clones it, copies
+`g3doc/` into their client, and mails a single CL. Nothing in the conversion
+requires google3 access, because this machine has none (see Constraints).
+
+### Why a separate repo
+
+Two reasons, both raised by the repo owner:
+
+1. **Avoid conflict.** This repo is actively developed across many branches
+   (`feat/*`, `docs/*`); dropping a large generated `g3doc/` tree into it would
+   collide with in-flight work and make every future content branch also a
+   g3doc branch.
+2. **The name no longer fits.** `hypercomputer-internode-deepdive` describes
+   Part II alone. The content now spans GPU microarchitecture, intra-node
+   NVLink, the inter-node fabric, clustering/JobSet/Kueue, NVIDIA platform
+   reference architectures, ops/diagnostics, and GCP architecture integration,
+   plus a T1–T6 tool layer and 21 live labs. `gpu-ai-infra-field-guide` covers
+   that span, names no single layer or vendor, and has room for further parts.
+
+### Repo split of responsibility
+
+| Repo | Owns |
+| :--- | :--- |
+| `hypercomputer-internode-deepdive` (existing, public) | The runnable lab environment: `labs/` scripts, `manifests/`, `scripts/`, and the authored `docs/` prose. Stays the place labs are developed and re-run. |
+| `gpu-ai-infra-field-guide` (new, private) | The publishable guide: the rendered `g3doc/` tree, the Mermaid-bearing `src/` it was rendered from, the `tools/` that do it, and `assets/`. Self-contained — can regenerate itself without the other repo. |
 
 ## Constraints
 
@@ -42,12 +64,37 @@ Measured against `main` at `bb5a06a`.
 | `assets/**` capture files | 174 | Port verbatim |
 | Mermaid blocks across all `.md` | 99 | Pre-render to SVG |
 | `docs/superpowers/{specs,plans}` | 6 | **Not ported** |
-| `labs/**/*.{sh,py,yaml,json}`, `manifests/`, `scripts/` | ~50 | Stay in place as code |
+| `labs/**/*.{sh,py,yaml,json}`, `manifests/`, `scripts/` | ~50 | **Not ported** — stay in the lab repo as runnable code |
 
 Mermaid diagram types in use: `flowchart` (58), `graph` (28), `xychart-beta`
 (8), `sequenceDiagram` (3), `pie` (1), `gantt` (1).
 
 ## Target layout
+
+The new repo root:
+
+```
+gpu-ai-infra-field-guide/
+├─ README.md          ← what this repo is, and the copy-into-client steps
+├─ g3doc/             ← THE DELIVERABLE: copy this dir into google3
+├─ src/               ← Mermaid-bearing markdown, imported from the lab repo
+├─ tools/             ← render-diagrams.sh, linkcheck.sh
+├─ assets/            ← 174 capture files
+└─ VERIFICATION.md    ← provenance log, carried over
+```
+
+`src/` mirrors the lab repo's authored prose (`docs/`, `labs/*/README.md`,
+`reference/`) and stays Mermaid — it is the editable source of truth for
+diagrams. `tools/render-diagrams.sh` reads `src/` and writes `g3doc/`. That is
+what makes this repo self-contained: a diagram edit is a `src/` edit plus a
+re-render, with no dependency on the lab repo.
+
+Content flows one way: prose is authored in the lab repo, imported into `src/`,
+then rendered into `g3doc/`. Re-importing later is a copy over `src/` followed
+by a re-render — deliberately a simple, repeatable step rather than a submodule
+or subtree, both of which are more machinery than a periodic refresh warrants.
+
+And `g3doc/` itself:
 
 ```
 g3doc/
@@ -86,9 +133,16 @@ Part II's scaling bridge, so the nav should say so.
 ### Labs: one copy of every script
 
 Each lab README becomes `g3doc/labs/lab-NN/index.md`. Runnable files
-(`run.sh`, `*.py`, manifests) **stay in `labs/`** and are linked by tree path,
-not embedded. Lab pages already inline the snippets that matter, so nothing is
-lost and there is exactly one copy of each script.
+(`run.sh`, `*.py`, manifests) are **not copied** — they stay in the lab repo,
+which remains the place labs are run. Lab pages reference them by name and
+already inline the snippets that matter, so there is exactly one copy of every
+script and no risk of a stale duplicate.
+
+Note the tradeoff this accepts: a lab page's reference to `run.sh` is prose, not
+a resolvable link, so the link checker cannot verify it. Cross-repo links would
+be checkable but would break if the lab repo is renamed or made private. Given
+the guide's readers are internal and the scripts are for re-running labs rather
+than reading inline, one authoritative copy is worth the unverifiable reference.
 
 ## Diagram pipeline
 
@@ -99,11 +153,11 @@ system Chrome at `/usr/bin/google-chrome`, with
 riskiest type) and a `classDef`-styled `flowchart` both produced non-empty SVG
 with title text present and `#1a73e8` fills intact.
 
-`tools/render-diagrams.sh` walks each source `.md`, extracts every ` ```mermaid `
+`tools/render-diagrams.sh` walks each `src/**.md`, extracts every ` ```mermaid `
 block, renders it to `g3doc/images/<page-slug>-<n>.svg`, and replaces the block
-with an image reference.
+with an image reference in the corresponding `g3doc/` page.
 
-Every diagram in this repo is already preceded by an italic `*Figure: …*`
+Every diagram in the guide is already preceded by an italic `*Figure: …*`
 caption. That caption becomes the alt text, so the SVGs are described rather
 than bare:
 
@@ -113,8 +167,10 @@ that cross the node boundary (red) are TCP over gVNIC](../images/nccl-collective
 ```
 
 The script is idempotent and re-runnable, so a changed diagram is a re-render,
-not a hand edit. It reads from the original `docs/`/`labs/` sources, which stay
-Mermaid — that remains the editable source of truth for diagrams.
+not a hand edit. `src/` stays Mermaid and is the editable source of truth;
+`g3doc/` is generated output. Since `g3doc/` is what gets copied into a client,
+it is committed rather than gitignored — the CL author should not need to run
+Chrome to produce the deliverable.
 
 ## Link rewriting
 
@@ -137,8 +193,12 @@ file. This is the build gate: a broken link fails the port.
 ## Out of scope
 
 `docs/superpowers/specs/` and `docs/superpowers/plans/` (6 files, ~130KB) are
-artifacts about *building* the guide, not the guide itself. They stay
-GitHub-only.
+artifacts about *building* the guide, not the guide itself. They stay in the lab
+repo only — including this spec.
+
+`labs/**` scripts, `manifests/`, and `scripts/` are not copied (see *Labs*
+above). The lab repo keeps them and keeps its current name; nothing about this
+port renames or restructures it.
 
 No prose is rewritten. This is a structural port: content, measurements, and the
 measured-vs-reference honesty framing carry over unchanged. Internal
@@ -155,6 +215,9 @@ Before the port is called done:
 - Page count matches the expected 69.
 - No ` ```mermaid ` block remains in `g3doc/`.
 - Every `assets/` reference from a g3doc page resolves to a ported file.
+- The new repo is **private**, and `git log` shows the tree pushed to it.
+- A fresh clone of the new repo can re-run `tools/render-diagrams.sh` and
+  reproduce `g3doc/` — i.e. it really is self-contained.
 
 ## Open question for the reviewer
 
@@ -165,9 +228,21 @@ either way, and is called out in the handoff notes.
 
 ## Deliverable
 
-A draft PR containing:
+**A new private GitHub repo, `elideng-sg/gpu-ai-infra-field-guide`**, created via
+`gh` (v2.63.2, installed to `~/.local/bin` during this work; authenticated as
+`elideng-sg`), containing:
 
-- the `g3doc/` tree
-- `tools/render-diagrams.sh` and the link checker
-- `g3doc-port.md` handoff notes: the `_toc.yaml` assumption, and the steps to
-  copy the tree into a client
+- `g3doc/` — the 69-page rendered tree with `_toc.yaml`
+- `src/` — the Mermaid-bearing sources
+- `tools/` — `render-diagrams.sh` and `linkcheck.sh`
+- `assets/` — the 174 captures
+- `README.md` — what the repo is, the `_toc.yaml` assumption, and the
+  copy-into-client steps
+- `VERIFICATION.md` — the provenance log, carried over
+
+Work happens on a branch and lands via PR in the new repo, so the tree is
+reviewable before it becomes `main`.
+
+This repo (`hypercomputer-internode-deepdive`) receives **only this spec** — no
+`g3doc/` tree, no structural change, nothing that conflicts with the in-flight
+`feat/*` and `docs/*` branches.
