@@ -1,0 +1,1 @@
+read 2.00 GiB in 0.42s  ->  4866.0 MiB/s sequential (GCSFuse userspace, fileCache off)

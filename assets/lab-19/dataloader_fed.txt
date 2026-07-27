@@ -1,0 +1,4 @@
+MODE=fed steps=1200 matmul_n=8192 iters/step=40 read_set=16 shards
+  wall=80.08s  io=0.00s (0%)  compute=80.07s (100%)  read=0.0 GiB
+  GPU-busy fraction (compute/wall) = 100.0%   NVML sampled util (secondary) = 99.6%
+  VERDICT: FED (GPU compute-bound)

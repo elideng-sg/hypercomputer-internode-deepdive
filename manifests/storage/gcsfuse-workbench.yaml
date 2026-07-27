@@ -1,0 +1,44 @@
+# gcsfuse-workbench.yaml — REFERENCE manifest for the lab-19 data-path workbench.
+#
+# This is the shape run_storage.sh applies (it injects the borrowed node name into
+# spec.nodeName at runtime). The three things that make it a GCSFuse pod:
+#   1. metadata.annotations "gke-gcsfuse/volumes: true"  → CSI sidecar injection
+#   2. spec.serviceAccountName: lab19-ksa                → Workload Identity to the bucket
+#   3. a csi volume with driver gcsfuse.csi.storage.gke.io mounting the bucket at /data
+#
+# The pod requests all 8 GPUs so the borrowed node stays FULLY held (always-hold rule):
+# the storage bench only drives cuda:0, but no GPU on the node is left idle.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gcs-data-wb
+  labels: { app: gcs-data-wb }
+  annotations:
+    gke-gcsfuse/volumes: "true"       # inject the gcsfuse CSI sidecar
+    gke-gcsfuse/cpu-limit: "0"        # let the sidecar burst (0 = unlimited)
+    gke-gcsfuse/memory-limit: "0"
+spec:
+  # nodeName: <injected by run_storage.sh to the borrowed Flex node>
+  serviceAccountName: lab19-ksa       # WIF → lab19-gcs@…​ → bucket objectAdmin
+  restartPolicy: Never
+  tolerations: [{ operator: Exists }]
+  containers:
+  - name: bench
+    image: nvcr.io/nvidia/pytorch:24.10-py3
+    command: ["sleep", "infinity"]
+    resources: { limits: { nvidia.com/gpu: "8" } }   # hold the whole node
+    volumeMounts:
+    - { name: gcs, mountPath: /data }                 # the bucket, via GCSFuse
+    - { name: dshm, mountPath: /dev/shm }
+  volumes:
+  - name: gcs
+    csi:
+      driver: gcsfuse.csi.storage.gke.io
+      readOnly: false                                 # false: Phase E writes a checkpoint back
+      volumeAttributes:
+        bucketName: hdlab-elideng-lab-data-asiaeast1
+        mountOptions: "implicit-dirs"
+        # fileCacheCapacity 0 keeps reads NETWORK-bound so the "starved" contrast is honest —
+        # a file cache would mask the data-path cost the lab is trying to show.
+        fileCacheCapacity: "0"
+  - { name: dshm, emptyDir: { medium: Memory, sizeLimit: 16Gi } }

@@ -1,0 +1,4 @@
+MODE=starved steps=200 matmul_n=8192 iters/step=40 read_set=8 shards
+  wall=99.29s  io=87.55s (88%)  compute=11.75s (12%)  read=200.0 GiB
+  GPU-busy fraction (compute/wall) = 11.8%   NVML sampled util (secondary) = 12.1%
+  VERDICT: STARVED (GPU idle on the data path)

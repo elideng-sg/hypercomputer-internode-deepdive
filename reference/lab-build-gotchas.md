@@ -257,6 +257,65 @@ Cross-check in-cluster: `kubectl -n kube-system get ds | grep -E 'anetd|cilium'`
 
 The project has **no on-demand `NVIDIA_H100_GPUS` / A3 quota** in the lab regions (verified against `gcloud compute regions describe` — the metric isn't even present, i.e. limit 0). The existing 3-node A3 pool exists because it was provisioned via **Flex-start** (DWS queued provisioning), which draws on a separate, scarce capacity path. Consequence for lab-18: a *new* 2-node TCPX pool must also come via `--flex-start` and can **queue indefinitely or stock-out** if the region has no A3 capacity at that moment. **Never** free capacity by shrinking the holders ([[always-hold-gpu-after-work]]); retry later or try another A3 zone. This capacity uncertainty, on top of G17, is why the TCPX after-number is honestly marked pending.
 
+## G19 — GCSFuse CSI driver requires Workload Identity *first* (lab-19)
+
+Enabling the managed GCSFuse CSI addon on a cluster without Workload Identity fails outright:
+
+```
+ERROR: Workload Identity must be enabled for GCS Fuse CSI driver addon.
+```
+
+**Fix / order of operations:** enable WIF *before* the addon —
+`gcloud container clusters update <cluster> --zone <zone> --workload-pool=<project>.svc.id.goog`
+(a slow, ~10-min cluster update), *then*
+`--update-addons GcsFuseCsiDriver=ENABLED`. The bucket auth also needs a GSA with
+`roles/storage.objectAdmin` on the bucket and a KSA↔GSA `roles/iam.workloadIdentityUser`
+binding + `iam.gke.io/gcp-service-account` annotation. WIF + VPC-native are shared
+prerequisites with the rest of Part VI (doc-21/22).
+
+## G20 — cluster-level WIF is NOT enough: the node pool needs `GKE_METADATA`, which recreates nodes (lab-19)
+
+After enabling WIF **and** the CSI addon, the GCSFuse mount still failed:
+
+```
+MountVolume.SetUp failed for volume "gcs": rpc error: code = FailedPrecondition
+desc = Workload Identity Federation is not enabled on node. Please make sure this is
+enabled on both cluster and node pool level
+```
+
+WIF has **two** switches: cluster `workloadPool` **and** the node pool's
+`workloadMetadataConfig.mode = GKE_METADATA` (the GKE metadata server that mints the
+KSA token on the node). A pool created before WIF keeps `GCE_METADATA` (legacy), and
+switching it — `gcloud container node-pools update … --workload-metadata=GKE_METADATA` —
+**recreates the nodes.** On a scarce **Flex-start A3 pool** that is unacceptable: the
+nodes would be destroyed and re-requested through queued Flex provisioning that can
+stock-out ([[always-hold-gpu-after-work]], G18). So the managed CSI+WIF path is
+**node-recreation-gated** on this pre-WIF pool, exactly like lab-18's Dataplane-V2 gate.
+
+**Flex-safe workaround (what lab-19 uses):** mount the bucket with **userspace GCSFuse**
+inside a privileged pod (`/dev/fuse` hostPath), authenticated by a **GSA key** mounted
+as a Secret (`GOOGLE_APPLICATION_CREDENTIALS`) — a GSA key ignores node oauth scopes and
+the node metadata mode entirely, so **no node is touched**. `gcsfuse 3.11` installs from
+the `packages.cloud.google.com` apt repo and auto-tunes for the `a3-highgpu-8g` machine
+type. Same data path, real numbers, zero risk to Flex capacity. (The managed CSI+WIF
+manifest is still shipped as the production reference in `manifests/storage/`.)
+
+## G21 — measuring a "starved GPU" honestly: fast GCSFuse + noisy NVML (lab-19)
+
+Two measurement traps when showing storage starving a GPU:
+1. **GCSFuse on A3 is FAST** — ~**4.9 GiB/s** sequential (gcsfuse 3.11 auto-enables parallel
+   downloads + high-perf flags for the machine type). A *single* 128 MB per-step read
+   (~26 ms) therefore **cannot** starve a realistic ~100 ms compute step. The starve only
+   appears at **low arithmetic intensity** (tiny compute per byte) or when the per-step
+   read volume is large. lab-19's controlled version keeps compute **identical** and makes
+   STARVED read many shards/step so I/O dominates even at multi-GB/s.
+2. **NVML instantaneous `utilization.gpu` lies for short kernels** — sampled once per sub-ms
+   step it read **2%** even in the compute-bound (fed) case, mislabeling it "starved". The
+   honest headline is **GPU-busy fraction = compute_time / wall_time** (what the loop truly
+   achieves); NVML is kept only as a frequently-sampled secondary, and DCGM
+   `GR_ENGINE_ACTIVE` from GMP is the third cross-check. Never let a single noisy meter set
+   the verdict (the doc-16/doc-20 discipline).
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17; Part VI lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity). Next: labs 19–21.)*
+*(Appended as labs are built. Part V complete through lab-17; Part VI: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), lab-19 captured live (userspace GCSFuse, Flex-safe). Next: labs 20–21.)*
