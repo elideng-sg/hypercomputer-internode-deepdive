@@ -316,6 +316,29 @@ Two measurement traps when showing storage starving a GPU:
    `GR_ENGINE_ACTIVE` from GMP is the third cross-check. Never let a single noisy meter set
    the verdict (the doc-16/doc-20 discipline).
 
+## G22 — a too-short run is invisible to GMP: size the job to outlast the scrape (lab-20)
+
+The first lab-20 training pass finished in **33 s**. GMP scrapes DCGM ~every 30 s, so the whole
+run fit inside roughly one scrape window: `DCGM_FI_PROF_GR_ENGINE_ACTIVE` came back **mostly
+0.000** with a lone 0.4 sample at the tail — the managed pipeline made a healthy job look idle.
+Nothing was wrong with the job; the **observation window was shorter than the sampling
+interval**. Fix: size any run you intend to *see on GMP* to **several minutes** (lab-20 uses
+STEPS=4000 ≈ 166 s), which turned the same query into a clean 15-sample plateau. Same "GMP
+scrapes ~30 s, wait for ingest" lesson as doc-20 / lab-17 — it applies to *run length*, not just
+to the post-run ingest wait.
+
+## G23 — engine-active ~0.4 (not ~1.0) on a HEALTHY multi-node DDP job: comms-bound, not idle (lab-20)
+
+lab-20's 16-GPU DDP training plateaued at `GR_ENGINE_ACTIVE` **avg ~0.32–0.39, peak ~0.5–0.67** —
+well below saturation, on a job that was training perfectly (loss 263 → 0.0076). The cause is
+**not** a throttle (lab-17) or a storage starve (lab-19): each step all-reduces a
+**268 M-param (~1 GiB) gradient** across 16 ranks over the node's **single gVNIC `eth0`** (no
+TCPX/RDMA on this cluster — lab-18), so compute is **interleaved with inter-node communication**
+and the SM engine idles during the exchange. The lesson for the guide: a mid-range engine-active
+now has **three** distinct causes — throttled, starved, comms-bound — and you separate them by
+reading the whole path (device clocks + io% + fabric), never one meter. It's also the honest
+bridge back to the fabric ladder: at 16 GPUs the network is already first-order.
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17; Part VI: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), lab-19 captured live (userspace GCSFuse, Flex-safe). Next: labs 20–21.)*
+*(Appended as labs are built. Part V complete through lab-17; Part VI: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), lab-19 + lab-20 captured live (userspace GCSFuse, Flex-safe; lab-20 = 2-node/16-GPU JobSet gang, data+code+ckpt on GCS). Next: lab-21.)*

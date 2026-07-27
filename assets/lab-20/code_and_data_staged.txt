@@ -1,0 +1,14 @@
+# cmd: bash -lc echo\ \'##\ code:\'\;\ gcloud\ storage\ ls\ gs://hdlab-elideng-lab-data-asiaeast1/code/\;\ echo\ \'##\ train\ shards:\'\;\ gcloud\ storage\ ls\ gs://hdlab-elideng-lab-data-asiaeast1/train/\ \|\ grep\ -c\ train_\ \;\ gcloud\ storage\ ls\ gs://hdlab-elideng-lab-data-asiaeast1/train/
+## code:
+gs://hdlab-elideng-lab-data-asiaeast1/code/train_pipeline.py
+## train shards:
+8
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_00.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_01.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_02.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_03.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_04.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_05.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_06.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/train_07.npz
+gs://hdlab-elideng-lab-data-asiaeast1/train/w_star.npy

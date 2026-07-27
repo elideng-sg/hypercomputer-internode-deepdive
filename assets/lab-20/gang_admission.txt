@@ -1,0 +1,5 @@
+# cmd: bash -lc $'kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get jobset train-pipeline -o wide 2>&1;\n   echo \'## Kueue workloads:\'; kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads.kueue.x-k8s.io 2>&1 | grep -i train-pipeline || kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get workloads.kueue.x-k8s.io 2>&1'
+NAME             TERMINALSTATE   RESTARTS   COMPLETED   SUSPENDED   AGE
+train-pipeline                   0                      false       8s
+## Kueue workloads:
+jobset-train-pipeline-437e3   gpu-lq-24   gpu-cq-24     True                  8s

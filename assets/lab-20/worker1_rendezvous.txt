@@ -1,0 +1,5 @@
+# cmd: bash -lc kubectl\ --context\ gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1\ logs\ train-pipeline-worker-1-0-t4hn2\ 2\>\&1\ \|\ grep\ -E\ \'mounted\|node_rank\|host=\'\ \|\ head\ -20
+{"timestamp":{"seconds":1785123289,"nanos":474375253},"severity":"INFO","message":"File system has been successfully mounted.","mount-id":"hdlab-elideng-lab-data-asiaeast1-bda190df"}
+host=gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 mounted gs://hdlab-elideng-lab-data-asiaeast1 at /data ; train shards: 8
+host=gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 node_rank=1 master=train-pipeline-worker-0-0.train-pipeline world=16
+node_rank=1 done rc=0
