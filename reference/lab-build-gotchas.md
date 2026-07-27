@@ -241,6 +241,117 @@ In Phase B the DCGM Job ran `dcgmproftester --no-dcgm-validation -t 1004 -d 25` 
 
 When Phase C range-queried the borrowed node, each GPU returned **two** time series for the same metric, distinguished only by the `container`/`pod` labels: one `container=bench` (the lab-17 workbench `gpu-mon-wb` that actually held the GPU under load) and one `container=holder` (the `gpu-holder` pod that **reclaimed** the node after the EXIT trap and now sits idle). GMP inherits the DCGM device-plugin's Kubernetes attribution, so the "who owns this GPU right now" changes across the borrow/return, and a naive `metric{gpu="0"}` returns both the loaded history *and* the idle-after aftermath. **Filter by `container`/`pod`** (or `pod=~"gpu-mon-wb"`) to isolate the workload you care about — otherwise the idle reclaimer's flatline muddies the signal. This is also *useful*: `DCGM_FI_*{pod="..."}` lets you attribute throttle/OOM/utilisation to a specific workload, which is exactly what the `GPUIdleButAllocated` cost alert keys on.
 
+## G17 — GKE multi-networking (⇒ GPUDirect-TCPX) requires Dataplane V2, and both are create-time-only (lab-18)
+
+Building lab-18 (enable GPUDirect-TCPX) surfaced a hard architecture gate: **you cannot add TCPX to an existing cluster.** GPUDirect-TCPX attaches each of the 4 A3-High GPU NICs to its own Kubernetes `Network`; that multi-networking is only available on clusters with **Dataplane V2** (`--enable-dataplane-v2`) **and** **multi-networking** (`--enable-multi-networking`) — and **both flags are create-time-only.** The lab's `hypercomputer-a3-asiaeast1` was created without them, so it is permanently single-gVNIC. Verify before planning any TCPX work:
+
+```bash
+gcloud container clusters describe "$CLUSTER" --zone "$ZONE" \
+  --format='value(networkConfig.datapathProvider)'
+#   ADVANCED_DATAPATH → Dataplane V2 (multi-networking possible)
+#   <empty>           → LEGACY_DATAPATH → single-gVNIC only, TCPX impossible (the lab cluster)
+```
+Cross-check in-cluster: `kubectl -n kube-system get ds | grep -E 'anetd|cilium'` — absent confirms legacy. **Takeaway:** the inter-node fabric is baked in at cluster creation; enabling TCPX means a **new cluster** (`scripts/provision_tcpx_pool.sh` provisions one reversibly), not an upgrade. This is *why* lab-18's TCPX "after" capture is staged rather than run on the existing cluster.
+
+## G18 — A3 High H100 has no on-demand quota here; capacity is Flex-start only (lab-18)
+
+The project has **no on-demand `NVIDIA_H100_GPUS` / A3 quota** in the lab regions (verified against `gcloud compute regions describe` — the metric isn't even present, i.e. limit 0). The existing 3-node A3 pool exists because it was provisioned via **Flex-start** (DWS queued provisioning), which draws on a separate, scarce capacity path. Consequence for lab-18: a *new* 2-node TCPX pool must also come via `--flex-start` and can **queue indefinitely or stock-out** if the region has no A3 capacity at that moment. **Never** free capacity by shrinking the holders ([[always-hold-gpu-after-work]]); retry later or try another A3 zone. This capacity uncertainty, on top of G17, is why the TCPX after-number is honestly marked pending.
+
+## G19 — GCSFuse CSI driver requires Workload Identity *first* (lab-19)
+
+Enabling the managed GCSFuse CSI addon on a cluster without Workload Identity fails outright:
+
+```
+ERROR: Workload Identity must be enabled for GCS Fuse CSI driver addon.
+```
+
+**Fix / order of operations:** enable WIF *before* the addon —
+`gcloud container clusters update <cluster> --zone <zone> --workload-pool=<project>.svc.id.goog`
+(a slow, ~10-min cluster update), *then*
+`--update-addons GcsFuseCsiDriver=ENABLED`. The bucket auth also needs a GSA with
+`roles/storage.objectAdmin` on the bucket and a KSA↔GSA `roles/iam.workloadIdentityUser`
+binding + `iam.gke.io/gcp-service-account` annotation. WIF + VPC-native are shared
+prerequisites with the rest of Part VI (doc-21/22).
+
+## G20 — cluster-level WIF is NOT enough: the node pool needs `GKE_METADATA`, which recreates nodes (lab-19)
+
+After enabling WIF **and** the CSI addon, the GCSFuse mount still failed:
+
+```
+MountVolume.SetUp failed for volume "gcs": rpc error: code = FailedPrecondition
+desc = Workload Identity Federation is not enabled on node. Please make sure this is
+enabled on both cluster and node pool level
+```
+
+WIF has **two** switches: cluster `workloadPool` **and** the node pool's
+`workloadMetadataConfig.mode = GKE_METADATA` (the GKE metadata server that mints the
+KSA token on the node). A pool created before WIF keeps `GCE_METADATA` (legacy), and
+switching it — `gcloud container node-pools update … --workload-metadata=GKE_METADATA` —
+**recreates the nodes.** On a scarce **Flex-start A3 pool** that is unacceptable: the
+nodes would be destroyed and re-requested through queued Flex provisioning that can
+stock-out ([[always-hold-gpu-after-work]], G18). So the managed CSI+WIF path is
+**node-recreation-gated** on this pre-WIF pool, exactly like lab-18's Dataplane-V2 gate.
+
+**Flex-safe workaround (what lab-19 uses):** mount the bucket with **userspace GCSFuse**
+inside a privileged pod (`/dev/fuse` hostPath), authenticated by a **GSA key** mounted
+as a Secret (`GOOGLE_APPLICATION_CREDENTIALS`) — a GSA key ignores node oauth scopes and
+the node metadata mode entirely, so **no node is touched**. `gcsfuse 3.11` installs from
+the `packages.cloud.google.com` apt repo and auto-tunes for the `a3-highgpu-8g` machine
+type. Same data path, real numbers, zero risk to Flex capacity. (The managed CSI+WIF
+manifest is still shipped as the production reference in `manifests/storage/`.)
+
+## G21 — measuring a "starved GPU" honestly: fast GCSFuse + noisy NVML (lab-19)
+
+Two measurement traps when showing storage starving a GPU:
+1. **GCSFuse on A3 is FAST** — ~**4.9 GiB/s** sequential (gcsfuse 3.11 auto-enables parallel
+   downloads + high-perf flags for the machine type). A *single* 128 MB per-step read
+   (~26 ms) therefore **cannot** starve a realistic ~100 ms compute step. The starve only
+   appears at **low arithmetic intensity** (tiny compute per byte) or when the per-step
+   read volume is large. lab-19's controlled version keeps compute **identical** and makes
+   STARVED read many shards/step so I/O dominates even at multi-GB/s.
+2. **NVML instantaneous `utilization.gpu` lies for short kernels** — sampled once per sub-ms
+   step it read **2%** even in the compute-bound (fed) case, mislabeling it "starved". The
+   honest headline is **GPU-busy fraction = compute_time / wall_time** (what the loop truly
+   achieves); NVML is kept only as a frequently-sampled secondary, and DCGM
+   `GR_ENGINE_ACTIVE` from GMP is the third cross-check. Never let a single noisy meter set
+   the verdict (the doc-16/doc-20 discipline).
+
+## G22 — a too-short run is invisible to GMP: size the job to outlast the scrape (lab-20)
+
+The first lab-20 training pass finished in **33 s**. GMP scrapes DCGM ~every 30 s, so the whole
+run fit inside roughly one scrape window: `DCGM_FI_PROF_GR_ENGINE_ACTIVE` came back **mostly
+0.000** with a lone 0.4 sample at the tail — the managed pipeline made a healthy job look idle.
+Nothing was wrong with the job; the **observation window was shorter than the sampling
+interval**. Fix: size any run you intend to *see on GMP* to **several minutes** (lab-20 uses
+STEPS=4000 ≈ 166 s), which turned the same query into a clean 15-sample plateau. Same "GMP
+scrapes ~30 s, wait for ingest" lesson as doc-20 / lab-17 — it applies to *run length*, not just
+to the post-run ingest wait.
+
+## G23 — engine-active ~0.4 (not ~1.0) on a HEALTHY multi-node DDP job: comms-bound, not idle (lab-20)
+
+lab-20's 16-GPU DDP training plateaued at `GR_ENGINE_ACTIVE` **avg ~0.32–0.39, peak ~0.5–0.67** —
+well below saturation, on a job that was training perfectly (loss 263 → 0.0076). The cause is
+**not** a throttle (lab-17) or a storage starve (lab-19): each step all-reduces a
+**268 M-param (~1 GiB) gradient** across 16 ranks over the node's **single gVNIC `eth0`** (no
+TCPX/RDMA on this cluster — lab-18), so compute is **interleaved with inter-node communication**
+and the SM engine idles during the exchange. The lesson for the guide: a mid-range engine-active
+now has **three** distinct causes — throttled, starved, comms-bound — and you separate them by
+reading the whole path (device clocks + io% + fabric), never one meter. It's also the honest
+bridge back to the fabric ladder: at 16 GPUs the network is already first-order.
+
+## G24 — a serving latency knee is NOT a GPU-saturation signal (lab-21)
+
+lab-21's ResNet-50 server hit **p99 ≈ 1 s** under high concurrency while the GPU's
+`DCGM_FI_PROF_GR_ENGINE_ACTIVE` sat at **~0.17** — the H100 was **83% idle** while latency
+was catastrophic. The bottleneck was the **serving stack** (single-thread request dispatch +
+one batching worker + Python), not compute: a single GPU sustained 5,720 img/s with huge
+headroom, and throughput scaled ~linearly to **41,438 img/s across 8 GPUs (7.24×)**. The trap
+is reading only the GPU meter and concluding "need a bigger GPU" — the fix is to **scale the
+serving layer horizontally** (more replicas / better batching), which is exactly what an HPA
+adds. This is the **fourth** distinct reading of a low/mid engine-active signal in the guide —
+throttled (G-lab-17), starved (G21), comms-bound (G23), server-bound (here) — all told apart
+only by reading the rest of the path (latency curve + replica scaling), never the one meter.
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17. Next: Part VI architecture labs.)*
+*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology.)*

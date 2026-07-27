@@ -1,0 +1,15 @@
+# mount | grep fuse
+devtmpfs on /dev/fuse type devtmpfs (rw,relatime,size=966003476k,nr_inodes=241500869,mode=755)
+hdlab-elideng-lab-data-asiaeast1 on /data type fuse.gcsfuse (rw,nosuid,nodev,relatime,user_id=0,group_id=0,default_permissions)
+# ls /data/shards
+total 2097152
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_00.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_01.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_02.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_03.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_04.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_05.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_06.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_07.bin
+-rw-r--r-- 1 root root 134217728 Jul 27 01:59 shard_08.bin
+count=16

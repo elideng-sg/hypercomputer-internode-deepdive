@@ -1,0 +1,6 @@
+# cmd: bash -lc $'kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get jobset train-pipeline -o wide 2>&1;\n   kubectl --context gke_hdlab-elideng_asia-east1-c_hypercomputer-a3-asiaeast1 get pods -l jobset.sigs.k8s.io/jobset-name=train-pipeline 2>&1'
+NAME             TERMINALSTATE   RESTARTS   COMPLETED   SUSPENDED   AGE
+train-pipeline   Completed       0          True        false       4m9s
+NAME                              READY   STATUS      RESTARTS   AGE
+train-pipeline-worker-0-0-lzm89   0/1     Completed   0          4m9s
+train-pipeline-worker-1-0-t4hn2   0/1     Completed   0          4m9s

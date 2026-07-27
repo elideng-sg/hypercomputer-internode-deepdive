@@ -1,0 +1,110 @@
+# manifests/tcpx/workbench-tcpx.yaml
+# A TCPX-enabled NCCL workbench Pod (one per node; run 2 for the inter-node all-reduce).
+# The three things that make it "TCPX" and not gVNIC:
+#   1. the `networking.gke.io/interfaces` annotation attaching the 4 GPU Networks
+#   2. the `tcpx-daemon` sidecar (the receive-datapath manager) sharing the Pod netns
+#   3. the NCCL_* env selecting the GPUDirectTCPX plugin + the 4 NIC IF names
+# Contrast: the gVNIC baseline (labs/lab-06) has none of these and NCCL logs `NET/Socket`.
+#
+# STAGED: validated as YAML; runs live only on the TCPX cluster once the pool + plugin are up.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tcpx-workbench-0
+  annotations:
+    # attach the 4 GPU networks defined in network-crds.yaml
+    networking.gke.io/interfaces: |
+      [
+        {"interfaceName":"eth0","network":"default"},
+        {"interfaceName":"eth1","network":"gpu-net-0"},
+        {"interfaceName":"eth2","network":"gpu-net-1"},
+        {"interfaceName":"eth3","network":"gpu-net-2"},
+        {"interfaceName":"eth4","network":"gpu-net-3"}
+      ]
+spec:
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-h100-80gb
+  restartPolicy: Never
+  volumes:
+    - name: libraries
+      hostPath:
+        path: /home/kubernetes/bin/nvidia/lib64
+    - name: tcpx-socket
+      emptyDir: {}
+    - name: shared-memory
+      emptyDir:
+        medium: Memory
+        sizeLimit: 1Gi
+  containers:
+    # --- the receive-datapath sidecar (GKE-published; re-pin at run time) ---
+    - name: tcpx-daemon
+      image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/tcpgpudmarxd-dev:latest
+      securityContext:
+        privileged: true
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          /tcpgpudmarxd/build/app/tcpgpudmarxd \
+            --gpu_nic_preset a3vm --gpu_shmem_type fd --uds_path /run/tcpx --setup_param "--verbose 128 2 0"
+      volumeMounts:
+        - name: tcpx-socket
+          mountPath: /run/tcpx
+        - name: libraries
+          mountPath: /usr/local/nvidia/lib64
+      env:
+        - name: LD_LIBRARY_PATH
+          value: /usr/local/nvidia/lib64
+    # --- the NCCL workload ---
+    - name: nccl-bench
+      image: us-central1-docker.pkg.dev/hdlab-elideng/lab/nccl-tests:latest   # reuse the lab image
+      securityContext:
+        capabilities:
+          add: ["IPC_LOCK"]
+      resources:
+        limits:
+          nvidia.com/gpu: 8
+      volumeMounts:
+        - name: tcpx-socket
+          mountPath: /run/tcpx
+        - name: libraries
+          mountPath: /usr/local/nvidia/lib64
+        - name: shared-memory
+          mountPath: /dev/shm
+      env:
+        # --- the TCPX plugin selection (the essence of the "after") ---
+        - name: LD_LIBRARY_PATH
+          value: /usr/local/nvidia/lib64
+        - name: NCCL_GPUDIRECTTCPX_UNIX_CLIENT_PREFIX
+          value: /run/tcpx
+        - name: NCCL_SOCKET_IFNAME
+          value: eth0
+        - name: NCCL_GPUDIRECTTCPX_CTRL_DEV
+          value: eth0
+        - name: NCCL_GPUDIRECTTCPX_SOCKET_IFNAME
+          value: eth1,eth2,eth3,eth4                 # the 4 GPU NICs
+        - name: NCCL_GPUDIRECTTCPX_TX_BINDINGS
+          value: "eth1:8-21,112-125;eth2:8-21,112-125;eth3:60-73,164-177;eth4:60-73,164-177"
+        - name: NCCL_GPUDIRECTTCPX_RX_BINDINGS
+          value: "eth1:22-35,126-139;eth2:22-35,126-139;eth3:74-87,178-191;eth4:74-87,178-191"
+        - name: NCCL_GPUDIRECTTCPX_FORCE_ACK
+          value: "0"
+        - name: NCCL_CROSS_NIC
+          value: "0"
+        - name: NCCL_ALGO
+          value: Ring
+        - name: NCCL_PROTO
+          value: Simple
+        - name: NCCL_NSOCKS_PERTHREAD
+          value: "4"
+        - name: NCCL_SOCKET_NTHREADS
+          value: "1"
+        - name: NCCL_DEBUG
+          value: INFO
+        - name: NCCL_DEBUG_SUBSYS
+          value: INIT,NET,GRAPH,ENV
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          # Placeholder: rendezvous + all_reduce_perf across the 2 TCPX pods.
+          # The real run is driven by labs/lab-18-enable-gpudirect-tcpx/run_tcpx_beforeafter.sh
+          sleep infinity

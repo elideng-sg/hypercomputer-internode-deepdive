@@ -191,4 +191,5 @@ The **mechanism** (remove copies, take the CPU out of the path, let the NIC touc
 - [doc-07: GKE scheduling & topology](../part3-clustering-execution/07-gke-scheduling-topology.md) — how pods land on GPU nodes and rails
 
 **Hands-on practice:** [lab-05: network-path inspect](../../labs/lab-05-network-path-inspect/)
+**Climbing the ladder (Part VI) →** [doc-21: GKE network design](../part6-architecture-gcp-integration/21-gke-network-design.md) turns this ladder into a design decision, and [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) provisions a new multi-network pool to move off rung 0 to GPUDirect-TCPX.
 **Tools in this layer →** [T5: Networking & Fabric Tools](../toolkit/T5-networking-fabric-tools.md)

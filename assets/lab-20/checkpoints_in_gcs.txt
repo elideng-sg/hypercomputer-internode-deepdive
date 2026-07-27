@@ -1,0 +1,13 @@
+# cmd: bash -lc gcloud\ storage\ ls\ -l\ gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/\ 2\>\&1
+         0  2026-07-27T03:30:56Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/
+
+gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/:
+         0  2026-07-27T03:30:56Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/
+ 276925084  2026-07-27T03:31:07Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_0200.pt
+ 276925084  2026-07-27T03:31:17Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_0400.pt
+ 276925084  2026-07-27T03:31:29Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_0600.pt
+ 276925084  2026-07-27T03:35:44Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_1000.pt
+ 276925084  2026-07-27T03:36:25Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_2000.pt
+ 276925084  2026-07-27T03:37:07Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_3000.pt
+ 276925084  2026-07-27T03:37:47Z  gs://hdlab-elideng-lab-data-asiaeast1/checkpoints/pipeline/step_4000.pt
+TOTAL: 9 objects, 1938475588 bytes (1.81GiB)

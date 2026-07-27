@@ -41,7 +41,7 @@ flowchart TD
 
 5. **Part V — Operations, diagnostics & troubleshooting** *(scenario-based; **live** — captured on the 3-node cluster):* the skill Parts I–IV don't teach — **symptom → hypothesis → tool → read the output → root cause → fix**. A triage-method hub (doc-16), single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 operations, with the NVIDIA tools (`ncu`, `dcgmi dmon`, `nccl-tests`, `ethtool`, HTA, PromQL/Grafana) finally run *in anger*.
 
-6. **Part VI — Architecture & GCP integration** *(design-first use-cases; specced, in build):* how a GPU workload is actually architected and deployed on GCP — GKE network design as a decision (with a **live GPUDirect-TCPX before/after** that measures the cliff closing), the storage/data path, an end-to-end training pipeline, and inference serving + MLOps.
+6. **Part VI — Architecture & GCP integration** *(design-first use-cases; docs 21–24 + labs 19–21 live, lab-18 staged):* how a GPU workload is actually architected and deployed on GCP — GKE network design as a decision (single-gVNIC measured; the GPUDirect-TCPX after staged on a new multi-network pool), the storage/data path (a live starved-vs-fed GPU swing), an end-to-end training pipeline (a 2-node/16-GPU JobSet training on GCS data), and inference serving + autoscale (a live saturation knee + near-linear 1→8-GPU scaling).
 
 Cutting across all six parts is a **NVIDIA tooling layer** — monitoring (`nvidia-smi`, DCGM, `dcgm-exporter`), health and diagnostics (`dcgmi diag`, XID decode, `nvidia-bug-report.sh`), profiling (`nsys`, `ncu`, NVTX), benchmarking (`nvbandwidth`, `nccl-tests`), and fabric tools (`perftest`, `ethtool`, NCCL topology export) — taught in context as they appear and consolidated in cross-cutting reference docs.
 
@@ -206,10 +206,10 @@ Each layer of the guide is built on a **three-way spine** that connects conceptu
 - Practice each scenario: `labs/lab-14-single-gpu-health-triage/`, `lab-15-internode-comms-debug/`, `lab-16-cluster-job-failure-triage/`, `lab-17-perf-monitoring-day2-ops/`
 - Docs 17–20 pair with those labs; every scenario ends in a root cause or an operational decision
 
-**Part VI — Architecture & GCP Integration** *(design-first; in build):*
+**Part VI — Architecture & GCP Integration** *(design-first; docs 21–24 + labs 19–21 live, lab-18 staged):*
 - Read: `docs/part6-architecture-gcp-integration/21-gke-network-design.md`
-- Practice: `labs/lab-18-enable-gpudirect-tcpx/` (flagship — live gVNIC→TCPX before/after), then `lab-19-storage-data-path/`, `lab-20-e2e-training-pipeline/`, `lab-21-inference-serving-autoscale/`
-- Docs 22–24 cover the storage/data path, the end-to-end pipeline, and inference serving + MLOps
+- Practice: `labs/lab-19-storage-data-path/` (starved-vs-fed GPU), `lab-20-training-pipeline/` (2-node/16-GPU JobSet, data+code+ckpt on GCS), `lab-21-inference-serving/` (serving knee + 1→8-GPU scaling) — all live; `lab-18-enable-gpudirect-tcpx/` is staged (before measured; TCPX after blocked on a new multi-network pool)
+- Docs 22–24 cover the storage/data path, the end-to-end pipeline, and inference serving + autoscale
 
 **Cross-cutting toolkit references** are listed in each doc's "Tools in this layer" section and are consolidated under `docs/toolkit/`. Read them when a tool first appears or as needed.
 
