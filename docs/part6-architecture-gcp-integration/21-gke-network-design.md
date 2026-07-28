@@ -55,24 +55,41 @@ Every GCP GPU platform sits on a rung of an inter-node fabric ladder. The rung i
 | Rung | Machine family | Inter-node fabric | Per-node GPU NICs | Where in this guide |
 |---|---|---|---|---|
 | **single-gVNIC / TCP** | any A3 (default) | standard VPC TCP over one gVNIC | 1 (shared w/ host) | **measured** — lab-06/12 (~28.6 GB/s floor) |
-| **GPUDirect-TCPX** | A3 High (`a3-highgpu-8g`) | TCP + GPU-Direct DMA over 4 dedicated NICs | 4 | **lab-18** (before/after; after pending) |
-| **GPUDirect-TCPXO** | A3 Mega (`a3-megagpu-8g`) | TCPX-optimized over 8 NICs (higher ceiling) | 8 | reference-arch (no A3 Mega on the lab) |
+| **GPUDirect-TCPX** | A3 High (`a3-highgpu-8g`) | TCP + GPU-Direct DMA over 4 dedicated NICs | 4 | **lab-18** — fabric **provisioned live** (`hypercomputer-a3-tcpx`); node capacity-gated |
+| **GPUDirect-TCPXO** | A3 Mega (`a3-megagpu-8g`) | TCPX-optimized over 8 NICs (higher ceiling) | 8 | **lab-22** — fabric **provisioned live** (`hypercomputer-a3-tcpxo`); 8 GPU NICs realised on-node, plugin installed |
 | **GPUDirect-RDMA / RoCE** | A3 Ultra (`a3-ultragpu-8g`), A4 | RoCEv2 over CX-7, `NET/IB` present | 8 (CX-7) | reference-arch (Part IV fabric contrast) |
 
-*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. Only the red rung is where this cluster sits (measured); TCPX is the rung lab-18 provisions; TCPXO/RDMA are reference.*
+*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. The red rung is where the original clusters sit (measured). TCPX and TCPXO are both now **provisioned and verified as configured** on purpose-built clusters; RDMA/RoCE remains reference.*
 
 ```mermaid
 flowchart LR
-  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>~28.6 GB/s — MEASURED"] --> R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 (after pending)"]
-  R1 --> R2["GPUDirect-TCPXO<br/>A3 Mega · 8 NICs<br/>reference"]
+  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>~28.6 GB/s — MEASURED"] --> R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 — PROVISIONED"]
+  R1 --> R2["GPUDirect-TCPXO<br/>A3 Mega · 8 GPU NICs<br/>lab-22 — PROVISIONED"]
   R2 --> R3["GPUDirect-RDMA / RoCE<br/>A3 Ultra / A4 · CX-7<br/>reference"]
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-  class R0 crit; class R1 meas; class R2,R3 ctx;
+  class R0 crit; class R1,R2 meas; class R3 ctx;
 ```
 
-**The honesty line (inherited from the whole guide):** only the rungs we can run are claimed as measured. This lab's cluster is single-gVNIC; TCPX is the rung we *provision* to close the cliff; **TCPXO and RDMA are reference-architecture** — described as the ladder above TCPX and contrasted, never asserted as run here (they need A3 Mega / A3 Ultra / A4 hardware — see [doc-13](../part4-platform-reference-arch/13-spectrum-x-and-fabrics.md)).
+**The honesty line (inherited from the whole guide):** claims are graded by what was actually done.
+
+- *Measured*: the single-gVNIC floor (~28.6 GB/s inter-node) on the two original clusters.
+- *Provisioned and verified as configured*: **TCPX** (`hypercomputer-a3-tcpx`) and **TCPXO**
+  (`hypercomputer-a3-tcpxo`). Both clear the create-time gates (Dataplane V2 +
+  multi-networking), have their GPU VPCs, `Network`/`GKENetworkParamSet` CRDs and NCCL
+  plugin applied live, and pass all checkable layers of
+  [`verify_gpu_fabric.sh`](../../scripts/verify_gpu_fabric.sh). On TCPXO an A3 Mega node
+  came up with **8 GPU NICs + 1 control NIC** and the plugin installed
+  (`libnccl-net.so` shim present, DaemonSet 1/1 Ready).
+- *Not yet claimed*: an **enabled-fabric throughput number** for either rung. Configuration
+  proven ≠ bandwidth measured — the multi-node NCCL run needs concurrent Flex capacity,
+  which is stockout-gated. The distinction matters: see
+  [doc-25](../part5-operations-diagnostics/25-fabric-diagnostics-playbook.md) on why
+  "configured" and "engaged" are different questions, and why only the workload's own
+  NCCL transport line settles the second one.
+- *Reference-architecture only*: **RDMA/RoCE** (needs A3 Ultra / A4 hardware — see
+  [doc-13](../part4-platform-reference-arch/13-spectrum-x-and-fabrics.md)).
 
 ---
 

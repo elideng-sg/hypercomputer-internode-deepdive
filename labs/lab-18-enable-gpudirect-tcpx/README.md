@@ -2,12 +2,31 @@
 
 **Objective:** Every earlier inter-node measurement in this guide rides the **single-gVNIC / TCP** path and honestly reports the **~28.6 GB/s** floor (lab-06) and the descending **465 → 23.7 → 14.95 GB/s** 1/2/3-node curve (lab-12). That floor is not physics — it's an *architecture choice*. This lab is the **design counterpart**: provision the **multi-network GPUDirect-TCPX** fabric that A3 High was built for, re-run the same NCCL all-reduce, and read the transport change off the wire — **`NET/Socket` → `NET/GPUDirectTCPX`**, GPU Direct enabled. It is the one lab that changes the *fabric*, not the workload.
 
-> ### ⚠️ Status: BEFORE captured live · AFTER pending a TCPX cluster (honest)
-> The **before** (gVNIC) half is **already measured live** — reused from [lab-06](../lab-06-2node-nccl-collectives/) and [lab-12](../lab-12-scaling-sweep/), not re-run. The **after** (TCPX) half is **not yet captured**, and this lab does **not** fabricate it. Why it's pending, captured as evidence in [`assets/lab-18/blocker_dataplane_v2.txt`](../../assets/lab-18/blocker_dataplane_v2.txt):
-> - GKE GPUDirect-TCPX needs **multi-networking**, which needs **Dataplane V2**, which is a **create-time-only** cluster setting. The existing `hypercomputer-a3-asiaeast1` cluster was created without it (`networkConfig.datapathProvider` empty; no anetd/cilium DaemonSet), so **TCPX cannot be added to it** — it requires a **new cluster**.
+> ### ⚠️ Status: BEFORE measured live · fabric now PROVISIONED · AFTER still capacity-gated
+> **Updated 2026-07-28.** The **before** (gVNIC) half is **measured live** — reused from [lab-06](../lab-06-2node-nccl-collectives/) and [lab-12](../lab-12-scaling-sweep/), not re-run.
+>
+> **The architectural blocker described below is now CLEARED.** A purpose-built cluster
+> `hypercomputer-a3-tcpx` (asia-east1-c) exists with **Dataplane V2 + multi-networking**, an
+> A3 High Flex pool carrying **4 `--additional-node-network` attachments**, and the
+> `Network`/`GKENetworkParamSet` CRDs **applied live** (previously staged-only).
+> [`scripts/verify_gpu_fabric.sh`](../../scripts/verify_gpu_fabric.sh) reports every
+> checkable layer PASS at `tier=TCPX`. The sibling [lab-22](../lab-22-fabric-diagnostics/)
+> did the same one rung up and got an A3 Mega node with **8 GPU NICs** and the plugin
+> installed, which proves the recipe end-to-end.
+>
+> **What remains pending is only the number, and only for one reason: capacity.** The
+> `after` needs *two* A3 High nodes up *simultaneously* in the same zone, and asia-east1-c
+> returned `FailedScaleUp: GCE out of resources`. A holder is armed to claim nodes the
+> moment they free up. So:
+> - ✅ *Architecture* — no longer a blocker. The create-time gate is satisfied.
+> - ⏳ *Throughput* — awaiting concurrent Flex capacity. **Not fabricated here.**
+>
+> Original blocker, kept for the record (it is the lesson, and it still applies to the two
+> production clusters) — evidence in [`assets/lab-18/blocker_dataplane_v2.txt`](../../assets/lab-18/blocker_dataplane_v2.txt):
+> - GKE GPUDirect-TCPX needs **multi-networking**, which needs **Dataplane V2**, which is a **create-time-only** cluster setting. `hypercomputer-a3-asiaeast1` was created without it (`networkConfig.datapathProvider` empty; no anetd/cilium DaemonSet), so **TCPX cannot be added to it** — it requires a **new cluster**. That is exactly what was done.
 > - The project has **no on-demand H100 quota** (the existing 3 A3 nodes came via scarce **Flex-start**); a new 2-node TCPX pool is capacity-gated.
 >
-> Everything needed to run the **after** the moment a TCPX cluster exists is built and validated here: [`scripts/provision_tcpx_pool.sh`](../../scripts/provision_tcpx_pool.sh) (reversible new-cluster + VPCs + pool + plugin), the [`manifests/tcpx/`](../../manifests/tcpx/) CRDs/installer/workbench, and [`run_tcpx_beforeafter.sh`](./run_tcpx_beforeafter.sh). This is the design + provisioning skill; the number lands when capacity does.
+> Tooling to land the `after` the moment capacity appears: [`scripts/provision_tcpx_pool.sh`](../../scripts/provision_tcpx_pool.sh) (reversible new-cluster + VPCs + pool + plugin — note its flex-start flags were **broken until 2026-07-28**; see lab-22 §"what running it actually taught us"), the [`manifests/tcpx/`](../../manifests/tcpx/) CRDs/installer/workbench, and [`run_tcpx_beforeafter.sh`](./run_tcpx_beforeafter.sh).
 
 This is the [doc-16 diagnostic method](../../docs/part5-operations-diagnostics/16-diagnostic-method.md) inverted into a **design decision**, written up in [doc-21](../../docs/part6-architecture-gcp-integration/21-gke-network-design.md).
 

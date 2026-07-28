@@ -127,7 +127,13 @@ VERIFICATION.md                        (append: TCPX provisioning + before/after
 
 ## 7. Explicitly out of scope (YAGNI)
 
-- RDMA/RoCE and TCPXO **live** demos (need A3 Ultra / A3 Mega hardware) — reference-architecture only unless that hardware is provisioned.
+- RDMA/RoCE **live** demos (need A3 Ultra / A4 hardware) — reference-architecture only unless that hardware is provisioned.
+  - **Superseded 2026-07-28 for TCPXO:** the "unless that hardware is provisioned" condition
+    was met. A3 Mega Flex capacity was obtained and `hypercomputer-a3-tcpxo` was built with
+    the create-time gates, 8 GPU VPCs, the CRDs and the NCCL plugin — all applied live, with
+    8 GPU NICs realised on-node. TCPXO is therefore **in scope** and covered by lab-22 +
+    doc-25. RDMA/RoCE remains out of scope. Note the residual limit: fabric *configuration*
+    is verified; an enabled-fabric *throughput* number still awaits concurrent Flex capacity.
 - Multi-cluster / multi-region fleet networking beyond a design discussion.
 - Full production MLOps platform (experiment tracking, feature stores, model registry governance) — reference the pattern, don't build it.
 - Cost-optimization / FinOps tooling beyond noting tradeoffs.

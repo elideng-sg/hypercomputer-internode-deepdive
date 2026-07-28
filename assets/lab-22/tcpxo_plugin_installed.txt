@@ -1,0 +1,25 @@
+# TCPXO NCCL plugin installed on the live node (installer DaemonSet 1/1 Ready)
+# captured 2026-07-28T08:08:20Z
+
+=== installer log ===
++ /scripts/container_entry.sh install --install-nccl
+install
++ cp -r /var/lib/tcpxo/lib64/. /usr/local/nvidia/lib64
+Installing NCCL plugin.Installed NCCL net plugin shim as libnccl-net.so; the original libnccl-net.so has been renamed to libnccl-net_internal.so
+=== plugin libraries visible on node (via GPU pod) ===
+libnccl-net.so
+libnccl-net_internal.so
+libnccl-profiler-comma.so
+libnccl-tuner.so
+libnccl.so
+libnccl.so.2
+libnccl.so.2.28.7
+nccl-env-profile-comma.sh
+nccl-env-profile-ll128.sh
+nccl-env-profile-nvlstree.sh
+nccl-env-profile-simple.sh
+nccl-env-profile.sh
+
+=== DaemonSet state ===
+NAME                   DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                            AGE
+nccl-tcpxo-installer   1         1         1       1            1           cloud.google.com/gke-accelerator=nvidia-h100-mega-80gb   26m

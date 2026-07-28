@@ -1,0 +1,31 @@
+# verify_gpu_fabric.sh — TCPXO cluster, all checkable layers PASS
+# captured 2026-07-28T08:08:20Z
+
+==============================================================================
+ GPU FABRIC HEALTH CHECK
+ project=hdlab-elideng  cluster=hypercomputer-a3-tcpxo  2026-07-28T08:01:13Z
+==============================================================================
+
+-- discovered: cluster=hypercomputer-a3-tcpxo zone=asia-southeast1-c
+-- machine=a3-megagpu-8g (source: node) accelerator=nvidia-h100-mega-80gb
+-- EXPECTED fabric tier for this family: TCPXO (8 GPU NICs)
+
+  [PASS] 7. Node NICs           : 9 GPU NICs on gke-hypercomputer-a3-a3-mega-tcpxo-fl-f106ac3b-03hg
+         The decisive test. In any GPU pod, set NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,NET and grep:
+           GOOD: NET/FasTrak|NET/GPUDirectTCPX      BAD: 'NET/Socket' or 'GPU Direct RDMA Disabled'
+
+------------------------------------------------------------------------------
+ RESULT LAYER                    DETAIL
+------------------------------------------------------------------------------
+ [PASS] 1. Dataplane V2          ADVANCED_DATAPATH
+ [PASS] 2. Multi-networking      enabled
+ [PASS] 3. GPU Network CRDs      8 NetDevice GPU nets (want >= 8; 9 Networks total incl. built-ins)
+ [PASS] 4. Pool GPU NICs         8 additional node networks (want 8)
+ [PASS] 5. Jumbo MTU 8244        all gpu-net VPCs >= 8244 (or none present)
+ [PASS] 6. NCCL plugin DS        installed and ready (1)
+ [WARN] 8. NCCL transport        no pod given — rerun with NAMESPACE=<ns> POD=<pod>
+------------------------------------------------------------------------------
+ tier=TCPXO  pass=6  fail=0  warn=1
+
+Fabric healthy for its tier (TCPXO). If throughput is still low, the bottleneck is
+above the fabric: check data loading (starved GPU), NCCL_ALGO, or job-level topology.

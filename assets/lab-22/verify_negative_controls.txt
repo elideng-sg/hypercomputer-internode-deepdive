@@ -1,0 +1,79 @@
+# verify_gpu_fabric.sh — NEGATIVE CONTROLS (single-gVNIC production clusters)
+# These clusters run real workloads at the ~28.6 GB/s floor and emit no error about it.
+# captured 2026-07-28T08:08:20Z
+
+############ A3 High: hypercomputer-a3-asiaeast1 ############
+==============================================================================
+ GPU FABRIC HEALTH CHECK
+ project=hdlab-elideng  cluster=hypercomputer-a3-asiaeast1  2026-07-28T07:41:48Z
+==============================================================================
+
+-- discovered: cluster=hypercomputer-a3-asiaeast1 zone=asia-east1-c
+-- machine=a3-highgpu-8g (source: node) accelerator=nvidia-h100-80gb
+-- EXPECTED fabric tier for this family: TCPX (4 GPU NICs)
+
+  [FAIL] 7. Node NICs           : only 0 GPU NICs on gke-hypercomputer-a3-a3-high-flex-poo-27562461-d7j7 (want 4)
+         -> node was not created with the GPU networks attached; recreate the pool.
+         The decisive test. In any GPU pod, set NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,NET and grep:
+           GOOD: NET/GPUDirectTCPX      BAD: 'NET/Socket' or 'GPU Direct RDMA Disabled'
+
+------------------------------------------------------------------------------
+ RESULT LAYER                    DETAIL
+------------------------------------------------------------------------------
+ [FAIL] 1. Dataplane V2          '<empty>' (legacy) — GPUDirect IMPOSSIBLE on this cluster
+ [FAIL] 2. Multi-networking      '<empty>' — GPU NICs cannot be attached
+ [FAIL] 3. GPU Network CRDs      0 NetDevice GPU nets (want 4; 0 total)
+ [FAIL] 4. Pool GPU NICs         0 additional node networks (want 4)
+ [PASS] 5. Jumbo MTU 8244        all gpu-net VPCs >= 8244 (or none present)
+ [FAIL] 6. NCCL plugin DS        not found
+ [WARN] 8. NCCL transport        no pod given — rerun with NAMESPACE=<ns> POD=<pod>
+------------------------------------------------------------------------------
+ tier=TCPX  pass=1  fail=5  warn=1
+
+MOST LIKELY ROOT CAUSE(S), in fix order:
+  1) Cluster lacks Dataplane V2. This is a CREATE-TIME-ONLY setting: it cannot be enabled on an existing cluster. A new cluster is required (--enable-dataplane-v2 --enable-multi-networking). This alone caps you at the ~28.6 GB/s single-gVNIC floor.
+  2) Multi-networking disabled (create-time only). Without it, Pods cannot attach the dedicated GPU networks.
+  3) Too few NetDevice GPU Networks. Apply manifests/tcpx{,o}/network-crds.yaml — one Network + GKENetworkParamSet per GPU NIC. Do not count GKE's built-in 'default'/'pod-network' Networks: they carry no GPUDirect DMA path.
+  4) Node pool was created without enough --additional-node-network flags. This CANNOT be added to an existing pool — recreate the pool with one --additional-node-network per GPU NIC.
+  5) No NCCL GPUDirect plugin installer DaemonSet found. Without libnccl-net-*.so on the node, NCCL uses the built-in socket transport — this is the classic silent-fallback cause.
+
+NOTE: a degraded fabric does NOT produce errors. Jobs succeed, ~17x slower inter-node.
+Escalating? Run scripts/collect_fabric_bundle.sh to package everything support needs.
+
+############ A3 Mega: hypercomputer-a3-asiasoutheast1 ############
+==============================================================================
+ GPU FABRIC HEALTH CHECK
+ project=hdlab-elideng  cluster=hypercomputer-a3-asiasoutheast1  2026-07-28T07:42:50Z
+==============================================================================
+
+-- discovered: cluster=hypercomputer-a3-asiasoutheast1 zone=asia-southeast1-c
+-- machine=a3-megagpu-8g (source: node) accelerator=nvidia-h100-mega-80gb
+-- EXPECTED fabric tier for this family: TCPXO (8 GPU NICs)
+
+  [FAIL] 7. Node NICs           : only 0 GPU NICs on gke-hypercomputer-a3-a3-mega-flex-poo-44c95a12-5w60 (want 8)
+         -> node was not created with the GPU networks attached; recreate the pool.
+         The decisive test. In any GPU pod, set NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,NET and grep:
+           GOOD: NET/FasTrak|NET/GPUDirectTCPX      BAD: 'NET/Socket' or 'GPU Direct RDMA Disabled'
+
+------------------------------------------------------------------------------
+ RESULT LAYER                    DETAIL
+------------------------------------------------------------------------------
+ [FAIL] 1. Dataplane V2          '<empty>' (legacy) — GPUDirect IMPOSSIBLE on this cluster
+ [FAIL] 2. Multi-networking      '<empty>' — GPU NICs cannot be attached
+ [FAIL] 3. GPU Network CRDs      0 NetDevice GPU nets (want 8; 0 total)
+ [FAIL] 4. Pool GPU NICs         0 additional node networks (want 8)
+ [PASS] 5. Jumbo MTU 8244        all gpu-net VPCs >= 8244 (or none present)
+ [FAIL] 6. NCCL plugin DS        not found
+ [WARN] 8. NCCL transport        no pod given — rerun with NAMESPACE=<ns> POD=<pod>
+------------------------------------------------------------------------------
+ tier=TCPXO  pass=1  fail=5  warn=1
+
+MOST LIKELY ROOT CAUSE(S), in fix order:
+  1) Cluster lacks Dataplane V2. This is a CREATE-TIME-ONLY setting: it cannot be enabled on an existing cluster. A new cluster is required (--enable-dataplane-v2 --enable-multi-networking). This alone caps you at the ~28.6 GB/s single-gVNIC floor.
+  2) Multi-networking disabled (create-time only). Without it, Pods cannot attach the dedicated GPU networks.
+  3) Too few NetDevice GPU Networks. Apply manifests/tcpx{,o}/network-crds.yaml — one Network + GKENetworkParamSet per GPU NIC. Do not count GKE's built-in 'default'/'pod-network' Networks: they carry no GPUDirect DMA path.
+  4) Node pool was created without enough --additional-node-network flags. This CANNOT be added to an existing pool — recreate the pool with one --additional-node-network per GPU NIC.
+  5) No NCCL GPUDirect plugin installer DaemonSet found. Without libnccl-net-*.so on the node, NCCL uses the built-in socket transport — this is the classic silent-fallback cause.
+
+NOTE: a degraded fabric does NOT produce errors. Jobs succeed, ~17x slower inter-node.
+Escalating? Run scripts/collect_fabric_bundle.sh to package everything support needs.
