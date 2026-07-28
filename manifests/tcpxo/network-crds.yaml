@@ -1,0 +1,172 @@
+# manifests/tcpxo/network-crds.yaml
+# The GKE multi-networking CRDs binding the EIGHT A3 Mega GPU VPCs (created by
+# provision_tcpxo_pool.sh) to Kubernetes Networks a Pod can request.
+# One GKENetworkParamSet + Network per GPU NIC.
+#
+# A3 Mega exposes 8 GPU NICs (vs A3 High's 4) — that doubled NIC count, plus the TCPXO
+# plugin, is the whole difference between the TCPX and TCPXO rungs. Per-node specs
+# (8× H100 80GB, 208 vCPU, ~1.87 TB RAM) are IDENTICAL to A3 High.
+#
+# Requires a Dataplane-V2 + multi-networking cluster (create-time gates — gotcha G17).
+#
+# GENERATED to match provision_tcpxo_pool.sh (PREFIX=tcpxo, NUM_GPU_NETS=8).
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-0
+spec:
+  vpc: tcpxo-gpu-net-0
+  vpcSubnet: tcpxo-gpu-sub-0
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-0
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-0
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-1
+spec:
+  vpc: tcpxo-gpu-net-1
+  vpcSubnet: tcpxo-gpu-sub-1
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-1
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-1
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-2
+spec:
+  vpc: tcpxo-gpu-net-2
+  vpcSubnet: tcpxo-gpu-sub-2
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-2
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-2
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-3
+spec:
+  vpc: tcpxo-gpu-net-3
+  vpcSubnet: tcpxo-gpu-sub-3
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-3
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-3
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-4
+spec:
+  vpc: tcpxo-gpu-net-4
+  vpcSubnet: tcpxo-gpu-sub-4
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-4
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-4
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-5
+spec:
+  vpc: tcpxo-gpu-net-5
+  vpcSubnet: tcpxo-gpu-sub-5
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-5
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-5
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-6
+spec:
+  vpc: tcpxo-gpu-net-6
+  vpcSubnet: tcpxo-gpu-sub-6
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-6
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-6
+---
+apiVersion: networking.gke.io/v1
+kind: GKENetworkParamSet
+metadata:
+  name: gpu-net-7
+spec:
+  vpc: tcpxo-gpu-net-7
+  vpcSubnet: tcpxo-gpu-sub-7
+  deviceMode: NetDevice
+---
+apiVersion: networking.gke.io/v1
+kind: Network
+metadata:
+  name: gpu-net-7
+spec:
+  type: Device
+  parametersRef:
+    group: networking.gke.io
+    kind: GKENetworkParamSet
+    name: gpu-net-7

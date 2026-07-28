@@ -55,24 +55,52 @@ Every GCP GPU platform sits on a rung of an inter-node fabric ladder. The rung i
 | Rung | Machine family | Inter-node fabric | Per-node GPU NICs | Where in this guide |
 |---|---|---|---|---|
 | **single-gVNIC / TCP** | any A3 (default) | standard VPC TCP over one gVNIC | 1 (shared w/ host) | **measured** — lab-06/12 (~28.6 GB/s floor) |
-| **GPUDirect-TCPX** | A3 High (`a3-highgpu-8g`) | TCP + GPU-Direct DMA over 4 dedicated NICs | 4 | **lab-18** (before/after; after pending) |
-| **GPUDirect-TCPXO** | A3 Mega (`a3-megagpu-8g`) | TCPX-optimized over 8 NICs (higher ceiling) | 8 | reference-arch (no A3 Mega on the lab) |
+| **GPUDirect-TCPX** | A3 High (`a3-highgpu-8g`) | TCP + GPU-Direct DMA over 4 dedicated NICs | 4 | **lab-18** — fabric **provisioned live** (`hypercomputer-a3-tcpx`); node capacity-gated |
+| **GPUDirect-TCPXO** | A3 Mega (`a3-megagpu-8g`) | TCPX-optimized over 8 NICs (higher ceiling) | 8 | **lab-22** — **MEASURED: 317.84 GB/s** busbw @ 16 GPU, `NET/FasTrak` (`hypercomputer-a3-tcpxo`) |
 | **GPUDirect-RDMA / RoCE** | A3 Ultra (`a3-ultragpu-8g`), A4 | RoCEv2 over CX-7, `NET/IB` present | 8 (CX-7) | reference-arch (Part IV fabric contrast) |
 
-*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. Only the red rung is where this cluster sits (measured); TCPX is the rung lab-18 provisions; TCPXO/RDMA are reference.*
+*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. The red rung is where the original clusters sit (measured). The **TCPXO rung is now measured too**, on a purpose-built cluster — and the gap between the two is 13.4× on identical GPUs. TCPX is provisioned and verified as configured; RDMA/RoCE remains reference.*
 
 ```mermaid
 flowchart LR
-  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>~28.6 GB/s — MEASURED"] --> R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 (after pending)"]
-  R1 --> R2["GPUDirect-TCPXO<br/>A3 Mega · 8 NICs<br/>reference"]
+  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>23.7–28.6 GB/s — MEASURED"] -->|"≈13.4×"| R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 — PROVISIONED"]
+  R1 --> R2["GPUDirect-TCPXO<br/>A3 Mega · 8 GPU NICs<br/>lab-22 — <b>317.84 GB/s MEASURED</b>"]
   R2 --> R3["GPUDirect-RDMA / RoCE<br/>A3 Ultra / A4 · CX-7<br/>reference"]
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#137333,stroke:#0d652d,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-  class R0 crit; class R1 meas; class R2,R3 ctx;
+  class R0 crit; class R1 meas; class R2 good; class R3 ctx;
 ```
 
-**The honesty line (inherited from the whole guide):** only the rungs we can run are claimed as measured. This lab's cluster is single-gVNIC; TCPX is the rung we *provision* to close the cliff; **TCPXO and RDMA are reference-architecture** — described as the ladder above TCPX and contrasted, never asserted as run here (they need A3 Mega / A3 Ultra / A4 hardware — see [doc-13](../part4-platform-reference-arch/13-spectrum-x-and-fabrics.md)).
+**What the rung is worth, in one line.** Same GPUs, same benchmark, same collective, 16 GPUs
+across 2 nodes: **23.7 GB/s** on the bottom rung, **317.84 GB/s** on the TCPXO rung. The
+ladder is not an optimisation — the bottom rung throws away more than 90% of the fabric.
+
+**The honesty line (inherited from the whole guide):** claims are graded by what was actually done.
+
+- *Measured*: the single-gVNIC floor (23.7 GB/s at 2 nodes on `asia-east1-c`; ~28.6 GB/s on
+  the original `us-central1` cluster) **and now the TCPXO rung** — **317.84 GB/s** busbw
+  across 16 GPUs on 2 × `a3-megagpu-8g`, with `NET/FasTrak` read off the wire on every rank
+  and **zero** `NET/Socket` lines. Same harness as lab-06/12, so the ratio is apples to
+  apples: **≈13.4×**. Evidence:
+  [`assets/lab-22/tcpxo_allreduce_16gpu.txt`](../../assets/lab-22/tcpxo_allreduce_16gpu.txt),
+  [`tcpxo_transport_fastrak.txt`](../../assets/lab-22/tcpxo_transport_fastrak.txt).
+- *Provisioned and verified as configured*: **TCPX** (`hypercomputer-a3-tcpx`) — clears the
+  create-time gates (Dataplane V2 + multi-networking), has its 4 GPU VPCs,
+  `Network`/`GKENetworkParamSet` CRDs and NCCL plugin applied live, and passes all checkable
+  layers of [`verify_gpu_fabric.sh`](../../scripts/verify_gpu_fabric.sh) — but has never
+  carried traffic.
+- *Not claimed*: a **TCPX (A3 High) bandwidth number**, and a **tuned** TCPXO figure. The
+  317.84 GB/s run logged `CPU affinity ... not a subset` — ranks were not NUMA-pinned to
+  their rails — so it is a healthy-fabric **floor**, not this hardware's ceiling. Do not
+  quote it as a certification target. And note the ordering that made the number meaningful:
+  the same cluster passed layers 1–7 of the checker while its fabric could not move a byte
+  (see [doc-25 §4.10](../part5-operations-diagnostics/25-fabric-diagnostics-playbook.md)) —
+  "configured" and "engaged" are different questions, and only the workload's own NCCL
+  transport line settles the second one.
+- *Reference-architecture only*: **RDMA/RoCE** (needs A3 Ultra / A4 hardware — see
+  [doc-13](../part4-platform-reference-arch/13-spectrum-x-and-fabrics.md)).
 
 ---
 

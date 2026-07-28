@@ -1,0 +1,43 @@
+# FAILURE SIGNATURE (hit live 2026-07-28): rxdm sidecar cannot create the dmabuf importer
+# Symptom: Pod sits 1/2 NotReady FOREVER. The WORKLOAD container is Running and healthy.
+#          The tcpxo-daemon sidecar TERMINATES WITH EXIT CODE 0, reason 'Completed'.
+#          => kubectl get pod shows no CrashLoopBackOff, no error state. Fails OPEN.
+
+## container states (note exitCode 0 / reason Completed on a FAILURE)
+bench:        ready=true  running
+tcpxo-daemon: ready=false terminated exitCode=0 reason=Completed   <-- the bug
+
+## the actual error, only visible in the SIDECAR log (not in events, not in the Pod status)
+E fastrak_addr_translator.cc:60] Failed to create dmabuf importer context.
+E fastrak_gpumem_manager.cc:200] Memory importer: failed to initialize addr translator on NIC IP 192.169.0.3.
+E fastrak_gpumem_manager_startup.cc:45] Exiting with result:1
+
+## ROOT CAUSE
+The rxdm binary opens /dev/dmabuf_import_helper (confirmed via `strings`). That device node
+did not exist on the node, and neither did /dev/aperture_devices.
+
+BOTH are created by the `pre-installation` initContainer of the OFFICIAL
+nccl-tcpxo-installer DaemonSet, which:
+  - runs `nsenter -at 1 -- modprobe import-helper`   (registers /dev/dmabuf_import_helper)
+  - bind-mounts each 1ae0:0084 PCI device into /dev/aperture_devices/<BDF>
+
+A hand-written installer DaemonSet that only runs
+`container_entry.sh install --install-nccl` installs the NCCL plugin .so files
+successfully -- so layers 1-7 of verify_gpu_fabric.sh all PASS -- but the fabric
+can never carry traffic. This is the strongest possible argument for checking
+layer 8 (the NCCL transport line) and never closing on configuration alone.
+
+Also required: the nri-device-injector DaemonSet, which consumes the
+`devices.gke.io/container.tcpxo-daemon` Pod annotation and injects the GPU
+devices + /dev/dmabuf_import_helper into the sidecar's container.
+
+## VERSION PAIRING (the second trap)
+rxdm and plugin versions are pinned to the GPU DRIVER, and are NOT interchangeable:
+  driver 580.65.06+  -> rxdm v1.0.22 + plugin v1.0.16   (R580)
+  driver 595.71.05+  -> rxdm v1.0.23 + plugin v1.0.17   (R595)
+This node ran driver 580.159.04, so rxdm v1.0.23 was an unqualified combination.
+The working capture used rxdm v1.0.22.
+
+## HOW TO VERIFY THE FIX ON THE NODE
+ls -la /dev/dmabuf_import_helper      # expect: crw------- 1 root root 10, 260
+ls /dev/aperture_devices/             # expect: 8 BDF directories (one per GPU NIC)

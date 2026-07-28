@@ -1,0 +1,38 @@
+# TCPXO (GPUDirect-TCPXO / FasTrak) 16-GPU 2-node all-reduce -- LIVE CAPTURE
+# cluster=hypercomputer-a3-tcpxo zone=asia-southeast1-c  nodes=2x a3-megagpu-8g (H100 Mega 80GB)
+# captured 2026-07-28  plugin=nccl-plugin-gpudirecttcpx-dev:v1.0.17 rxdm=tcpgpudmarxd-dev:v1.0.22 driver=580.159.04
+# GKE 1.35.6-gke.1127000  8 GPU NICs @ MTU 8244  transport: NET/FasTrak (NOT Socket)
+# method: repo's own labs/lab-06/allreduce_bench.py via torchrun, identical to lab-06/lab-12 baselines
+
+# world_size=16  backend=nccl  warmup=5 iters=15
+#       size        count    time_ms   algbw_GBps   busbw_GBps
+          8B            2      0.188         0.00         0.00
+         16B            4      0.081         0.00         0.00
+         32B            8      0.080         0.00         0.00
+         64B           16      0.080         0.00         0.00
+        128B           32      0.080         0.00         0.00
+        256B           64      0.081         0.00         0.01
+        512B          128      0.080         0.01         0.01
+         1KB          256      0.080         0.01         0.02
+         2KB          512      0.082         0.02         0.05
+         4KB         1024      0.084         0.05         0.09
+         8KB         2048      0.089         0.09         0.17
+        16KB         4096      0.092         0.18         0.34
+        32KB         8192      0.128         0.26         0.48
+        64KB        16384      0.095         0.69         1.30
+       128KB        32768      0.094         1.39         2.60
+       256KB        65536      0.098         2.66         4.99
+       512KB       131072      0.105         4.97         9.32
+         1MB       262144      0.173         6.07        11.38
+         2MB       524288      0.142        14.73        27.63
+         4MB      1048576      0.154        27.32        51.23
+         8MB      2097152      0.268        31.33        58.74
+        16MB      4194304      0.319        52.59        98.60
+        32MB      8388608      0.447        75.15       140.90
+        64MB     16777216      0.667       100.62       188.65
+       128MB     33554432      1.114       120.49       225.92
+       256MB     67108864      1.996       134.46       252.12
+       512MB    134217728      3.561       150.74       282.65
+         1GB    268435456      6.575       163.31       306.21
+         2GB    536870912     12.669       169.51       317.84
+# done
