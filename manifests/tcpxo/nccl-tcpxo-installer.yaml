@@ -1,18 +1,74 @@
 # manifests/tcpxo/nccl-tcpxo-installer.yaml
-# Installs the GPUDirect-TCPXO NCCL plugin ("FasTrak") + receive-datapath binaries onto each
-# A3 Mega node, into a hostPath the workload mounts.
 #
-# TCPXO is NOT merely "TCPX with more NICs". Three things differ from the TCPX recipe:
-#   1. plugin image        — nccl-plugin-gpudirecttcpxo (not ...tcpx)
-#   2. rxdm daemon         — tcpxo-daemon / fastrak rxdm (different flavour + args)
-#   3. NCCL env family     — NCCL_FASTRAK_* (not NCCL_GPUDIRECTTCPX_*)
-# Copying the TCPX recipe and only bumping the NIC count is the single most common
-# TCPXO bring-up mistake — it fails open, falling back to NET/Socket with no error.
+# ============================================================================
+#  APPLY THIS FILE UNMODIFIED. DO NOT HAND-ROLL A SUBSTITUTE.
+# ============================================================================
+# This is the OFFICIAL GKE installer DaemonSet, taken verbatim from
+#   GoogleCloudPlatform/container-engine-accelerators
+#   → gpudirect-tcpxo/nccl-tcpxo-installer.yaml
+# and applied live on cluster `hypercomputer-a3-tcpxo` (asia-southeast1-c) on
+# 2026-07-28, where it produced a working NET/FasTrak fabric measured at
+# 317.84 GB/s busbw across 16 GPUs (see labs/lab-22-fabric-diagnostics).
 #
-# This is the GKE-published recipe; the installer image tag moves between GKE minor versions —
-# RE-PIN at run time from "Maximize GPU network bandwidth with GPUDirect-TCPXO".
+# WHY THE WARNING ABOVE IS THE MOST IMPORTANT LINE IN THIS FILE
+# -------------------------------------------------------------
+# An earlier hand-written version of this DaemonSet ran only the plugin install:
+#     /scripts/container_entry.sh install --install-nccl
+# That installs libnccl-net.so correctly, the DaemonSet reports 1/1 Ready, and
+# layers 1-7 of scripts/verify_gpu_fabric.sh all PASS. The fabric still could
+# not move a single byte.
 #
-# STAGED: validated as YAML; applied live only on the TCPXO cluster.
+# The reason is the `pre-installation` initContainer below. It is not optional
+# setup — it is where the two device nodes rxdm requires are created:
+#
+#   modprobe import-helper          -> /dev/dmabuf_import_helper  (char 10:260)
+#   mount --bind per 1ae0:0084 BDF  -> /dev/aperture_devices/<BDF> (8 on A3 Mega)
+#
+# Without them the rxdm sidecar logs:
+#     Failed to create dmabuf importer context
+#     Memory importer: failed to initialize addr translator on NIC IP ...
+#     Exiting with result:1
+# ...and then EXITS 0 with reason "Completed". The Pod sits at READY 1/2 with no
+# error state anywhere in Kubernetes. That is a fail-open one level worse than
+# the socket fallback this whole guide is about.
+# Full signature: assets/lab-22/tcpxo_failure_dmabuf_importer.txt
+# Playbook entry: docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md §4.10
+#
+# THIS FILE IS ONLY HALF THE INSTALL
+# ----------------------------------
+# Also apply manifests/tcpxo/nri-device-injector.yaml. This DaemonSet creates the
+# devices on the NODE; the injector is what places them INSIDE the rxdm sidecar
+# (it consumes the `devices.gke.io/container.tcpxo-daemon` Pod annotation).
+# One without the other does not work.
+#
+#   kubectl apply -f manifests/tcpxo/nccl-tcpxo-installer.yaml
+#   kubectl apply -f manifests/tcpxo/nri-device-injector.yaml
+#   kubectl -n kube-system get ds nccl-tcpxo-installer device-injector   # want 1/1 each
+#   # then, on a GPU node:
+#   ls -l /dev/dmabuf_import_helper && ls /dev/aperture_devices/ | wc -l
+#
+# VERSIONS ARE PINNED TO THE GPU DRIVER
+# -------------------------------------
+# The plugin image below and the rxdm image in workbench-tcpxo.yaml are versioned
+# SEPARATELY from each other, and both track the driver release train:
+#
+#   driver 580.65.06+ (R580)  ->  rxdm v1.0.22   plugin v1.0.16
+#   driver 595.71.05+ (R595)  ->  rxdm v1.0.23   plugin v1.0.17
+#
+# What was actually run here: node driver 580.159.04, rxdm **v1.0.22**, and this
+# file's upstream-default plugin **v1.0.17** — which worked. The rxdm pin is the
+# one that mattered in practice; do not read the table as "any combination works".
+# Check the driver before choosing:
+#   kubectl get node <n> -o jsonpath='{.metadata.labels.cloud\.google\.com/gke-gpu-driver-version}'
+#
+# A mismatch does NOT fail at image pull. It fails at the device layer with the
+# §4.10 signature above, which is far harder to read.
+#
+# The nodeAffinity below targets `nvidia-h100-mega-80gb` (A3 Mega). A3 High is
+# `nvidia-h100-80gb` and needs the TCPX installer, not this one — a one-word
+# mismatch leaves the DaemonSet at DESIRED 0 and NCCL silently on sockets.
+#
+# VERIFIED LIVE 2026-07-28: 1/1 Ready; devices present; NET/FasTrak confirmed.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -33,13 +89,17 @@ spec:
         k8s-app: nccl-tcpxo-installer
     spec:
       priorityClassName: system-node-critical
-      # Only land on the A3 MEGA pool — note the accelerator label differs from A3 High
-      # (nvidia-h100-mega-80gb vs nvidia-h100-80gb). Getting this wrong is why an installer
-      # can silently never schedule, leaving NCCL on the socket transport.
-      nodeSelector:
-        cloud.google.com/gke-accelerator: nvidia-h100-mega-80gb
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: cloud.google.com/gke-accelerator
+                    operator: In
+                    values:
+                      - nvidia-h100-mega-80gb
       tolerations:
-        - operator: Exists
+        - operator: "Exists"
       hostNetwork: true
       hostPID: true
       volumes:
@@ -51,22 +111,35 @@ spec:
             path: /var/lib/tcpxo
         - name: library-dir-host
           hostPath:
-            path: /home/kubernetes/bin/nvidia/lib64
+            path: /home/kubernetes/bin
       initContainers:
+        - image: "ubuntu"
+          name: pre-installation
+          securityContext:
+            privileged: true
+          command:
+            - nsenter
+            - -at
+            - '1'
+            - --
+            - sh
+            - -c
+            - |
+              /sbin/iptables -I INPUT -p tcp -m tcp -j ACCEPT && modprobe import-helper
+              sudo mkdir -p /dev/aperture_devices
+              while IFS= read -r line; do
+                BDF=$( echo "$line" | awk '{print $1}' );
+                target_aperture_path="/dev/aperture_devices/$BDF"
+                host_aperture_device=$(readlink -f "/sys/bus/pci/devices/$BDF");
+                sudo mkdir -p $target_aperture_path;
+                sudo umount -R $target_aperture_path;
+                sudo mount --bind $host_aperture_device $target_aperture_path;
+              done < <(lspci -nn -D | grep '1ae0:0084')
+              if [ -d /dev/aperture_devices ]; then
+                  chmod -R a+r /dev/aperture_devices/
+                  chmod a+rw /dev/aperture_devices/*/resource*
+              fi
         - name: nccl-tcpxo-installer
-          # GOTCHA (hit live, 2026-07-28): the image is NOT called
-          # ".../gpudirect-tcpxo/nccl-plugin-gpudirecttcpxo". That path does not exist and
-          # pulling it yields Init:ErrImagePull -> ImagePullBackOff, which on a Flex-start
-          # node burns provisioned GPU time while you debug. The TCPXO plugin lives in the
-          # gpudirect-tcpxo REPO but under the ...tcpx-dev IMAGE name:
-          #     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev
-          # (repo says tcpxo, image says tcpx — the one is not a typo for the other.)
-          # There is also no usable ':latest' contract here: tags are vN.N.N and the repo
-          # additionally carries deprecated-public-image-* / no-new-use-public-image-*
-          # prefixes, so ALWAYS pin an explicit version. Enumerate current tags with:
-          #   gcloud artifacts docker images list \
-          #     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev \
-          #     --include-tags --format='value(tags)'
           image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev:v1.0.17
           resources:
             requests:
@@ -76,39 +149,17 @@ spec:
           volumeMounts:
             - name: var-lib
               mountPath: /var/lib
-            - name: tcpxo
-              mountPath: /var/lib/tcpxo
             - name: library-dir-host
-              mountPath: /usr/local/nvidia/lib64
+              mountPath: /usr/local
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -ex
+              chmod 755 /scripts/container_entry.sh
               /scripts/container_entry.sh install --install-nccl
+              mkdir -p /usr/local/nvidia/lib64
               cp -r /var/lib/tcpxo/lib64/. /usr/local/nvidia/lib64
+              echo "installation finishes"
       containers:
-        # The installer's real work happens in the initContainer; this container only keeps
-        # the Pod alive so the DaemonSet stays Ready. Use registry.k8s.io — the legacy
-        # gcr.io/google-containers path is frozen and has NO 3.9 tag, so it fails with
-        # "not found" (observed live 2026-07-28). Note the failure surfaces as a DaemonSet
-        # that never reaches Ready even though the plugin installed correctly — easy to
-        # misdiagnose as a plugin problem (see doc-25 §4.2 for the real-vs-benign split).
-        - name: pause
-          image: registry.k8s.io/pause:3.9
-          resources:
-            requests:
-              cpu: 10m
----
-# The tcpxo-daemon (FasTrak receive-datapath manager) is added as a SIDECAR to the GPU
-# workload Pod so it shares the Pod's network namespace — see workbench-tcpxo.yaml.
-# It is deliberately NOT a DaemonSet here: a node-level daemon cannot see the workload
-# Pod's netns, which is the #2 cause of "plugin loaded but GPU Direct still Disabled".
-#
-# The rxdm sidecar image is versioned SEPARATELY from the plugin above and moves faster
-# (plugin was at v1.0.17 while rxdm was at v1.0.23 on 2026-07-28). Do not assume the two
-# share a version number:
-#     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev:v1.0.23
-# List current tags with:
-#   gcloud artifacts docker images list \
-#     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev \
-#     --include-tags --format='value(tags)'
+        - image: "gke.gcr.io/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830"
+          name: pause

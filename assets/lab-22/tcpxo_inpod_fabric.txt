@@ -1,0 +1,31 @@
+# In-pod fabric view, TCPXO workload Pod (tcpxo-wb-0), 2026-07-28
+## interfaces + MTU (eth0=control 1460, eth1-8=GPU NICs @ 8244)
+eth0 mtu=1460
+eth1 mtu=8244
+eth2 mtu=8244
+eth3 mtu=8244
+eth4 mtu=8244
+eth5 mtu=8244
+eth6 mtu=8244
+eth7 mtu=8244
+eth8 mtu=8244
+
+## aperture devices injected (one per GPU NIC) -- created by the installer pre-installation initContainer
+0000:06:00.1
+0000:07:00.1
+0000:0d:00.1
+0000:0e:00.1
+0000:86:00.1
+0000:87:00.1
+0000:8d:00.1
+0000:8e:00.1
+
+## rail balance: per-NIC mentions in the NCCL log (even => traffic spread across all 8 rails)
+     43 eth1
+     43 eth2
+     43 eth3
+     43 eth4
+     43 eth5
+     43 eth6
+     43 eth7
+     43 eth8

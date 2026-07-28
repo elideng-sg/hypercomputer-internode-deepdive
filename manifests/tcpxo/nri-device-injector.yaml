@@ -1,0 +1,112 @@
+# manifests/tcpxo/nri-device-injector.yaml
+#
+# The SECOND HALF of the GPUDirect-TCPXO install. Applying the NCCL TCPXO installer
+# without this DaemonSet produces a fabric that passes every configuration check and
+# cannot move a byte — see nccl-tcpxo-installer.yaml and playbook §4.10.
+#
+# WHAT IT DOES
+# ------------
+# The installer creates /dev/dmabuf_import_helper and /dev/aperture_devices/<BDF> on
+# the NODE. The rxdm sidecar runs in a CONTAINER and, by default, sees neither. This
+# NRI (Node Resource Interface) plugin watches Pod admission and injects device nodes
+# named in the Pod annotation:
+#
+#   metadata:
+#     annotations:
+#       devices.gke.io/container.tcpxo-daemon: |+
+#         - path: /dev/nvidia0        # ... through /dev/nvidia7
+#         - path: /dev/nvidiactl
+#         - path: /dev/nvidia-uvm
+#         - path: /dev/dmabuf_import_helper
+#
+# The annotation KEY names the target container (`tcpxo-daemon`). Without the injector
+# the annotation is inert — nothing errors, and the sidecar dies with
+# CUDA_ERROR_NO_DEVICE or the dmabuf-importer failure.
+#
+# Taken verbatim from GoogleCloudPlatform/container-engine-accelerators
+# (nri_device_injector/nri-device-injector.yaml). The stale MIG/driver-450 comment in
+# the upstream header is upstream's, not ours — the image is the NRI device injector.
+#
+#   kubectl apply -f manifests/tcpxo/nri-device-injector.yaml
+#   kubectl -n kube-system get ds device-injector      # want 1/1 per GPU node
+#
+# VERIFIED LIVE 2026-07-28 on `hypercomputer-a3-tcpxo`: 1/1 Ready; the rxdm sidecar
+# received 8 GPUs + the dmabuf helper; NCCL selected NET/FasTrak on all 16 ranks.
+# ---------------------------------------------------------------------------
+# Copyright 2024 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This daemonset installs nvidia driver 450.80.02 and invokes the
+# partition_gpu tool to enable MIG mode and create GPU instances as specified
+# in the GPU config.
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: device-injector
+  namespace: kube-system
+  labels:
+    k8s-app: device-injector
+spec:
+  selector:
+    matchLabels:
+      k8s-app: device-injector
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: device-injector
+        k8s-app: device-injector
+    spec:
+      priorityClassName: system-node-critical
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: cloud.google.com/gke-accelerator
+                    operator: In
+                    values:
+                      - nvidia-rtx-pro-6000
+                      - nvidia-rtx-pro-6000-vws
+                      - nvidia-h100-80gb
+                      - nvidia-h100-mega-80gb
+      tolerations:
+        - operator: "Exists"
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - image: "gcr.io/gke-release/nri-device-injector@sha256:6e79483d52abdc28454bf186320b10a56b0f117a10e8d65d5c74dbb821a76970"
+          name: device-injector
+          resources:
+            requests:
+              cpu: 150m
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+            - name: nri
+              mountPath: /var/run/nri
+      volumes:
+        - name: root
+          hostPath:
+            path: /
+        - name: nri
+          hostPath:
+            path: /var/run/nri
+        - name: dev
+          hostPath:
+            path: /dev

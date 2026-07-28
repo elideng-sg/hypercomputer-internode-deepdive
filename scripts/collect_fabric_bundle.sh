@@ -29,11 +29,36 @@ NAMESPACE="${NAMESPACE:-}"
 POD="${POD:-}"
 ALLOW_DEBUG_POD="${ALLOW_DEBUG_POD:-0}"
 
+# CLUSTER/ZONE must steer the kubectl half of the bundle too, not just the gcloud
+# half — otherwise a bundle labelled "$CLUSTER" contains another cluster's Pods,
+# DaemonSets and logs, and support triages the wrong system. See the same fix and
+# the mis-read it prevents in verify_gpu_fabric.sh.
+KCTX=""
 if [ -z "$CLUSTER" ]; then
   CTX="$(kubectl config current-context 2>/dev/null)"
   CLUSTER="$(echo "$CTX" | awk -F_ '{print $NF}')"
   ZONE="${ZONE:-$(echo "$CTX" | awk -F_ '{print $(NF-1)}')}"
+else
+  WANT="gke_${PROJECT}_${ZONE}_${CLUSTER}"
+  if kubectl config get-contexts -o name 2>/dev/null | grep -qx "$WANT"; then
+    KCTX="$WANT"
+  else
+    KCTX="$(kubectl config get-contexts -o name 2>/dev/null | grep -E "_${CLUSTER}\$" | head -1)"
+  fi
+  if [ -z "$KCTX" ]; then
+    echo "FATAL: CLUSTER=$CLUSTER requested but no kubeconfig context matches it — the"
+    echo "       bundle would mix in a different cluster's kubectl output. Run:"
+    echo "       gcloud container clusters get-credentials $CLUSTER --zone ${ZONE:-<zone>} --project ${PROJECT:-<project>}"
+    exit 2
+  fi
 fi
+
+# Every later kubectl routes through here, including the ones run via cap() —
+# bash resolves `"$@"` against shell functions, so the pin survives that hop.
+kubectl(){
+  if [ -n "$KCTX" ]; then command kubectl --context "$KCTX" "$@"
+  else command kubectl "$@"; fi
+}
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUTDIR="${OUTDIR:-${TMPDIR:-/tmp}/fabric-bundle-${CLUSTER}-${STAMP}}"
 mkdir -p "$OUTDIR" || { echo "FATAL: cannot create $OUTDIR"; exit 2; }

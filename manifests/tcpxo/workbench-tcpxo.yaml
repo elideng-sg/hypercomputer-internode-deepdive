@@ -1,0 +1,149 @@
+# manifests/tcpxo/workbench-tcpxo.yaml
+#
+# A working 2-rank GPUDirect-TCPXO workbench for A3 Mega. This is the EXACT Pod spec
+# that produced this guide's measured fabric result on 2026-07-28:
+#
+#   cluster  hypercomputer-a3-tcpxo (asia-southeast1-c), GKE 1.35.6-gke.1127000
+#   16 GPUs / 2 x a3-megagpu-8g, driver 580.159.04, MTU 8244 on eth1-eth8
+#   transport NET/FasTrak (plugin 1.0.17), rxdm tcpgpudmarxd-dev v1.0.22
+#   peak busbw 317.84 GB/s @ 2GB  vs  23.7 GB/s on the single-gVNIC path (lab-12)
+#
+# Evidence: assets/lab-22/tcpxo_allreduce_16gpu.txt,
+#           assets/lab-22/tcpxo_transport_fastrak.txt,
+#           assets/lab-22/tcpxo_inpod_fabric.txt
+#
+# PREREQUISITES — apply BOTH, or this Pod hangs at READY 1/2 with no error (§4.10):
+#   kubectl apply -f manifests/tcpxo/network-crds.yaml
+#   kubectl apply -f manifests/tcpxo/nccl-tcpxo-installer.yaml
+#   kubectl apply -f manifests/tcpxo/nri-device-injector.yaml
+#
+# THE FIVE THINGS THAT ARE EASY TO GET WRONG (each fails open or fails confusingly)
+# ---------------------------------------------------------------------------------
+# 1. `devices.gke.io/container.tcpxo-daemon` — gives the rxdm SIDECAR the 8 GPUs and
+#    /dev/dmabuf_import_helper. Requires the nri-device-injector DaemonSet. Missing
+#    GPUs here => rxdm dies with CUDA_ERROR_NO_DEVICE; missing dmabuf helper => the
+#    "Failed to create dmabuf importer context" / exit-0 failure of playbook §4.10.
+#
+# 2. `networking.gke.io/interfaces` — 9 entries: eth0 on `default` plus eth1..eth8 on
+#    gpu-net-0..7. The names must match the Network CRDs in network-crds.yaml.
+#
+# 3. NO `nodeName`. Pinning with nodeName bypasses the scheduler, so kubelet REJECTS
+#    the Pod with `UnexpectedAdmissionError: ... nvidia.com/gpu Requested: 8,
+#    Available: 0` instead of queueing it (playbook §4.11). nodeSelector +
+#    podAntiAffinity gives one rank per node AND lets the Pod sit Pending in line —
+#    which is what makes a gap-free handover from a capacity holder possible.
+#
+# 4. `NCCL_FASTRAK_LLCM_DEVICE_DIRECTORY=/dev/aperture_devices` on the WORKLOAD
+#    container, plus the matching hostPath mount. The NCCL config checker will warn
+#    that this variable is "expected unset" — that warning is wrong for TCPXO; ignore it.
+#
+# 5. rxdm needs `chmod 755` on its entrypoint before exec (some tags ship it 0644 and
+#    fail with "Permission denied"), and only NET_ADMIN/NET_BIND_SERVICE — not
+#    privileged: true. If you find yourself reaching for privileged, the real problem
+#    is almost always a missing device injection (item 1).
+#
+# RUNNING THE BENCHMARK — source the vendor profile, never hand-write the NIC list:
+#   source /usr/local/nvidia/lib64/nccl-env-profile.sh   # discovers eth1..eth8
+#   export NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,NET    # or the transport is NEVER logged
+#   torchrun --nproc_per_node=8 --nnodes=2 --node_rank=$RANK \
+#            --master_addr=<rank0-ip> --master_port=29500 scripts/allreduce_bench.py
+#
+# Deploy BOTH ranks: this file is rank 0 (tcpxo-wb-0). Copy it, change the name to
+# tcpxo-wb-1, and keep the label `app: tcpxo-workbench` so the antiAffinity splits them.
+#
+# The bench container idles (`sleep infinity`) on purpose: capture NIC lists, dmesg and
+# NCCL logs while the node is ALIVE. On a Flex-start pool the node — and all its
+# evidence — disappears when the Pod ends.
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tcpxo-wb-0
+  labels: {app: tcpxo-workbench}
+  annotations:
+    devices.gke.io/container.tcpxo-daemon: |+
+      - path: /dev/nvidia0
+      - path: /dev/nvidia1
+      - path: /dev/nvidia2
+      - path: /dev/nvidia3
+      - path: /dev/nvidia4
+      - path: /dev/nvidia5
+      - path: /dev/nvidia6
+      - path: /dev/nvidia7
+      - path: /dev/nvidiactl
+      - path: /dev/nvidia-uvm
+      - path: /dev/dmabuf_import_helper
+    networking.gke.io/default-interface: 'eth0'
+    networking.gke.io/interfaces: |
+      [
+        {"interfaceName":"eth0","network":"default"},
+        {"interfaceName":"eth1","network":"gpu-net-0"},
+        {"interfaceName":"eth2","network":"gpu-net-1"},
+        {"interfaceName":"eth3","network":"gpu-net-2"},
+        {"interfaceName":"eth4","network":"gpu-net-3"},
+        {"interfaceName":"eth5","network":"gpu-net-4"},
+        {"interfaceName":"eth6","network":"gpu-net-5"},
+        {"interfaceName":"eth7","network":"gpu-net-6"},
+        {"interfaceName":"eth8","network":"gpu-net-7"}
+      ]
+spec:
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-h100-mega-80gb
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels: {app: tcpxo-workbench}
+        topologyKey: kubernetes.io/hostname
+  restartPolicy: Never
+  tolerations:
+  - operator: Exists
+  volumes:
+  - name: nvidia
+    hostPath: {path: /home/kubernetes/bin/nvidia/lib64}
+  - name: shared-memory
+    emptyDir: {medium: Memory, sizeLimit: 1Gi}
+  - name: sys
+    hostPath: {path: /sys}
+  - name: proc-sys
+    hostPath: {path: /proc/sys}
+  - name: aperture-devices
+    hostPath: {path: /dev/aperture_devices}
+  - name: workdir
+    emptyDir: {}
+  containers:
+  - name: tcpxo-daemon
+    image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev:v1.0.22
+    imagePullPolicy: Always
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      set -ex
+      chmod 755 /fts/entrypoint_rxdm_container.sh
+      /fts/entrypoint_rxdm_container.sh --num_hops=2 --num_nics=8 --uid= --alsologtostderr
+    securityContext:
+      capabilities:
+        add: ["NET_ADMIN","NET_BIND_SERVICE"]
+    volumeMounts:
+    - {name: nvidia, mountPath: /usr/local/nvidia/lib64}
+    - {name: sys, mountPath: /hostsysfs}
+    - {name: proc-sys, mountPath: /hostprocsysfs}
+    env:
+    - {name: LD_LIBRARY_PATH, value: /usr/local/nvidia/lib64}
+  - name: bench
+    image: nvcr.io/nvidia/pytorch:24.10-py3
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      capabilities: {add: ["IPC_LOCK"]}
+    resources:
+      limits: {nvidia.com/gpu: 8}
+    volumeMounts:
+    - {name: nvidia, mountPath: /usr/local/nvidia/lib64}
+    - {name: shared-memory, mountPath: /dev/shm}
+    - {name: aperture-devices, mountPath: /dev/aperture_devices}
+    - {name: workdir, mountPath: /work}
+    env:
+    - {name: LD_LIBRARY_PATH, value: /usr/local/nvidia/lib64}
+    - {name: NCCL_LIB_DIR, value: /usr/local/nvidia/lib64}
+    - {name: NCCL_FASTRAK_LLCM_DEVICE_DIRECTORY, value: /dev/aperture_devices}
+    command: ["/bin/bash","-c","sleep infinity"]

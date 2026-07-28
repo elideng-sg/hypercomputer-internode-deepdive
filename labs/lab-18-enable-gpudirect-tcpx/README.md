@@ -2,7 +2,7 @@
 
 **Objective:** Every earlier inter-node measurement in this guide rides the **single-gVNIC / TCP** path and honestly reports the **~28.6 GB/s** floor (lab-06) and the descending **465 → 23.7 → 14.95 GB/s** 1/2/3-node curve (lab-12). That floor is not physics — it's an *architecture choice*. This lab is the **design counterpart**: provision the **multi-network GPUDirect-TCPX** fabric that A3 High was built for, re-run the same NCCL all-reduce, and read the transport change off the wire — **`NET/Socket` → `NET/GPUDirectTCPX`**, GPU Direct enabled. It is the one lab that changes the *fabric*, not the workload.
 
-> ### ⚠️ Status: BEFORE measured live · fabric now PROVISIONED · AFTER still capacity-gated
+> ### ⚠️ Status: BEFORE measured · fabric PROVISIONED · AFTER capacity-gated *on this tier* — but **the thesis is now proven one rung up**
 > **Updated 2026-07-28.** The **before** (gVNIC) half is **measured live** — reused from [lab-06](../lab-06-2node-nccl-collectives/) and [lab-12](../lab-12-scaling-sweep/), not re-run.
 >
 > **The architectural blocker described below is now CLEARED.** A purpose-built cluster
@@ -10,16 +10,33 @@
 > A3 High Flex pool carrying **4 `--additional-node-network` attachments**, and the
 > `Network`/`GKENetworkParamSet` CRDs **applied live** (previously staged-only).
 > [`scripts/verify_gpu_fabric.sh`](../../scripts/verify_gpu_fabric.sh) reports every
-> checkable layer PASS at `tier=TCPX`. The sibling [lab-22](../lab-22-fabric-diagnostics/)
-> did the same one rung up and got an A3 Mega node with **8 GPU NICs** and the plugin
-> installed, which proves the recipe end-to-end.
+> checkable layer PASS at `tier=TCPX`.
 >
-> **What remains pending is only the number, and only for one reason: capacity.** The
-> `after` needs *two* A3 High nodes up *simultaneously* in the same zone, and asia-east1-c
-> returned `FailedScaleUp: GCE out of resources`. A holder is armed to claim nodes the
-> moment they free up. So:
+> **The `after` has now been measured — on the TCPXO rung, not this one.**
+> [lab-22](../lab-22-fabric-diagnostics/) got **two** A3 Mega nodes concurrently and ran the
+> same all-reduce over an enabled fabric: `NET/FasTrak` on all 16 ranks, **zero** `NET/Socket`
+> lines, **317.84 GB/s busbw** against **23.7 GB/s** on the single-gVNIC 2-node path —
+> **≈13.4×**. So this lab's central claim — *the floor is an architecture choice, not
+> physics* — is no longer a hypothesis. It is measured; just on A3 Mega/TCPXO rather than
+> A3 High/TCPX.
+>
+> **What remains pending is this tier's own number, and only for one reason: capacity.** The
+> TCPX `after` needs *two* A3 High nodes up *simultaneously* in the same zone, and
+> asia-east1-c returned `FailedScaleUp: GCE out of resources`. A holder is armed to claim
+> nodes the moment they free up. So:
 > - ✅ *Architecture* — no longer a blocker. The create-time gate is satisfied.
-> - ⏳ *Throughput* — awaiting concurrent Flex capacity. **Not fabricated here.**
+> - ✅ *Thesis* — proven live at the TCPXO rung (lab-22): **13.4×**.
+> - ⏳ *TCPX-specific throughput* — awaiting concurrent Flex capacity. **Not fabricated here,
+>   and not back-filled from the TCPXO number** — TCPX has 4 NICs to TCPXO's 8 and a
+>   different plugin; the figures are not interchangeable.
+>
+> **Before you attempt this lab, read [lab-22 §3.6](../lab-22-fabric-diagnostics/README.md)
+> and [doc-25 §4.10](../../docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md).**
+> The TCPXO bring-up found a failure mode that will bite the TCPX bring-up too: a
+> hand-written installer DaemonSet passes **every** layer of the verify script and still
+> cannot move a byte, because the official installer's `pre-installation` initContainer is
+> what creates `/dev/dmabuf_import_helper` and the aperture devices. Use the official
+> manifests unmodified.
 >
 > Original blocker, kept for the record (it is the lesson, and it still applies to the two
 > production clusters) — evidence in [`assets/lab-18/blocker_dataplane_v2.txt`](../../assets/lab-18/blocker_dataplane_v2.txt):

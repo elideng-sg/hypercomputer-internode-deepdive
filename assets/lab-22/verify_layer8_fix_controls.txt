@@ -1,0 +1,203 @@
+verify_gpu_fabric.sh — controls after the layer-8 SIGPIPE fix
+=============================================================
+Captured 2026-07-28. project hdlab-elideng.
+
+Two runs of the SAME script: one cluster where the fabric works, one where it cannot.
+A checker that has only ever been seen to pass is not evidence of anything.
+
+The positive run below is the first ALL-GREEN result in this repo (8 PASS / 0 FAIL /
+0 WARN) — and it only became possible after fixing the layer-8 bug documented at the
+bottom of this file, which had been suppressing the decisive check.
+
+=== POSITIVE CONTROL: hypercomputer-a3-tcpxo (asia-southeast1-c) ===
+  2 x a3-megagpu-8g, 16 x H100 Mega, driver 580.159.04, GKE 1.35.6-gke.1127000
+  official nccl-tcpxo-installer + nri-device-injector, rxdm v1.0.22, plugin 1.0.17
+  workload pod: default/tcpxo-wb-0 (NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,NET)
+ GPU FABRIC HEALTH CHECK
+ project=hdlab-elideng  cluster=hypercomputer-a3-tcpxo  2026-07-28T11:42:05Z
+==============================================================================
+
+-- discovered: cluster=hypercomputer-a3-tcpxo zone=asia-southeast1-c
+-- machine=a3-megagpu-8g (source: node) accelerator=nvidia-h100-mega-80gb
+-- EXPECTED fabric tier for this family: TCPXO (8 GPU NICs)
+
+  [PASS] 7. Node NICs           : 8 GPU NICs + 1 control NIC on gke-hypercomputer-a3-a3-mega-tcpxo-fl-f106ac3b-03hg (want 8)
+
+------------------------------------------------------------------------------
+ RESULT LAYER                    DETAIL
+------------------------------------------------------------------------------
+ [PASS] 1. Dataplane V2          ADVANCED_DATAPATH
+ [PASS] 2. Multi-networking      enabled
+ [PASS] 3. GPU Network CRDs      8 NetDevice GPU nets (want >= 8; 9 Networks total incl. built-ins)
+ [PASS] 4. Pool GPU NICs         8 additional node networks (want 8)
+ [PASS] 5. Jumbo MTU 8244        all gpu-net VPCs >= 8244 (or none present)
+ [PASS] 6. NCCL plugin DS        installed and ready (2)
+ [PASS] 6c. rxdm devices         /dev/dmabuf_import_helper present, 8 aperture devices (want 8)
+ [PASS] 8. NCCL transport        NET/FasTrak — GPUDirect ENGAGED
+------------------------------------------------------------------------------
+ tier=TCPXO  pass=8  fail=0  warn=0
+
+Fabric healthy for its tier (TCPXO). If throughput is still low, the bottleneck is
+above the fabric: check data loading (starved GPU), NCCL_ALGO, or job-level topology.
+
+=== NEGATIVE CONTROL: hypercomputer-a3-asiasoutheast1 (asia-southeast1-c) ===
+  Production single-gVNIC A3 Mega cluster. Same machine family, same zone, same script.
+  A GPU node IS up and healthy here — so layer 6c is proving "device absent", not
+  "node absent". Exit 1.
+ GPU FABRIC HEALTH CHECK
+ project=hdlab-elideng  cluster=hypercomputer-a3-asiasoutheast1  2026-07-28T11:42:56Z
+==============================================================================
+
+-- discovered: cluster=hypercomputer-a3-asiasoutheast1 zone=asia-southeast1-c
+-- machine=a3-megagpu-8g (source: node) accelerator=nvidia-h100-mega-80gb
+-- EXPECTED fabric tier for this family: TCPXO (8 GPU NICs)
+
+  [FAIL] 7. Node NICs           : only 0 GPU NICs on gke-hypercomputer-a3-a3-mega-flex-poo-44c95a12-5w60 (want 8)
+         -> node was not created with the GPU networks attached; recreate the pool.
+         The decisive test. In any GPU pod, set NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,NET and grep:
+           GOOD: NET/FasTrak|NET/GPUDirectTCPX      BAD: 'NET/Socket' or 'GPU Direct RDMA Disabled'
+
+------------------------------------------------------------------------------
+ RESULT LAYER                    DETAIL
+------------------------------------------------------------------------------
+ [FAIL] 1. Dataplane V2          '<empty>' (legacy) — GPUDirect IMPOSSIBLE on this cluster
+ [FAIL] 2. Multi-networking      '<empty>' — GPU NICs cannot be attached
+ [FAIL] 3. GPU Network CRDs      0 NetDevice GPU nets (want 8; 0 total)
+ [FAIL] 4. Pool GPU NICs         0 additional node networks (want 8)
+ [PASS] 5. Jumbo MTU 8244        all gpu-net VPCs >= 8244 (or none present)
+ [FAIL] 6. NCCL plugin DS        not found
+ [FAIL] 6c. rxdm devices         /dev/dmabuf_import_helper MISSING on gke-hypercomputer-a3-a3-mega-flex-poo-44c95a12-5w60
+ [WARN] 8. NCCL transport        no pod given — rerun with NAMESPACE=<ns> POD=<pod>
+------------------------------------------------------------------------------
+ tier=TCPXO  pass=1  fail=6  warn=1
+
+MOST LIKELY ROOT CAUSE(S), in fix order:
+  1) Cluster lacks Dataplane V2. This is a CREATE-TIME-ONLY setting: it cannot be enabled on an existing cluster. A new cluster is required (--enable-dataplane-v2 --enable-multi-networking). This alone caps you at the ~28.6 GB/s single-gVNIC floor.
+  2) Multi-networking disabled (create-time only). Without it, Pods cannot attach the dedicated GPU networks.
+  3) Too few NetDevice GPU Networks. Apply manifests/tcpx{,o}/network-crds.yaml — one Network + GKENetworkParamSet per GPU NIC. Do not count GKE's built-in 'default'/'pod-network' Networks: they carry no GPUDirect DMA path.
+  4) Node pool was created without enough --additional-node-network flags. This CANNOT be added to an existing pool — recreate the pool with one --additional-node-network per GPU NIC.
+  5) No NCCL GPUDirect plugin installer DaemonSet found. Without libnccl-net-*.so on the node, NCCL uses the built-in socket transport — this is the classic silent-fallback cause.
+  6) The import-helper kernel module was never loaded, so the rxdm sidecar cannot create its dmabuf importer — it will log 'Failed to create dmabuf importer context' and EXIT 0, leaving the workload Pod 1/2 NotReady with no error state. Apply the OFFICIAL installer (its pre-installation initContainer runs 'modprobe import-helper' and populates /dev/aperture_devices): kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/gpudirect-tcpxo/nccl-tcpxo-installer.yaml — plus the nri-device-injector DaemonSet. A hand-rolled installer that only runs 'container_entry.sh install --install-nccl' passes every other layer of this script and still cannot move a byte.
+
+NOTE: a degraded fabric does NOT produce errors. Jobs succeed, ~17x slower inter-node.
+Escalating? Run scripts/collect_fabric_bundle.sh to package everything support needs.
+
+===============================================================================
+THE LAYER-8 BUG THIS FILE EXISTS TO RECORD  (found 2026-07-28)
+===============================================================================
+Before the fix, the positive control above reported:
+
+  [WARN] 8. NCCL transport   no NCCL transport line found
+                             (set NCCL_DEBUG=INFO, NCCL_DEBUG_SUBSYS=INIT,NET)
+
+...on a pod whose own logs contained 153 matching 'NET/FasTrak' lines. The decisive
+layer of the checker was reporting "no evidence" while the evidence was right there.
+
+TWO INDEPENDENT DEFECTS, both worth knowing about:
+
+1. `kubectl logs <pod>` DEFAULTS TO THE FIRST CONTAINER.
+   On every TCPXO workload pod the first container is the rxdm/tcpxo-daemon sidecar,
+   which never prints an NCCL transport line. kubectl even says so on stderr:
+       Defaulted container "tcpxo-daemon" out of: tcpxo-daemon, bench
+   ...but the script sent stderr to /dev/null. Fix: --all-containers.
+       tcpxo-daemon: 0 matches / 261 lines
+       bench:      153 matches / 4000 lines
+
+2. `set -o pipefail` + `grep -q` = FALSE NEGATIVE ON LARGE INPUT.  <-- the real one
+   grep -q exits 0 immediately on its FIRST match, without draining stdin. The
+   upstream `echo` then gets SIGPIPE and dies with status 141. Under pipefail the
+   PIPELINE takes 141, so the `if` takes the FALSE branch even though the pattern
+   matched. Demonstrated on the real 4261-line log:
+
+       $ set -uo pipefail
+       $ echo "$LOG" | grep -qE "NET/FasTrak"; echo $?
+       141                          <- "no match", but there are 153 matches
+       $ grep -qE "NET/FasTrak" <<<"$LOG"; echo $?
+       0                            <- correct
+
+   It is input-size dependent: with a log small enough to fit the 64 KiB pipe buffer
+   the echo completes before grep exits and the bug does not appear. That is why it
+   survived every earlier test — the negative controls have SHORT logs, and a broken
+   cluster's expected answer for layer 8 is WARN/FAIL anyway. The bug only shows up
+   on a healthy cluster with a real workload, which is the one case where a wrong
+   answer costs the most.
+
+   Fixed by replacing all six `echo "$VAR" | grep -q...` with `grep -q... <<<"$VAR"`.
+   A here-string is a file, not a pipe: nothing to break.
+
+LESSONS FOR ANY DIAGNOSTIC TOOL:
+  - `grep -q` in a pipeline under pipefail is a latent false negative. Prefer <<<.
+  - Never discard stderr from kubectl; it tells you when it guessed a container.
+  - "No evidence found" and "evidence shows failure" are DIFFERENT verdicts, and a
+    tool that confuses the two sends support looking for a bug that isn't there.
+  - Validate on a WORKING system as well as a broken one. Both of this script's
+    negative controls passed while its most important check was silently broken.
+
+================================================================================
+BUG 3 — CLUSTER=/ZONE= steered only HALF the script (found 2026-07-28, post-fix
+review, while re-running the controls before commit)
+================================================================================
+
+Symptom: asking for one cluster and getting a report about two.
+
+    $ kubectl config current-context
+    gke_hdlab-elideng_asia-southeast1-c_hypercomputer-a3-tcpxo     <- healthy TCPXO
+
+    $ CLUSTER=hypercomputer-a3-asiaeast1 ZONE=asia-east1-c bash scripts/verify_gpu_fabric.sh
+    -- discovered: cluster=hypercomputer-a3-asiaeast1 zone=asia-east1-c
+    -- EXPECTED fabric tier for this family: TCPXO           <- WRONG. a3-highgpu = TCPX
+     [FAIL] 1. Dataplane V2      '<empty>' (legacy)          <- from asiaeast1 (gcloud)
+     [PASS] 6c. rxdm devices     /dev/dmabuf_import_helper present, 8 aperture devices
+                                                             <- from TCPXO (kubectl)!
+     tier=TCPXO  pass=4  fail=3  warn=1
+
+Root cause: CLUSTER/ZONE were only ever passed to the `gcloud` calls (layers 1, 2,
+4, 5). The `kubectl` calls — machine-family/tier detection and layers 3, 6, 6c, 7,
+8 — kept using the CURRENT CONTEXT. So the report spliced two clusters together:
+gcloud answered about asiaeast1, kubectl answered about tcpxo. It even reported
+layer 6c PASS for a cluster that has no such device, and picked the wrong tier
+(hence the wrong NIC target and the wrong transport pattern) for every check.
+
+Why it is worse than a plain false negative: the exit code and the FAIL rows still
+looked plausible, so nothing invited suspicion. A support engineer handed this
+output would have attributed one cluster's healthy fabric to another cluster's
+ticket. Mis-attribution is more expensive than a missing answer.
+
+Fix: resolve CLUSTER to a kubeconfig context up front, then shadow `kubectl` with a
+one-line wrapper that always passes `--context "$KCTX"`. Pinning at the wrapper
+instead of at 19 call sites makes it impossible to forget in a later edit. If no
+context matches the requested cluster, EXIT 2 rather than silently reporting on
+whatever is currently selected. Same fix applied to collect_fabric_bundle.sh, whose
+failure mode was worse still: a support bundle NAMED for one cluster containing
+another cluster's Pods, DaemonSets and logs.
+
+CONTROLS AFTER THE FIX — all three now explicitly targeted, current context left
+pointing at the TCPXO cluster throughout, to prove the pin actually holds:
+
+  POSITIVE  CLUSTER=hypercomputer-a3-tcpxo ZONE=asia-southeast1-c
+    -- kubectl pinned to context: gke_..._asia-southeast1-c_hypercomputer-a3-tcpxo
+    -- machine=a3-megagpu-8g (source: node)  EXPECTED tier: TCPXO (8 GPU NICs)
+    1 PASS  2 PASS  3 PASS(8)  4 PASS(8)  5 PASS  6 PASS  6c PASS  8 WARN(no pod)
+    tier=TCPXO  pass=7  fail=0  warn=1                                    EXIT=0
+
+  NEGATIVE 1  CLUSTER=hypercomputer-a3-asiaeast1 ZONE=asia-east1-c
+    -- kubectl pinned to context: gke_..._asia-east1-c_hypercomputer-a3-asiaeast1
+    -- machine=a3-highgpu-8g (source: node)  EXPECTED tier: TCPX (4 GPU NICs)  <- now right
+    1 FAIL  2 FAIL  3 FAIL(0/4)  4 FAIL(0/4)  5 PASS  6 FAIL  8 WARN
+    tier=TCPX  pass=1  fail=5  warn=1                                     EXIT=1
+
+  NEGATIVE 2  CLUSTER=hypercomputer-a3-asiasoutheast1 ZONE=asia-southeast1-c
+    -- kubectl pinned to context: gke_..._asia-southeast1-c_hypercomputer-a3-asiasoutheast1
+    -- machine=a3-megagpu-8g (source: node)  EXPECTED tier: TCPXO (8 GPU NICs)
+    1 FAIL  2 FAIL  3 FAIL(0/8)  4 FAIL(0/8)  5 PASS  6 FAIL  6c FAIL  8 WARN
+    tier=TCPXO  pass=1  fail=6  warn=1                                    EXIT=1
+
+Note layer 8 is WARN in all three because no NAMESPACE/POD was given — that is the
+correct "no evidence" verdict, distinct from FAIL. The layer-8 PASS on live
+FasTrak traffic is the run recorded earlier in this file.
+
+ADDITIONAL LESSON:
+  - If a tool accepts a target as a parameter, EVERY backend it queries must honour
+    that parameter, or it will confidently describe the wrong system. Pin once, at
+    a wrapper — not at each call site. And when the target cannot be resolved,
+    fail loudly instead of falling back to an implicit default.
