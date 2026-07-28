@@ -1,0 +1,114 @@
+# manifests/tcpxo/nccl-tcpxo-installer.yaml
+# Installs the GPUDirect-TCPXO NCCL plugin ("FasTrak") + receive-datapath binaries onto each
+# A3 Mega node, into a hostPath the workload mounts.
+#
+# TCPXO is NOT merely "TCPX with more NICs". Three things differ from the TCPX recipe:
+#   1. plugin image        — nccl-plugin-gpudirecttcpxo (not ...tcpx)
+#   2. rxdm daemon         — tcpxo-daemon / fastrak rxdm (different flavour + args)
+#   3. NCCL env family     — NCCL_FASTRAK_* (not NCCL_GPUDIRECTTCPX_*)
+# Copying the TCPX recipe and only bumping the NIC count is the single most common
+# TCPXO bring-up mistake — it fails open, falling back to NET/Socket with no error.
+#
+# This is the GKE-published recipe; the installer image tag moves between GKE minor versions —
+# RE-PIN at run time from "Maximize GPU network bandwidth with GPUDirect-TCPXO".
+#
+# STAGED: validated as YAML; applied live only on the TCPXO cluster.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nccl-tcpxo-installer
+  namespace: kube-system
+  labels:
+    k8s-app: nccl-tcpxo-installer
+spec:
+  selector:
+    matchLabels:
+      k8s-app: nccl-tcpxo-installer
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: nccl-tcpxo-installer
+        k8s-app: nccl-tcpxo-installer
+    spec:
+      priorityClassName: system-node-critical
+      # Only land on the A3 MEGA pool — note the accelerator label differs from A3 High
+      # (nvidia-h100-mega-80gb vs nvidia-h100-80gb). Getting this wrong is why an installer
+      # can silently never schedule, leaving NCCL on the socket transport.
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-h100-mega-80gb
+      tolerations:
+        - operator: Exists
+      hostNetwork: true
+      hostPID: true
+      volumes:
+        - name: var-lib
+          hostPath:
+            path: /var/lib
+        - name: tcpxo
+          hostPath:
+            path: /var/lib/tcpxo
+        - name: library-dir-host
+          hostPath:
+            path: /home/kubernetes/bin/nvidia/lib64
+      initContainers:
+        - name: nccl-tcpxo-installer
+          # GOTCHA (hit live, 2026-07-28): the image is NOT called
+          # ".../gpudirect-tcpxo/nccl-plugin-gpudirecttcpxo". That path does not exist and
+          # pulling it yields Init:ErrImagePull -> ImagePullBackOff, which on a Flex-start
+          # node burns provisioned GPU time while you debug. The TCPXO plugin lives in the
+          # gpudirect-tcpxo REPO but under the ...tcpx-dev IMAGE name:
+          #     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev
+          # (repo says tcpxo, image says tcpx — the one is not a typo for the other.)
+          # There is also no usable ':latest' contract here: tags are vN.N.N and the repo
+          # additionally carries deprecated-public-image-* / no-new-use-public-image-*
+          # prefixes, so ALWAYS pin an explicit version. Enumerate current tags with:
+          #   gcloud artifacts docker images list \
+          #     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev \
+          #     --include-tags --format='value(tags)'
+          image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev:v1.0.17
+          resources:
+            requests:
+              cpu: 150m
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: var-lib
+              mountPath: /var/lib
+            - name: tcpxo
+              mountPath: /var/lib/tcpxo
+            - name: library-dir-host
+              mountPath: /usr/local/nvidia/lib64
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -ex
+              /scripts/container_entry.sh install --install-nccl
+              cp -r /var/lib/tcpxo/lib64/. /usr/local/nvidia/lib64
+      containers:
+        # The installer's real work happens in the initContainer; this container only keeps
+        # the Pod alive so the DaemonSet stays Ready. Use registry.k8s.io — the legacy
+        # gcr.io/google-containers path is frozen and has NO 3.9 tag, so it fails with
+        # "not found" (observed live 2026-07-28). Note the failure surfaces as a DaemonSet
+        # that never reaches Ready even though the plugin installed correctly — easy to
+        # misdiagnose as a plugin problem (see doc-25 §4.2 for the real-vs-benign split).
+        - name: pause
+          image: registry.k8s.io/pause:3.9
+          resources:
+            requests:
+              cpu: 10m
+---
+# The tcpxo-daemon (FasTrak receive-datapath manager) is added as a SIDECAR to the GPU
+# workload Pod so it shares the Pod's network namespace — see workbench-tcpxo.yaml.
+# It is deliberately NOT a DaemonSet here: a node-level daemon cannot see the workload
+# Pod's netns, which is the #2 cause of "plugin loaded but GPU Direct still Disabled".
+#
+# The rxdm sidecar image is versioned SEPARATELY from the plugin above and moves faster
+# (plugin was at v1.0.17 while rxdm was at v1.0.23 on 2026-07-28). Do not assume the two
+# share a version number:
+#     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev:v1.0.23
+# List current tags with:
+#   gcloud artifacts docker images list \
+#     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpxo/tcpgpudmarxd-dev \
+#     --include-tags --format='value(tags)'

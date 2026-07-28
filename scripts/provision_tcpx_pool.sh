@@ -102,12 +102,19 @@ create_pool(){
   for i in 0 1 2 3; do
     addl+=" --additional-node-network=network=$(gpu_net "$i"),subnetwork=$(gpu_sub "$i")"
   done
-  log "creating A3 TCPX node pool $POOL ($NUM_NODES × $MACHINE, Flex-start, +4 GPU networks)"
+  log "creating A3 TCPX node pool $POOL (0→$NUM_NODES × $MACHINE, Flex-start, +4 GPU networks)"
   # Flex-start (queued provisioning) — matches the existing pool's scarce-capacity posture.
+  # Flex-start REQUIRES autoscaling and REJECTS reservation affinity (gotcha G19). A plain
+  # --num-nodes=N flex pool is rejected at the API with:
+  #   "flex start node pools require autoscaling enabled"
+  #   "flex start node pools don't support reservations"
+  # The holder Deployment's Pending Pods are what trigger the flex scale-up from 0.
   # shellcheck disable=SC2086
   gcloud container node-pools create "$POOL" --project "$PROJECT" --cluster "$CLUSTER" --zone "$ZONE" \
     --machine-type="$MACHINE" --accelerator=type=nvidia-h100-80gb,count=8,gpu-driver-version=latest \
-    --num-nodes="$NUM_NODES" --flex-start --enable-gvnic \
+    --flex-start --enable-gvnic \
+    --enable-autoscaling --num-nodes=0 --total-min-nodes=0 --total-max-nodes="$NUM_NODES" \
+    --location-policy=ANY --reservation-affinity=none \
     $addl \
     || die "node pool create failed (likely A3 Flex capacity — see NOTES; fall back to staged)"
 }
