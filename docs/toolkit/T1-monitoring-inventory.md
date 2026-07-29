@@ -469,6 +469,19 @@ dcgm-exporter exposes **100+ Prometheus metrics** with labels for GPU UUID, GPU 
 
 Full list: [dcgm-exporter metrics reference](https://github.com/NVIDIA/dcgm-exporter#metrics)
 
+> **The list above is upstream dcgm-exporter, not GKE's managed one.** Verified live (lab-14,
+> lab-22), the **managed** exporter ships a curated ~19-field set — captured verbatim in
+> [`assets/lab-17/dcgm_prof_fields.txt`](../../assets/lab-17/dcgm_prof_fields.txt) — and three
+> of the entries above return **0 series** on it: `DCGM_FI_DEV_XID_ERRORS` (gotcha
+> [G11](../../reference/lab-build-gotchas.md) — XIDs surface via NPD → Cloud Logging instead),
+> `DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` (use the `DCGM_FI_PROF_NVLINK_*_BYTES` profiling
+> fields, or `nvidia-smi nvlink -gt d` in-Pod), and `DCGM_FI_DEV_PCIE_*_THROUGHPUT` (use
+> `DCGM_FI_PROF_PCIE_TX_BYTES` / `_RX_BYTES`). PromQL over a non-existent metric does not
+> error — it silently never fires, so `count(<metric>)` before building a rule on it. The
+> `PROF_PCIE_*` pair matters more than it looks: lab-22 found it is the **only** counter that
+> can see GPUDirect fabric traffic at all, because kernel NIC counters are blind to the
+> kernel-bypass datapath (G25).
+
 **Forward reference:** Lab-10 demonstrates deploying dcgm-exporter on the GKE A3 cluster, scraping metrics into Prometheus, and using them to debug a stalled NCCL collective.
 
 ### DCGM vs. nvidia-smi

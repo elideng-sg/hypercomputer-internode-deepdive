@@ -1,0 +1,207 @@
+# TCPXO MONITORING VALIDATION -- LIVE, against Google Managed Prometheus (GMP)
+# cluster=hypercomputer-a3-tcpxo zone=asia-southeast1-c  2 x a3-megagpu-8g (16x H100 Mega)
+# captured 2026-07-29  driver 580.159.04  rxdm v1.0.22  plugin 1.0.17
+# method: same 2GB all-reduce (labs/lab-06 saturate loop) held at steady state for 15 min,
+#         run TWICE on the SAME pods/GPUs -- once over FasTrak, once forced onto the socket
+#         path with NCCL_NET_PLUGIN=none NCCL_SOCKET_IFNAME=eth0. Only env differs.
+# GMP query endpoint:
+#   https://monitoring.googleapis.com/v1/projects/hdlab-elideng/location/global/prometheus/api/v1/query
+#
+# WHY THIS FILE EXISTS: doc-25 §5 shipped PromQL and alert rules that had never been
+# executed. Running them found that the CENTRAL ONE WAS BACKWARDS -- it would have paged
+# on a perfectly healthy fabric and stayed silent during the real 13x regression.
+
+================================================================================
+FINDING 1 (the big one) -- GPUDirect traffic IS INVISIBLE TO EVERY KERNEL/NIC
+                           BYTE COUNTER. node_network_* / container_network_* on
+                           eth1-8 read ZERO while the fabric runs at full rate.
+================================================================================
+
+Under a sustained FasTrak all-reduce at ~283 iters/s of 2GB (~1.13 TB/s aggregate
+in-flight, busbw 317 GB/s), with GPUs pinned at 100% util:
+
+  in-pod /sys/class/net/ethN/statistics/tx_bytes, 30s delta, node -blth:
+    eth0     0.00 Gbit/s          6 pkt/s
+    eth1     0.00 Gbit/s          4 pkt/s     <-- 4 packets per second.
+    eth2     0.00 Gbit/s          4 pkt/s
+    eth3     0.00 Gbit/s          4 pkt/s
+    eth4     0.00 Gbit/s          4 pkt/s
+    eth5     0.00 Gbit/s          4 pkt/s
+    eth6     0.00 Gbit/s          4 pkt/s
+    eth7     0.00 Gbit/s          4 pkt/s
+    eth8     0.00 Gbit/s          4 pkt/s
+
+  raw counters after ~5 min of full-rate traffic (node -blth):
+    eth1..eth8   tx ~1.73 MB each   (essentially static)
+    lo           tx 1,020,714,306   (1.02 GB -- rank-to-rank loopback control)
+
+  GMP, same moment, the query doc-25 §5.1 originally shipped:
+    sum by (interface) (rate(container_network_transmit_bytes_total{interface=~"eth[1-8]"}[5m]))
+      eth1..eth8  =  0.000 Gbit/s      <-- all eight rails
+      eth0        =  0.019 Gbit/s      (control plane chatter only)
+
+  hypervisor-level VM metric, same moment, 15m window to rule out ingestion lag:
+    compute_googleapis_com:instance_network_sent_bytes_count
+      -03hg = 0.001 Gbit/s     -blth = 0.001 Gbit/s
+
+  host netns: eth1-8 DO NOT EXIST there at all (passed into the pod), so there is
+  no host-side counter to fall back to:
+    /hostsysfs/class/net/ -> cilium_host cilium_net docker0 eth0 lo lxc*
+
+Cause: TCPXO/FasTrak is a userspace datapath. The rxdm sidecar drives the NIC
+directly and DMAs into GPU HBM via dmabuf, so payload bytes never traverse the
+kernel network stack that populates these counters. The 4 pkt/s residue is ARP
+and link housekeeping. This is not a scrape gap or a label problem -- the bytes
+are genuinely not counted anywhere in netdev.
+
+CONSEQUENCE: any fabric alert built on eth1-8 byte counters is not merely useless,
+it is INVERTED. "GPUs busy AND GPU-NIC bytes ~0" is the signature of a HEALTHY
+TCPXO fabric, and it is exactly the condition doc-25 §5.2 originally paged on.
+
+================================================================================
+FINDING 2 -- DCGM PCIe counters DO see it, and they discriminate cleanly.
+================================================================================
+
+The bytes must cross PCIe to reach the NIC, and DCGM counts that. Same job, same
+pods, same GPUs; only the transport differs.
+
+  signal (per node, sum over 8 GPUs)     FasTrak        socket path     ratio
+  -------------------------------------  -------------  -------------  --------
+  DCGM_FI_PROF_PCIE_TX_BYTES  Gbit/s     1327.3         29.7           44.7x
+  DCGM_FI_PROF_PCIE_RX_BYTES  Gbit/s     1378.7         (see note)
+  DCGM_FI_DEV_GPU_UTIL        %          100.0          100.0          1.0x
+  pod eth0 TX (in-pod, instant) Gbit/s   ~0.00          23.90            --
+  pod eth1-8 TX (in-pod)      Gbit/s     0.00           0.00             --
+  all-reduce iters in 449s               ~127,000       2,400          ~53x
+
+  per-node detail, FasTrak (loaded):
+    PCIE_TX  -03hg 1327.3   -blth 1326.3
+    PCIE_RX  -03hg 1378.7   -blth 1377.2
+  per-node detail, socket path (loaded):
+    PCIE_TX  -03hg   29.65  -blth   29.71
+    eth0 TX  -03hg   23.90 (in-pod, 15s delta)
+
+  cross-cluster control at the same instant (FasTrak loaded) -- PCIe_TX Gbit/s:
+    1327.0  hypercomputer-a3-tcpxo            tcpxo-fl-...-03hg   util 100%
+    1326.1  hypercomputer-a3-tcpxo            tcpxo-fl-...-blth   util 100%
+       0.0  hypercomputer-a3-tcpx             flex-poo-...-6lvn   util   0%
+       0.0  hypercomputer-a3-tcpx             flex-poo-...-lkw4   util   0%
+       0.0  hypercomputer-a3-asiaeast1        flex-poo-...-d7j7   util   0%
+       0.0  hypercomputer-a3-asiaeast1        flex-poo-...-lq6m   util   0%
+       0.0  hypercomputer-a3-asiaeast1        flex-poo-...-q0qn   util   0%
+       0.0  hypercomputer-a3-asiasoutheast1   flex-poo-...-5w60   util   0%
+       0.0  hypercomputer-a3-asiasoutheast1   flex-poo-...-lj1n   util   0%
+       0.0  hypercomputer-a3-asiasoutheast1   flex-poo-...-ncmp   util   0%
+       0.0  hypercomputer-a3-cluster          dws-pool-...-062z   util   0%
+
+NOTE on PCIe magnitudes: 1327 Gbit/s = ~166 GB/s per node summed over 8 GPUs,
+which is the right order for 317 GB/s busbw across 2 nodes. Do NOT read these as
+a calibrated wire rate -- DCGM_FI_PROF_PCIE_* counts all PCIe traffic (H2D/D2H
+copies included), so treat it as a RELATIVE indicator. The 44x separation is what
+matters, not the absolute value.
+
+So the working inversion is:
+    GPU util high  +  PCIe TX high  +  eth1-8 bytes ~0   => HEALTHY GPUDirect
+    GPU util high  +  PCIe TX low   +  eth0 bytes high   => SILENT FALLBACK
+
+================================================================================
+FINDING 3 -- node_network_* does not exist in GMP at all. 0 series.
+================================================================================
+
+  node_network_receive_bytes_total          -> 0 series   (no node-exporter here)
+  kube_node_labels                          -> 0 series   (no kube-state-metrics)
+  DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL        -> 0 series   (not in managed DCGM)
+  DCGM_FI_DEV_XID_ERRORS                    -> 0 series   (confirms lab-14 G11)
+  DCGM_FI_DEV_GPU_UTIL                      -> 80 series  OK
+  DCGM_FI_PROF_PCIE_TX_BYTES / _RX_BYTES    -> 80 series  OK
+  kube_daemonset_status_number_ready        -> 3 series   OK
+  container_network_transmit_bytes_total     -> 1442 series, HAS an `interface` label
+  kubernetes_io:pod_network_sent_bytes_count -> 404 series, HAS an `interface` label
+
+Two of the four metrics in the original §5.3 DCGM table do not exist on managed
+GMP, and the §5.1/§5.2 queries referenced a metric family with zero series. They
+were written from upstream Prometheus convention, not from this platform.
+
+================================================================================
+FINDING 4 -- `sum by (node)` over container_network_* OVER-COUNTS ~10x.
+================================================================================
+
+  count by (node,interface) (container_network_transmit_bytes_total{interface="eth0"})
+    -03hg eth0 series=16      -blth eth0 series=16      -m184 eth0 series=22
+
+cAdvisor reports the pod's netns counters once PER CONTAINER, so summing multiplies
+by container count. Measured, socket path, node -03hg:
+
+    sum by (node) ...    235.57 Gbit/s     <-- wrong, ~10x inflated
+    max by (node) ...     13.86 Gbit/s     <-- correct
+    pod-level metric      13.91 Gbit/s     <-- independent agreement
+    in-pod ground truth   23.90 Gbit/s     <-- instantaneous 15s delta
+
+(13.9 vs 23.9 is the 5m rate window averaging in the pre-load ramp, not a
+disagreement; the two GMP paths agree with each other to 0.4%.)
+
+An inflated NIC rate matters here: it makes a "GPU-NIC bytes are low" alert
+threshold silently ~10x too lax. Use max by (node, interface), or the pod-level
+kubernetes_io:pod_network_* metric which has no container fan-out.
+
+================================================================================
+FINDING 5 -- there ARE TCPXO-specific GCP metrics, but they export nothing here.
+================================================================================
+
+  compute.googleapis.com/instance/gpu/tcpxo_send_chunk_latency_{count,sum,bucket}
+  compute.googleapis.com/instance/gpu/tcpxo_receive_chunk_latency_{count,sum,bucket}
+  compute.googleapis.com/instance/gpu/network_rtt_{count,sum,bucket}
+  compute.googleapis.com/instance/gpu/network_cc_rate_{count,sum,bucket}
+
+These are defined in the metric descriptor list (so they are the RIGHT signal to
+ask a TAM/support about) but returned 0 series on this project under full load --
+not enabled, or gated. Worth requesting before building a dashboard on the DCGM
+proxy above.
+
+Also present and unexplored: compute.googleapis.com/mrdma_nic/* (ethtool_counters,
+linkup, rttcc_*) -- those are for A3 Ultra/A4 RoCE, not TCPXO.
+
+================================================================================
+VALIDATED QUERIES (these were run and returned the values shown above)
+================================================================================
+
+# 1. Silent-fallback detector. GPUs busy but PCIe near-idle => not using GPUDirect.
+#    Measured separation: 1327 (healthy) vs 29.7 (fallback) Gbit/s per node.
+#    Threshold 200e9 sits ~6.6x below healthy and ~6.7x above fallback.
+(avg by (Hostname) (DCGM_FI_DEV_GPU_UTIL) > 80)
+and
+(sum by (Hostname) (DCGM_FI_PROF_PCIE_TX_BYTES) < 200e9)
+
+# 2. Corroborating signal: control NIC carrying bulk traffic = socket fallback.
+#    Measured: 23.9 Gbit/s on eth0 during fallback vs ~0 when healthy.
+max by (node) (rate(container_network_transmit_bytes_total{interface="eth0"}[5m])) > 5e9
+
+# 3. Rail balance -- ONLY valid on tiers whose counters are visible (RoCE/A3 Ultra,
+#    or TCPX where the socket path still touches netdev). On TCPXO all rails read 0
+#    even when healthy, so this ratio is 0/0 and MUST NOT be alerted on. Kept for
+#    the A3 Ultra / A4 rung.
+max by (node) (rate(container_network_receive_bytes_total{interface=~"eth[1-8]"}[5m]))
+  / avg by (node) (rate(container_network_receive_bytes_total{interface=~"eth[1-8]"}[5m]))
+
+# 4. Plugin DaemonSet readiness, guarded so stocked-out Flex pools do not page.
+#    kube_node_labels has 0 series here, so the original guard clause never fired;
+#    use the DCGM series count as the "GPU nodes exist" proxy instead.
+kube_daemonset_status_number_ready{daemonset=~"nccl-.*(tcpx|tcpxo).*"} == 0
+and on() (count(DCGM_FI_DEV_GPU_UTIL) > 0)
+
+================================================================================
+LESSONS
+================================================================================
+- A monitoring rule is a claim about the system. Ship it unrun and it is a guess.
+  doc-25 §5's central alert was not merely miscalibrated, it was INVERTED: the
+  condition it paged on is the healthy state.
+- "Fewer bytes on the NIC" can mean the fast path is WORKING. Kernel counters are
+  blind to userspace/DMA datapaths (TCPXO, RDMA, DPDK, SPDK). Verify what your
+  counters can physically observe before alerting on their absence.
+- Validate a threshold against BOTH states of the thing you are detecting. The
+  same job forced onto the slow path is the cheapest way to get the second state:
+  no cluster changes, only env vars.
+- Check series cardinality before using sum(). 16 containers reporting one netns
+  turned a 13.9 Gbit/s reality into 235 Gbit/s.
+- Confirm each metric NAME exists on YOUR stack. Four of the metrics originally
+  cited here return 0 series on managed GMP.

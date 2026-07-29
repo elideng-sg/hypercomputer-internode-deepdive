@@ -352,6 +352,58 @@ adds. This is the **fourth** distinct reading of a low/mid engine-active signal 
 throttled (G-lab-17), starved (G21), comms-bound (G23), server-bound (here) — all told apart
 only by reading the rest of the path (latency curve + replica scaling), never the one meter.
 
+## G25 — GPUDirect traffic is **invisible** to every kernel/NIC byte counter (lab-22)
+
+**Symptom.** During a 16-GPU TCPXO all-reduce sustaining **317 GB/s busbw** at 100% GPU util,
+every GPU NIC reads **zero**: in-pod `/sys/class/net/eth[1-8]/statistics/tx_bytes` shows
+**4 packets/s**, GMP `rate(container_network_transmit_bytes_total{interface=~"eth[1-8]"}[5m])`
+returns `0.000`, and the hypervisor's `instance_network_sent_bytes_count` reads 0.001 Gbit/s.
+`eth1-8` don't exist in the host netns at all (passed into the Pod), so there is no host-side
+counter to fall back to.
+
+**Root cause.** GPUDirect-TCPXO is a **kernel-bypass datapath**: the rxdm sidecar drives the
+NIC from userspace and DMAs into GPU HBM via dmabuf, so payload bytes never traverse the
+kernel network stack that populates `netdev` counters. The 4 pkt/s residue is ARP and link
+housekeeping. Same class of blindness applies to RDMA, DPDK and SPDK.
+
+**Fix / correction.** **Never alert on the absence of bytes on a GPU NIC** — low NIC counts
+are what *health* looks like on these fabrics. This **inverted** lab-22/doc-25's original
+`GPUFabricSilentFallbackSuspected` rule, which paged on "GPU util high **and** GPU-NIC bytes
+near zero": it would have fired continuously on a healthy cluster and stayed silent through
+the real 13.4× regression. The signal that *does* discriminate is
+`DCGM_FI_PROF_PCIE_TX_BYTES` — the bytes must cross PCIe to reach the NIC either way.
+Measured on the same Pods/GPUs, changing only env vars: **1327 Gbit/s over FasTrak vs 29.7
+Gbit/s on the socket path (44.7×)**, while `DCGM_FI_DEV_GPU_UTIL` is **100% on both sides**
+of a 53× throughput cliff. Rail-balance ratios are likewise `0/0` on TCPXO and must not be
+alerted on there (they remain valid on A3 Ultra/A4 RoCE). Full evidence:
+`assets/lab-22/tcpxo_monitoring_validation.txt`; corrected rules in
+[doc-25 §5](../docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md).
+
+## G26 — `sum by (node)` over `container_network_*` over-counts ~10× (lab-22)
+
+**Symptom.** GMP reported **235.57 Gbit/s** on a node's `eth0` while the in-pod counter delta
+said **23.90 Gbit/s** and the pod-level metric said 13.91.
+
+**Root cause.** cAdvisor reports the **Pod's netns** counters once **per container**, so
+`sum by (node)` multiplies by container count — measured **16 series per node** for a single
+`eth0` (22 on a busier node).
+
+**Fix.** Aggregate with `max by (node, interface)` (13.86 Gbit/s — agrees with the pod-level
+`kubernetes_io:pod_network_sent_bytes_count` to 0.4%), or use the pod-level metric, which has
+no container fan-out. This matters beyond cosmetics: an inflated NIC rate makes any "NIC
+traffic is low" alert threshold silently ~10× too lax.
+
+**Related (same lab, same root cause — unverified metric names).** Four metric names cited in
+this guide's earlier monitoring copy return **0 series** on GKE managed collection:
+`node_network_*` (no node-exporter), `kube_node_labels` (no kube-state-metrics — which
+silently disabled the `GPUNCCLPluginNotReady` guard clause), and
+`DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` / `DCGM_FI_DEV_XID_ERRORS` (see **G11**). PromQL over a
+non-existent metric doesn't error — it just never fires. `count(<metric>)` before you write
+the rule. GCP *does* define TCPXO-native metrics (`instance/gpu/tcpxo_send_chunk_latency_*`,
+`tcpxo_receive_chunk_latency_*`, `instance/gpu/network_rtt_*`, `network_cc_rate_*`) but they
+exported 0 series here under full load — worth requesting from a TAM before settling for the
+PCIe proxy.
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology.)*
+*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology. lab-22 live TCPXO fabric + diagnostics: 317.84 GB/s measured (13.4×), checker validated against broken *and* working clusters, monitoring validated against live GMP in both fabric states.)*
