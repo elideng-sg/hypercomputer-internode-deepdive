@@ -496,67 +496,181 @@ incumbent releases its GPUs.
 
 ## 5. Monitoring — catching silent fallback before a human notices
 
-The point of monitoring here is to make a *silent* failure *loud*. Three signals:
+The point of monitoring here is to make a *silent* failure *loud*. Everything in this
+section was **executed against live Managed Prometheus during a real 16-GPU TCPXO
+all-reduce, and again with the same job forced onto the socket path**. Raw numbers:
+[`assets/lab-22/tcpxo_monitoring_validation.txt`](../../assets/lab-22/tcpxo_monitoring_validation.txt).
 
-### 5.1 Per-NIC throughput and rail balance
+> **This section previously shipped an alert that was backwards.** It paged on "GPUs busy
+> **and** GPU-NIC bytes near zero" — which measurement shows is the signature of a
+> *perfectly healthy* TCPXO fabric, not a broken one. It would have paged continuously on
+> a working cluster and stayed silent through the real 13× regression. The corrected rule
+> is §5.2. Keep reading for why, because the reason generalises to every kernel-bypass
+> datapath you will ever monitor.
+
+### 5.1 The counter that cannot see your fabric
+
+Under a sustained FasTrak all-reduce — 100% GPU util, ~283 iterations/s of a 2 GB buffer,
+317 GB/s bus bandwidth — the GPU NICs report this:
+
+```
+in-pod /sys/class/net/ethN/statistics/tx_bytes, 30 s delta:
+  eth1 .. eth8    0.00 Gbit/s     4 packets/s     (raw counter ~1.73 MB, static)
+GMP, same instant:
+  rate(container_network_transmit_bytes_total{interface=~"eth[1-8]"}[5m])  =  0.000
+hypervisor, same instant:
+  compute_googleapis_com:instance_network_sent_bytes_count  =  0.001 Gbit/s
+```
+
+Four packets per second, on eight rails, while ~1.1 TB/s crosses them. **GPUDirect is a
+kernel-bypass datapath**: the rxdm sidecar drives the NIC from userspace and DMAs straight
+into GPU HBM via dmabuf, so payload bytes never touch the kernel network stack that
+populates `netdev` counters. What is left is ARP and link housekeeping. `eth1-8` do not
+even exist in the host netns — they are passed into the Pod — so there is no host-side
+counter to fall back to.
+
+Two consequences, and both are load-bearing:
+
+1. **Never alert on the absence of bytes on a GPU NIC.** On TCPXO/TCPX and on RDMA fabrics
+   generally, low NIC byte counts are what *health* looks like.
+2. **The rail-imbalance ratio in this section's earlier form is 0/0 on TCPXO.** It remains
+   valid on tiers whose datapath still touches `netdev`, so it is kept below with an
+   explicit applicability note rather than deleted.
+
+Three further metric names this document previously cited **do not exist** on GKE managed
+collection (each returns 0 series): `node_network_*` (no node-exporter — use
+`container_network_*` or `kubernetes_io:pod_network_*`), `kube_node_labels` (no
+kube-state-metrics), and both `DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` and
+`DCGM_FI_DEV_XID_ERRORS`. Confirm every metric name against your own stack before you
+build a rule on it:
+
+```bash
+# 0 rows here means the rule you are about to write will never fire.
+curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  --data-urlencode 'query=count(DCGM_FI_PROF_PCIE_TX_BYTES)' \
+  "https://monitoring.googleapis.com/v1/projects/$PROJECT/location/global/prometheus/api/v1/query"
+```
+
+**Aggregate GPU-node NIC rates with `max`, never `sum`.** cAdvisor reports the Pod's netns
+counters once *per container*, so `sum by (node)` multiplies by container count — measured
+16 series per node, turning a real 13.86 Gbit/s into **235.57 Gbit/s**. An inflated NIC
+rate makes any "NIC traffic is low" threshold silently ~10× too lax.
 
 ```promql
-# Per-interface receive rate on GPU nodes (expect traffic on ALL GPU NICs, roughly equal)
-sum by (instance, device) (
-  rate(node_network_receive_bytes_total{device=~"eth[1-8]"}[5m])
+# Correct: one value per node per interface, regardless of container count.
+max by (node, interface) (
+  rate(container_network_transmit_bytes_total{interface=~"eth[0-8]"}[5m])
 )
 
-# Rail imbalance ratio: max NIC / mean NIC. Sustained > 2 during a collective-heavy
-# phase means traffic is concentrating on one rail (§4.7).
-max by (instance) (rate(node_network_receive_bytes_total{device=~"eth[1-8]"}[5m]))
+# Equivalent, no container fan-out to defend against:
+max by (node, interface) (rate(kubernetes_io:pod_network_sent_bytes_count[5m]))
+
+# Rail imbalance: max NIC / mean NIC, sustained > 2 = traffic concentrating on one rail
+# (§4.7). VALID on A3 Ultra/A4 RoCE and on a TCPX socket path; on TCPXO all rails read
+# zero even when healthy, so this is 0/0 there and MUST NOT be alerted on.
+max by (node) (rate(container_network_receive_bytes_total{interface=~"eth[1-8]"}[5m]))
   /
-avg by (instance) (rate(node_network_receive_bytes_total{device=~"eth[1-8]"}[5m]))
+avg by (node) (rate(container_network_receive_bytes_total{interface=~"eth[1-8]"}[5m]))
 ```
 
 ### 5.2 The silent-fallback alert (the important one)
 
-There is no metric named "NCCL fell back to sockets", so alert on the *shape* of the
-failure: GPUs busy, and GPU-NIC traffic essentially absent.
+There is no metric named "NCCL fell back to sockets". But the bytes have to cross PCIe to
+reach the NIC either way, and **DCGM counts PCIe**. Running the identical job twice on the
+same Pods and GPUs, changing only environment variables, gives the discriminator and its
+thresholds:
+
+| Signal (per node, 8 GPUs) | FasTrak | Socket path | Ratio |
+|---|---|---|---|
+| `DCGM_FI_PROF_PCIE_TX_BYTES` | **1327.3 Gbit/s** | **29.7 Gbit/s** | **44.7×** |
+| `DCGM_FI_PROF_PCIE_RX_BYTES` | 1378.7 Gbit/s | — | — |
+| `DCGM_FI_DEV_GPU_UTIL` | 100 % | 100 % | 1.0× |
+| Pod `eth0` TX (in-pod) | ~0.00 Gbit/s | 23.90 Gbit/s | — |
+| Pod `eth1-8` TX (in-pod) | 0.00 Gbit/s | 0.00 Gbit/s | — |
+| all-reduce iterations in 449 s | ~127,000 | 2,400 | ~53× |
+
+GPU util is **100% in both** — which is exactly why util alone can never detect this. PCIe
+TX separates the two states by 44×, and the separation survives the obvious objection that
+it is merely tracking "GPU busy". So the working inversion is:
+
+```
+GPU util high  +  PCIe TX high  +  eth1-8 ~0     =>  HEALTHY GPUDirect
+GPU util high  +  PCIe TX low   +  eth0 high     =>  SILENT FALLBACK
+```
 
 ```yaml
 - alert: GPUFabricSilentFallbackSuspected
-  # GPUs are working hard but the dedicated GPU NICs are idle => inter-node traffic is
-  # almost certainly going over eth0/TCP instead of GPUDirect. This is the ONLY
-  # automated warning you will get for a 17x regression.
+  # GPUs are working hard but almost nothing is crossing PCIe toward the NICs => the
+  # collective is not using GPUDirect. Measured separation: 1327 Gbit/s healthy vs
+  # 29.7 Gbit/s on the socket path, so 200e9 sits ~6.6x below healthy and ~6.7x above
+  # fallback. Do NOT substitute a NIC byte counter here: on a healthy TCPXO fabric
+  # eth1-8 read zero, so a NIC-based rule fires permanently on working clusters.
+  # Label is `Hostname` (DCGM's own), not `instance`.
   expr: |
-    (avg by (instance) (DCGM_FI_DEV_GPU_UTIL) > 80)
+    (avg by (Hostname) (DCGM_FI_DEV_GPU_UTIL) > 80)
     and
-    (sum by (instance) (rate(node_network_transmit_bytes_total{device=~"eth[1-8]"}[10m])) < 1e8)
+    (sum by (Hostname) (DCGM_FI_PROF_PCIE_TX_BYTES) < 200e9)
   for: 15m
   labels: {severity: critical}
   annotations:
-    summary: "GPU fabric may have silently fallen back to TCP on {{ $labels.instance }}"
+    summary: "GPU fabric may have silently fallen back to TCP on {{ $labels.Hostname }}"
     runbook: "docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md — run scripts/verify_gpu_fabric.sh"
+
+- alert: GPUControlNICCarryingBulkTraffic
+  # Corroborating signal, cheap and independent: the control NIC is moving collective
+  # payload. Measured 23.9 Gbit/s on eth0 during fallback vs ~0 when healthy.
+  # `max`, not `sum` — see the cAdvisor container fan-out in §5.1.
+  expr: |
+    max by (node) (rate(container_network_transmit_bytes_total{interface="eth0"}[5m])) > 5e9
+  for: 15m
+  labels: {severity: warning}
 
 - alert: GPUNCCLPluginNotReady
   # Catches §4.1/§4.2 (bad image, wrong accelerator label) — but only when GPU nodes
-  # actually exist, so stocked-out Flex pools do not page anyone.
+  # actually exist, so stocked-out Flex pools do not page anyone. The guard used to key
+  # on kube_node_labels, which has 0 series under managed collection, so the whole rule
+  # was dead; the DCGM series count is the working "GPU nodes exist" proxy.
   expr: |
     kube_daemonset_status_number_ready{daemonset=~"nccl-.*(tcpx|tcpxo).*"} == 0
-    and on() (count(kube_node_labels{label_cloud_google_com_gke_accelerator!=""}) > 0)
+    and on() (count(DCGM_FI_DEV_GPU_UTIL) > 0)
   for: 10m
   labels: {severity: warning}
 ```
 
+Read `DCGM_FI_PROF_PCIE_*` as a **relative** indicator, not a calibrated wire rate: it
+counts all PCIe traffic including H2D/D2H copies. The 44× gap is the signal; the absolute
+number is not a bandwidth measurement. Re-derive the threshold on your own hardware by
+running one job over the fabric and one with `NCCL_NET_PLUGIN=none`.
+
 ### 5.3 DCGM signals worth a panel
 
-| Metric | Reads on |
-|---|---|
-| `DCGM_FI_DEV_GPU_UTIL` | GPU busy — pair with NIC idle to detect fallback (§5.2) |
-| `DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` | intra-node path; stays healthy even when the fabric is broken (this is *why* single-node tests mislead) |
-| `DCGM_FI_PROF_PCIE_TX_BYTES` / `_RX_BYTES` | host-bounce traffic; high values with GPUDirect "engaged" hint at a wrong rail (§4.7) |
-| `DCGM_FI_DEV_XID_ERRORS` | rules out a GPU fault before blaming the network |
+Verified series counts on this cluster (10 GPU nodes, 80 GPUs):
+
+| Metric | Series | Reads on |
+|---|---|---|
+| `DCGM_FI_PROF_PCIE_TX_BYTES` / `_RX_BYTES` | 80 | **the fabric-activity signal.** The only counter that sees GPUDirect traffic at all (§5.2) |
+| `DCGM_FI_DEV_GPU_UTIL` | 80 | GPU busy. Necessary but never sufficient — 100% on both sides of the 44× cliff |
+| `kube_daemonset_status_number_ready` | 3 | plugin installer health (§4.1/§4.2) |
+| `container_network_*` / `kubernetes_io:pod_network_*` | 1442 / 404 | per-interface bytes, carries an `interface` label. Useful for `eth0` (fallback tell), useless for `eth1-8` |
+| `DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` | **0** | not exported by managed DCGM. For the intra-node path use `nvidia-smi nvlink -gt d` in-Pod |
+| `DCGM_FI_DEV_XID_ERRORS` | **0** | not exported. Get XIDs from node `dmesg` / Cloud Logging instead (same gap as lab-14 G11) |
+
+**Ask your TAM about these before building a dashboard on the PCIe proxy.** GCP defines
+TCPXO-native metrics — `instance/gpu/tcpxo_send_chunk_latency_*`,
+`tcpxo_receive_chunk_latency_*`, `instance/gpu/network_rtt_*`,
+`instance/gpu/network_cc_rate_*` — which are exactly the right signal. They are present in
+the metric-descriptor list but returned **0 series** on this project under full load, so
+they are either not enabled or gated. The PCIe counter is a workaround for their absence.
 
 **Suggested Grafana layout** — one row, four panels, readable in ten seconds:
-1. per-NIC TX/RX stacked by `device` (all rails visible, or the imbalance is obvious)
-2. rail-imbalance ratio (§5.1) with a threshold line at 2
-3. GPU util vs GPU-NIC bytes on a shared time axis (the fallback signature)
-4. plugin DaemonSet ready count, annotated with GPU node count
+1. `DCGM_FI_PROF_PCIE_TX_BYTES` summed per node, with a threshold line at your measured
+   fallback level (the fabric's actual heartbeat)
+2. GPU util *and* PCIe TX on a shared axis — the fallback signature is util-high/PCIe-low
+3. `eth0` rate per node (`max by`, not `sum by`) — bulk traffic here means socket path
+4. plugin DaemonSet ready count vs GPU node count
+
+Do **not** put per-rail `eth1-8` throughput on a TCPXO dashboard. It reads zero on a
+healthy fabric and every viewer will misread it as an outage.
 
 ---
 

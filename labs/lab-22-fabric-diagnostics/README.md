@@ -24,6 +24,14 @@ PASS/FAIL verdict across all eight layers, validate that command against cluster
 > [`tcpxo_transport_fastrak.txt`](../../assets/lab-22/tcpxo_transport_fastrak.txt),
 > [`tcpxo_inpod_fabric.txt`](../../assets/lab-22/tcpxo_inpod_fabric.txt).
 >
+> **Monitoring validated against live Managed Prometheus (2026-07-29)** by running the same
+> job twice — over FasTrak, then forced onto the socket path — and querying GMP during both.
+> This **overturned this lab's original alert rule**: GPU-NIC byte counters read *zero* on a
+> healthy TCPXO fabric (GPUDirect bypasses the kernel stack), so "GPUs busy + NICs idle"
+> pages on health. `DCGM_FI_PROF_PCIE_TX_BYTES` is the signal that actually discriminates —
+> **1327 vs 29.7 Gbit/s**, while GPU util is 100% on both sides. See §7 and
+> [`tcpxo_monitoring_validation.txt`](../../assets/lab-22/tcpxo_monitoring_validation.txt).
+>
 > **Still not claimed:** a *tuned* figure. The run logged `CPU affinity ... not a subset`
 > advisories, so 317.84 GB/s is an untuned **floor**, not this fabric's ceiling. And the
 > TCPX (A3 High) tier remains configuration-verified only — see
@@ -563,22 +571,94 @@ Secrets or workload data are read. Review `SUMMARY.txt` before sending externall
 
 ## 7. Monitoring: make a silent failure loud
 
-There is no metric named "NCCL fell back to sockets", so alert on the *shape*: **GPUs busy,
-GPU NICs idle.** Full PromQL, alert rules and the suggested Grafana row are in
+An unrun alert rule is a guess wearing a uniform. This lab's original §7 said: alert on
+**GPUs busy, GPU NICs idle**. Then we ran it against live Managed Prometheus during the
+§5.1 all-reduce — and found the rule was not miscalibrated, it was **inverted**.
+
+### 7.1 The measurement that killed the obvious alert
+
+100% GPU util, ~283 iterations/s of a 2 GB all-reduce, 317 GB/s busbw. The eight GPU NICs
+during that:
+
+| Where you look | eth1–eth8 TX, under full FasTrak load |
+|---|---|
+| in-pod `/sys/class/net/ethN/statistics/tx_bytes` | **0.00 Gbit/s — 4 packets/s** |
+| GMP `rate(container_network_transmit_bytes_total[5m])` | **0.000** |
+| hypervisor `instance_network_sent_bytes_count` | 0.001 Gbit/s |
+| host netns | `eth1-8` **do not exist** — passed into the Pod |
+
+Four packets per second on eight rails while ~1.1 TB/s crosses them. **GPUDirect is a
+kernel-bypass datapath** — rxdm drives the NIC from userspace and DMAs into GPU HBM via
+dmabuf, so payload bytes never traverse the kernel stack that fills `netdev` counters. The
+residue is ARP and link housekeeping.
+
+So "GPUs busy **and** GPU-NIC bytes near zero" is the signature of a **healthy** TCPXO
+fabric. The original rule would have paged continuously on a working cluster and said
+nothing during the 13.4× regression. Delete it; don't retune it.
+
+That also retires the rail-balance idea *for this tier*: `max/avg` over eight rails that
+all read zero is 0/0. It stays valid on A3 Ultra/A4 RoCE and on a TCPX socket path, so
+doc-25 keeps it with an applicability note. The healthy-balance evidence from this lab is
+still good, it just comes from the **NCCL ring setup**, not from a counter: all eight rails
+`eth1`–`eth8` referenced **43 times each** — dead even.
+
+### 7.2 What does work: DCGM PCIe, proven against both states
+
+The bytes must cross PCIe to reach the NIC, and DCGM counts PCIe. Same job, same Pods, same
+GPUs, **only environment variables changed** (`NCCL_NET_PLUGIN=none NCCL_SOCKET_IFNAME=eth0`):
+
+| Signal (per node, 8 GPUs) | FasTrak | Socket path | Ratio |
+|---|---|---|---|
+| `DCGM_FI_PROF_PCIE_TX_BYTES` | **1327.3 Gbit/s** | **29.7 Gbit/s** | **44.7×** |
+| `DCGM_FI_DEV_GPU_UTIL` | 100 % | 100 % | **1.0×** |
+| Pod `eth0` TX (in-pod) | ~0.00 Gbit/s | 23.90 Gbit/s | — |
+| Pod `eth1-8` TX (in-pod) | 0.00 | 0.00 | — |
+| iterations in 449 s | ~127,000 | 2,400 | ~53× |
+
+GPU util is **identical on both sides of a 53× throughput cliff** — that column is the whole
+reason this failure is silent. PCIe TX separates the states by 44×:
+
+```
+GPU util high + PCIe TX high + eth1-8 ~0   =>  HEALTHY GPUDirect
+GPU util high + PCIe TX low  + eth0 high   =>  SILENT FALLBACK
+```
+
+The corrected rules, with thresholds derived from those two numbers, plus the Grafana row,
+are in
 [doc-25 §5](../../docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md#5-monitoring--catching-silent-fallback-before-a-human-notices).
-The two that matter:
+The three that matter:
 
 - `GPUFabricSilentFallbackSuspected` — `DCGM_FI_DEV_GPU_UTIL > 80` **and**
-  GPU-NIC (`eth[1-8]`) TX rate near zero for 15m. The only automated warning you will ever
-  get for the ~13× regression measured in §5.1.
+  `sum by (Hostname) (DCGM_FI_PROF_PCIE_TX_BYTES) < 200e9` for 15m. Threshold sits ~6.6×
+  below healthy and ~6.7× above fallback. The only automated warning you will ever get for
+  the ~13× regression measured in §5.1.
+- `GPUControlNICCarryingBulkTraffic` — `eth0` above 5 Gbit/s. Independent corroboration:
+  measured 23.9 Gbit/s during fallback vs ~0 when healthy.
 - `GPUNCCLPluginNotReady` — plugin DaemonSet ready count 0 **while GPU nodes exist**. The
-  second clause is what keeps stocked-out Flex pools from paging anyone (§3.5).
+  second clause is what keeps stocked-out Flex pools from paging anyone (§3.5) — but it used
+  `kube_node_labels`, which has **0 series** here, so the guard never evaluated. Now keyed on
+  `count(DCGM_FI_DEV_GPU_UTIL) > 0`.
 
-Also track **rail balance**: `max/avg` of per-NIC rates sustained above ~2 during a
-collective-heavy phase means traffic is concentrating on one rail instead of spreading. The
-healthy shape, from this lab's run: all eight rails `eth1`–`eth8` referenced **43 times
-each** in the NCCL ring setup — dead even. A single hot rail on an otherwise-green fabric
-costs you most of the 13× without failing any layer.
+### 7.3 Three more metric names that silently don't exist
+
+`node_network_*`, `kube_node_labels`, `DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL` and
+`DCGM_FI_DEV_XID_ERRORS` all return **0 series** on GKE managed collection. A PromQL rule
+over a non-existent metric doesn't error — it just never fires. Count series before you
+trust a rule.
+
+And when you do use `container_network_*`, aggregate with **`max by (node, interface)`,
+never `sum`**: cAdvisor reports the Pod's netns counters once per container — 16 series per
+node here — which turned a real 13.86 Gbit/s into **235.57 Gbit/s**. That inflation makes
+any "NIC traffic is low" threshold ~10× too lax.
+
+Every number above, the cross-cluster control, and the four validated queries:
+[`assets/lab-22/tcpxo_monitoring_validation.txt`](../../assets/lab-22/tcpxo_monitoring_validation.txt).
+
+> **The transferable lesson.** Kernel counters are blind to kernel-bypass datapaths —
+> TCPXO, RDMA, DPDK, SPDK. Before alerting on the *absence* of a signal, prove your
+> collector can physically observe its *presence*. And validate every threshold against
+> **both** states of the thing you're detecting; forcing the same job onto the slow path
+> costs one environment variable and no cluster changes.
 
 ---
 
@@ -605,3 +685,10 @@ costs you most of the 13× without failing any layer.
 11. **Validate them against a known-*working* system too.** Both negative controls passed
     while layer 8 — the decisive check — was silently broken by a `grep -q` pipeline (§4).
     "No evidence" is a verdict too, and a wrong one is expensive.
+12. **Don't ask a customer for GPU-NIC throughput graphs.** On TCPXO they read zero when the
+    fabric is *healthy* (§7.1). Ask for `DCGM_FI_PROF_PCIE_TX_BYTES` and the NCCL transport
+    line instead — and if a ticket says "our GPU NIC dashboards show no traffic", that is not
+    the bug.
+13. **An alert rule is a claim about the system.** Ship it unrun and it is a guess: this lab's
+    own rule was *inverted*, and three of the metric names it referenced return 0 series on
+    managed collection (§7.3). Fire the rule against a real fault before you trust it.
