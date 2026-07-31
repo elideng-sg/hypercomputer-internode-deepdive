@@ -4,7 +4,7 @@
 fabric?"*. This lab asks the question support actually gets asked: **"is the fast fabric
 working right now, and if not, which layer broke?"** You will stand up a **GPUDirect-TCPXO**
 fabric on A3 Mega (one rung above lab-18's TCPX), then run a single command that renders a
-PASS/FAIL verdict across all eight layers, validate that command against clusters that are
+PASS/FAIL verdict across all nine layers, validate that command against clusters that are
 *deliberately* broken, and package an escalation bundle.
 
 > ### ✅ Status: fabric PROVISIONED, VERIFIED **and MEASURED** live
@@ -303,7 +303,7 @@ CLUSTER=<cluster> ZONE=<zone> NAMESPACE=<ns> POD=<pod> scripts/verify_gpu_fabric
 ```
 
 Read-only. Exit `0` healthy · `1` degraded · `2` undeterminable. It discovers the machine
-family, derives the expected tier, and checks the eight layers that must **all** hold.
+family, derives the expected tier, and checks the nine layers that must **all** hold (1-8 plus **6c**, added after a bring-up that passed 1-7 and still moved no bytes).
 
 Real output on this lab's TCPXO cluster, **after** §3.6 was fixed:
 
