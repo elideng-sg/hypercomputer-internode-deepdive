@@ -141,7 +141,7 @@ Two points prove the cliff *exists*; they cannot show its **shape**. [lab-12](..
 
 ## What this lab does **not** claim
 
-- It does **not** use GPUDirect-TCPX, TCPXO, RDMA, or SHARP — the NCCL log proves none are active here. The ~28 GB/s is the **standard-gVNIC/TCP** floor, **not** the A3 High ceiling with the TCPX plugin enabled (which would be materially higher; see [doc-05](../../docs/part2-inter-node/05-nic-rdma-gpudirect.md)).
+- It does **not** use GPUDirect-TCPX, TCPXO, RDMA, or SHARP — the NCCL log proves none are active here. The ~28 GB/s is the **standard-gVNIC/TCP** floor, **not** the A3 High ceiling with the TCPX plugin enabled. That ceiling is no longer a hypothetical: [lab-18](../lab-18-enable-gpudirect-tcpx/) measured **83.27 GB/s** at 16 GPUs on a TCPX cluster (**3.5×** the gVNIC path at the same message size), and [lab-22](../lab-22-fabric-diagnostics/) measured **317.84 GB/s** on A3 Mega/TCPXO (**13.4×**). See [doc-05](../../docs/part2-inter-node/05-nic-rdma-gpudirect.md).
 - It reports `busbw` from a PyTorch/NCCL all-reduce, not the `all_reduce_perf` binary — same NCCL, same formula, noted above for full transparency.
 
 ---

@@ -41,7 +41,7 @@ flowchart TD
 
 5. **Part V — Operations, diagnostics & troubleshooting** *(scenario-based; **live** — captured on the 3-node cluster):* the skill Parts I–IV don't teach — **symptom → hypothesis → tool → read the output → root cause → fix**. A triage-method hub (doc-16), single-GPU/node health, inter-node comms debugging, cluster/job failure triage, and performance monitoring & day-2 operations, with the NVIDIA tools (`ncu`, `dcgmi dmon`, `nccl-tests`, `ethtool`, HTA, PromQL/Grafana) finally run *in anger*.
 
-6. **Part VI — Architecture & GCP integration** *(design-first use-cases; docs 21–24 + labs 19–21 live, lab-18 staged):* how a GPU workload is actually architected and deployed on GCP — GKE network design as a decision (single-gVNIC measured; the GPUDirect-TCPX after staged on a new multi-network pool), the storage/data path (a live starved-vs-fed GPU swing), an end-to-end training pipeline (a 2-node/16-GPU JobSet training on GCS data), and inference serving + autoscale (a live saturation knee + near-linear 1→8-GPU scaling).
+6. **Part VI — Architecture & GCP integration** *(design-first use-cases; docs 21–24 + labs 18–21 all live):* how a GPU workload is actually architected and deployed on GCP — GKE network design as a decision (**both** rungs measured: single-gVNIC 23.70 vs GPUDirect-TCPX **83.27 GB/s** on a purpose-built multi-network cluster), the storage/data path (a live starved-vs-fed GPU swing), an end-to-end training pipeline (a 2-node/16-GPU JobSet training on GCS data), and inference serving + autoscale (a live saturation knee + near-linear 1→8-GPU scaling).
 
 Cutting across all six parts is a **NVIDIA tooling layer** — monitoring (`nvidia-smi`, DCGM, `dcgm-exporter`), health and diagnostics (`dcgmi diag`, XID decode, `nvidia-bug-report.sh`), profiling (`nsys`, `ncu`, NVTX), benchmarking (`nvbandwidth`, `nccl-tests`), and fabric tools (`perftest`, `ethtool`, NCCL topology export) — taught in context as they appear and consolidated in cross-cutting reference docs.
 
@@ -61,7 +61,7 @@ Labs run on **two live GKE A3 High (H100) clusters** in project `hdlab-elideng`.
 
 Each node = an HGX H100 8-GPU baseboard, exposing `nvidia.com/gpu: 8`. Auxiliary `default-pool` (e2-standard-4) carries control/CPU workloads.
 
-*Figure: where the guide's labs run — two live GKE A3 H100 clusters (16- and 24-GPU), both on a single-gVNIC/TCP fabric (no TCPX/RDMA today), feeding Google Managed Prometheus and reading/writing GCS, all driven from your shell.*
+*Figure: where the guide's labs run — the two **general-purpose** GKE A3 H100 clusters (16- and 24-GPU) sit on a single-gVNIC/TCP fabric and carry Parts I–V; two **purpose-built GPUDirect clusters** (green) carry the fabric labs, because Dataplane V2 + multi-networking are create-time-only. All feed Google Managed Prometheus and read/write GCS, driven from your shell.*
 
 ```mermaid
 flowchart LR
@@ -74,24 +74,36 @@ flowchart LR
   subgraph C3["GKE · hypercomputer-a3-asiaeast1 · asia-east1-c"]
     P3["a3-high-flex-pool (Flex)<br/>3× a3-highgpu-8g = 24× H100"]
   end
-  FAB["single-gVNIC eth0 / VPC TCP<br/>~28.6 GB/s floor · no TCPX/RDMA"]
+  subgraph C4["GKE · GPUDirect clusters (purpose-built · create-time gates)"]
+    P4["hypercomputer-a3-tcpx · asia-east1-c<br/>2× a3-highgpu-8g · 4 GPU NICs"]
+    P5["hypercomputer-a3-tcpxo · asia-southeast1-c<br/>2× a3-megagpu-8g · 8 GPU NICs"]
+  end
+  FAB["single-gVNIC eth0 / VPC TCP<br/>23.7–28.6 GB/s floor · no GPUDirect"]
+  FAB2["GPUDirect multi-network<br/>MTU 8244 · TCPX 83.27 · TCPXO 317.84 GB/s"]
   GMP["Google Managed Prometheus<br/>+ managed dcgm-exporter"]
   GCS["GCS buckets<br/>lab data / checkpoints"]
   CLI -->|"borrow · cap · restore"| P2
   CLI -->|"borrow · cap · restore"| P3
+  CLI -->|"provision · measure · hand back"| P4
+  CLI -->|"provision · measure · hand back"| P5
   P2 --- FAB
   P3 --- FAB
+  P4 --- FAB2
+  P5 --- FAB2
   P2 -->|"scrape"| GMP
   P3 -->|"scrape"| GMP
+  P4 -->|"scrape"| GMP
   P2 --- GCS
   P3 --- GCS
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
+  classDef good fill:#137333,stroke:#0d652d,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-  class P2,P3 meas; class CLI,FAB,GMP,GCS ctx;
+  class P2,P3 meas; class P4,P5,FAB2 good; class CLI,FAB,GMP,GCS ctx;
 ```
 
 Key facts verified during execution:
-- **Both clusters are single-gVNIC / TCP today** — inter-node NCCL traverses the standard gVNIC/VPC TCP path (~28.6 GB/s floor), *not* GPUDirect. No multi-network CRDs, no TCPX/TCPXO/RDMA DaemonSets. Characterizing this actual path is a core Part II thread; **Part VI `lab-18` provisions a new multi-network node pool to enable GPUDirect-TCPX and measure the before/after**.
+- **Both general-purpose clusters are single-gVNIC / TCP** — inter-node NCCL traverses the standard gVNIC/VPC TCP path (23.7–28.6 GB/s floor), *not* GPUDirect. No multi-network CRDs, no TCPX/TCPXO/RDMA DaemonSets. Characterizing this actual path is a core Part II thread — and it **cannot be upgraded in place**, because multi-networking requires Dataplane V2 and both are create-time-only cluster flags.
+- **So the GPUDirect rungs were measured on two purpose-built clusters**, not by upgrading these: `hypercomputer-a3-tcpx` (4 GPU NICs, `GPUDirectTCPX_v7`, **83.27 GB/s** busbw @ 16 GPU — `lab-18`) and `hypercomputer-a3-tcpxo` (8 GPU NICs, `NET/FasTrak`, **317.84 GB/s** — `lab-22`). Same benchmark, same GPU model as the floor above, so the ladder reads **23.7 → 83.27 → 317.84 GB/s** at 1 → 4 → 8 rails. Both enabled figures are **untuned floors** (no NUMA/rail pinning).
 - No tenant-visible BlueField DPU, Spectrum-X SuperNIC, or DGX Fabric Manager is present on either cluster (this contrast is explored in Part IV).
 - Flex capacity on the 3-node cluster is scarce and hard to re-grab, so resilience exercises inject faults at the **job/pod level** — no node is ever drained or deleted (the "always hold the GPU" posture).
 
@@ -128,8 +140,8 @@ graph LR
 
 | GCP machine family | GPU | Inter-node GPU networking | Where it appears in the guide |
 | :--- | :--- | :--- | :--- |
-| A3 High (`a3-highgpu-8g`) — **the lab** | H100 80GB | GPUDirect-**TCPX** (gVNIC) | Parts I–III, measured live |
-| A3 Mega (`a3-megagpu-8g`) | H100 80GB | GPUDirect-**TCPXO** | Part II/III contrast |
+| A3 High (`a3-highgpu-8g`) — **the lab** | H100 80GB | single-gVNIC by default; **GPUDirect-TCPX** (4 NICs) when the cluster is built for it | Parts I–III measured live on the gVNIC path; the TCPX path measured in **lab-18** (**83.27 GB/s**) |
+| A3 Mega (`a3-megagpu-8g`) | H100 80GB | GPUDirect-**TCPXO** / FasTrak (8 NICs) | Part II/III contrast; measured in **lab-22** (**317.84 GB/s**) |
 | A3 Ultra (`a3-ultragpu-8g`) | H200 141GB | **RoCE / GPUDirect-RDMA** (CX-7) | Part II + Part IV fabric contrast |
 | A4 (`a4-highgpu-8g`) | Blackwell B200 | RoCE / GPUDirect-RDMA | Part I arch + Part IV |
 | A4X (`a4x-highgpu-4g`) | GB200 (Grace-Blackwell) | RoCE + **NVLink domain** | Part IV (NVLink Switch System / NVL72) |
@@ -235,9 +247,9 @@ Each layer of the guide is built on a **three-way spine** that connects conceptu
 - Practice each scenario: `labs/lab-14-single-gpu-health-triage/`, `lab-15-internode-comms-debug/`, `lab-16-cluster-job-failure-triage/`, `lab-17-perf-monitoring-day2-ops/`
 - Docs 17–20 pair with those labs; every scenario ends in a root cause or an operational decision
 
-**Part VI — Architecture & GCP Integration** *(design-first; docs 21–24 + labs 19–21 live, lab-18 staged):*
+**Part VI — Architecture & GCP Integration** *(design-first; docs 21–24 + labs 18–21 all live):*
 - Read: `docs/part6-architecture-gcp-integration/21-gke-network-design.md`
-- Practice: `labs/lab-19-storage-data-path/` (starved-vs-fed GPU), `lab-20-training-pipeline/` (2-node/16-GPU JobSet, data+code+ckpt on GCS), `lab-21-inference-serving/` (serving knee + 1→8-GPU scaling) — all live; `lab-18-enable-gpudirect-tcpx/` is staged (before measured; TCPX after blocked on a new multi-network pool)
+- Practice: `labs/lab-18-enable-gpudirect-tcpx/` (the fabric before/after — **both halves measured**, 23.70 → 83.27 GB/s), `lab-19-storage-data-path/` (starved-vs-fed GPU), `lab-20-training-pipeline/` (2-node/16-GPU JobSet, data+code+ckpt on GCS), `lab-21-inference-serving/` (serving knee + 1→8-GPU scaling) — all live
 - Docs 22–24 cover the storage/data path, the end-to-end pipeline, and inference serving + autoscale
 
 **Cross-cutting toolkit references** are listed in each doc's "Tools in this layer" section and are consolidated under `docs/toolkit/`. Read them when a tool first appears or as needed.

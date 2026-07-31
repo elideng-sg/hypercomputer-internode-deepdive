@@ -246,12 +246,12 @@ lab-06's all-reduce sweep (16 ranks, 2 nodes, NCCL 2.22.3), `busbw` vs. size:
 
 **≈ 17× slower** the instant the ring crosses a node boundary. This single fact is the reason the rest of Part II and Part IV exist. The ladder for closing the gap:
 
-- **GPUDirect-TCPX** (A3 High) — NIC↔GPU DMA over TCP, NCCL plugin; multiple NICs/rails.
-- **GPUDirect-TCPXO** (A3 Mega) — the optimized successor, higher achievable bandwidth.
+- **GPUDirect-TCPX** (A3 High) — NIC↔GPU DMA over TCP, NCCL plugin, 4 rails. **Measured: 83.27 GB/s busbw @ 16 GPU = 3.5×** this floor ([lab-18](../../labs/lab-18-enable-gpudirect-tcpx/)).
+- **GPUDirect-TCPXO / FasTrak** (A3 Mega) — 8 rails and a userspace datapath. **Measured: 317.84 GB/s = 13.4×** ([lab-22](../../labs/lab-22-fabric-diagnostics/)).
 - **GPUDirect-RDMA / RoCE** (A3 Ultra, A4) — RDMA verbs, `NET/IB` device present, `GPU Direct RDMA Enabled`.
 - **InfiniBand + SHARP** (reference DGX SuperPOD, [§14](../part4-platform-reference-arch/14-dgx-superpod.md)) — in-network reduction offloads the all-reduce itself.
 
-On *this* cluster none are enabled, so we honestly measure the TCP floor. When you run the same lab on a TCPX/RDMA-enabled cluster, the transport line changes and the ~28 GB/s rises accordingly — the lab is written to make that change self-evident.
+On *this* cluster none are enabled, so we honestly measure the TCP floor. The guide then went and ran the same benchmark on purpose-built TCPX and TCPXO clusters, so the ladder is measured rather than argued: **23.7 → 83.27 → 317.84 GB/s** at 1 → 4 → 8 rails. Two things that fact buys you: the transport line — not the throughput — is what proves which rung you are on, and the cost of ending up on the wrong rung is **tier-specific** (3.5× on A3 High, 13.4× on A3 Mega), which is why a silent fallback must never be quoted with a single number.
 
 ### The cliff has a shape (the third node)
 

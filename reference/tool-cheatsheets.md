@@ -2,7 +2,7 @@
 
 Quick command invocations for the key tools used throughout the labs. Each section lists the commands **actually run on the live A3 clusters** (with the lab that runs them), so this file doubles as an index of *where* each tool is exercised. Detailed interpretation of each tool's output lives in the `docs/toolkit/` deep-dives (T1–T6).
 
-> **Honesty note — run vs. named.** Two networking tools in the toolkit, **`perftest`** (`ib_write_bw`…) and **`ethtool`**, are **never actually invoked** in any lab on these clusters: A3 High is gVNIC / GPUDirect-TCPX with **no InfiniBand/RoCE fabric**, so their RDMA/NIC-counter use cases don't apply here. They are documented in [`docs/toolkit/T5-networking-fabric-tools.md`](../docs/toolkit/T5-networking-fabric-tools.md) as reference and are flagged below as *named-but-not-run*. Likewise `ncu` runs but **fails by design** on managed GKE (privilege), and `nvbandwidth`'s binary is **absent** from the NGC image — both are honest, captured negative results, not omissions.
+> **Honesty note — run vs. named.** **`perftest`** (`ib_write_bw`…) is **never actually invoked** in any lab: A3 High/Mega have **no InfiniBand/RoCE fabric** (`NET/IB : No device found` is the expected line), so its RDMA use cases don't apply here. **`ethtool` itself** is also never invoked — but the *NIC-counter use case is now exercised*, via sysfs: lab-18 read `/sys/class/net/eth[1-4]/statistics/tx_bytes` on a live **TCPX** fabric and got a valid rail-balance signal (~50.4 GB/rail, <0.05% spread), because TCPX keeps the kernel TCP transport. The same read on **TCPXO** returns ~zero under full load and is useless (kernel-bypass). So: counters are a real tool on A3 High and a trap on A3 Mega. They are documented in [`docs/toolkit/T5-networking-fabric-tools.md`](../docs/toolkit/T5-networking-fabric-tools.md) as reference and are flagged below as *named-but-not-run*. Likewise `ncu` runs but **fails by design** on managed GKE (privilege), and `nvbandwidth`'s binary is **absent** from the NGC image — both are honest, captured negative results, not omissions.
 >
 > Most GPU commands are executed inside a pod via `kubectl exec <pod> -- <cmd>`; run.sh scripts wrap them through `cap_run` (`scripts/lib_capture.sh`), and every captured `assets/*/*.txt` starts with a `# cmd:` provenance header echoing the exact command.
 
@@ -111,6 +111,42 @@ ethtool -i eth0                                          # driver (expect: gve),
 ethtool -S eth0                                          # per-queue rx/tx, drops, errors
 ```
 
+**What is actually run instead — the rail-balance read (lab-18, TCPX only).** CUDA/pytorch images
+ship no `ethtool` or `iproute2`, so read sysfs directly. Imbalance, not absolute bytes, is the
+signal:
+
+```bash
+# in-Pod: per-rail tx/rx + MTU. On A3 High (TCPX) the GPU rails should be large and EVEN.
+kubectl exec $POD -c $CTR -- sh -c \
+  'for i in /sys/class/net/eth*; do n=$(basename $i);
+     echo "$n mtu=$(cat $i/mtu) tx=$(cat $i/statistics/tx_bytes) rx=$(cat $i/statistics/rx_bytes)"; done'
+# measured (lab-18, 16-GPU all-reduce): eth0 mtu=1460 tx=0.04GB
+#   eth1-4 mtu=8244 tx=50.43/50.41/50.40/50.41 GB  -> spread <0.05%  = healthy 4-rail striping
+# On A3 Mega (TCPXO) these SAME counters read ~zero while the fabric moves ~1.1 TB/s. Not a bug.
+```
+
+## verify_gpu_fabric.sh (GPUDirect fabric verdict)
+
+**Purpose:** one-command PASS/FAIL across the **9 layers** that must all hold for GPUDirect to
+engage, ending in the only sufficient check — NCCL's actual transport line. *(Run in lab-18 and
+lab-22; validated against 4 clusters plus deliberately-broken negative controls.)*
+
+```bash
+# configuration-only verdict (no workload needed)
+CLUSTER=$CLUSTER ZONE=$ZONE bash scripts/verify_gpu_fabric.sh
+# WITH a live workload pod — strongly preferred; this is what reaches layer 8
+CLUSTER=$CLUSTER ZONE=$ZONE NAMESPACE=$NS POD=$POD bash scripts/verify_gpu_fabric.sh
+#   exit 0 = healthy for its tier · 1 = degraded (silent fallback likely) · 2 = cannot determine
+#   measured verdicts: tier=TCPX pass=6 fail=0 (lab-18) · tier=TCPXO pass=8 fail=0 (lab-22)
+
+# escalation bundle in one shot
+CLUSTER=$CLUSTER ZONE=$ZONE bash scripts/collect_fabric_bundle.sh
+```
+
+Confirm the `-- kubectl pinned to context:` line names the cluster you asked for — the script
+targets `gcloud` **and** `kubectl` from the same variables, after a bug where it spliced one
+table from two clusters.
+
 ## kubectl (GPU-specific)
 
 **Purpose:** Cluster/workload inspection — GPU device-plugin, allocatable GPUs, placement, DWS, Kueue/JobSet status, events. *(Run across labs 02, 05, 07, 08, 10, 13.)*
@@ -124,6 +160,8 @@ kubectl get node $NODE -o jsonpath='{.metadata.annotations}' | tr ',' '\n' | gre
 # device plugin & GPU DaemonSets
 kubectl get ds -n kube-system -o wide | awk 'NR==1 || /nvidia-gpu-device-plugin/'   # (lab-07)
 kubectl get ds -A -o wide | grep -iE 'tcpx|fastsocket|rdma|nccl|gpudirect'          # confirm no TCPX/RDMA DS (lab-05)
+kubectl get pods -n kube-system -l name=nccl-tcpx-installer \
+  -o custom-columns='POD:.metadata.name,READY:.status.containerStatuses[*].ready,WAIT:.status.containerStatuses[*].state.waiting.reason'   # `0 ready`: WHICH container? (lab-18, G27/G30)
 kubectl get ds -n gke-managed-system dcgm-exporter -o wide                          # fleet telemetry (lab-10)
 
 # scheduling gate / events

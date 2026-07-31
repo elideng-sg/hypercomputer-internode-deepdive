@@ -66,7 +66,7 @@ The lines that matter, and what each answers:
 | `Ring NN : a -> b -> c` / `Trees […]` | The ring and tree schedules NCCL will run |
 | `Channel NN/0 : x[..] -> y[..] [receive] via NET/Socket/0` | The **inter-node hop** and the transport it rides — *where the cross-node bottleneck lives* |
 
-This read is the **reference baseline**: every fault is diagnosed by *what changed* relative to it. On this cluster the answer is always "Socket over eth0, no RDMA" — the [~28.6 GB/s inter-node floor](../15-scaling-shape-of-the-cliff.md). If you expected TCPX and see `Using network Socket`, you've already found your problem before running a benchmark. (lab-15 §1 shows the full capture; enabling TCPX and re-reading these exact lines is [lab-18](../../labs/lab-18-gpudirect-tcpx/).)
+This read is the **reference baseline**: every fault is diagnosed by *what changed* relative to it. On this cluster the answer is always "Socket over eth0, no RDMA" — the [~28.6 GB/s inter-node floor](../15-scaling-shape-of-the-cliff.md). If you expected TCPX and see `Using network Socket`, you've already found your problem before running a benchmark — and you can put a number on it: the same 16-GPU all-reduce is **23.70 GB/s** on this path and **83.27 GB/s** on a TCPX fabric (**3.5×**; **13.4×** on A3 Mega/TCPXO). Quote the tier-matched ratio, never one for the other. (lab-15 §1 shows the full capture; enabling TCPX and re-reading these exact lines is [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/).)
 
 ---
 

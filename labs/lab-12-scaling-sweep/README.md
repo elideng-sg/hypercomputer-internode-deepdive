@@ -129,7 +129,7 @@ graph LR
   linkStyle 0,1,2 stroke:#c5221f,stroke-width:4px;
 ```
 
-- **`NET/IB : No device found`** + **`Using network Socket`** + **`GPU Direct RDMA Disabled`** — identical to lab-06: TCP sockets over a single gVNIC, host-staged. No TCPX/RDMA on this cluster either.
+- **`NET/IB : No device found`** + **`Using network Socket`** + **`GPU Direct RDMA Disabled`** — identical to lab-06: TCP sockets over a single gVNIC, host-staged. No TCPX/RDMA on this cluster either. **This is the "before" that [lab-18](../lab-18-enable-gpudirect-tcpx/) closes:** the same 16-GPU all-reduce on a TCPX cluster reads `Using network GPUDirectTCPX_v7` with zero `NET/Socket` lines and **83.27 GB/s** against this lab's 23.70 — so the transport line above is a *design consequence*, not a hardware limit.
 - **`Channel 00/16`** lists ranks `0 7 6 … 1` (node njnx), then `8 15 … 9` (node nmrc), then `16 23 … 17` (node zcn4). The ring crosses the boundary at `1→8`, `9→16`, and `17→0` — **three** Ethernet hops in series set the pace for all 24 GPUs. At 2 nodes there was exactly one such crossing (`1→8` and `9→0` share the single boundary); a third node adds genuinely new serial hops.
 
 ### 2. The scaling curve — `assets/lab-12/scaling_curve.csv`
@@ -201,11 +201,13 @@ Forcing `NCCL_ALGO=Ring` then `Tree` (same `NCCL_PROTO=Simple`, same sweep) at 2
 
 This entire curve is captured on **`asia-east1-c`** so that node count is the *only* variable. lab-06's 2-node run measured **~28.6 GB/s** on the **`us-central1`** cluster; this lab's 2-node point (16 GPU) is **23.70 GB/s** on `asia-east1-c`. Both are the same fabric *class* (plain TCP over a single gVNIC, no GPUDirect), but they are **different clusters** with possibly different GKE/driver/NCCL builds — so the ~20% gap is a cross-cluster artifact, **not** a point on the scaling curve. Splicing them would confound node count with cluster version. They are compared side-by-side in [doc-15](../../docs/15-scaling-shape-of-the-cliff.md), never spliced.
 
+The same discipline applies to the fabric comparison: this lab's **23.70 GB/s** at 16 GPUs is the row [lab-18](../lab-18-enable-gpudirect-tcpx/) quotes as its "before", because both used **the same harness at the same message size (512 MB)**. That is the *only* honest pairing available — lab-18's cluster is a different cluster in a different zone, so the 3.5× is a like-for-like *benchmark* ratio, not a controlled experiment on one cluster. It is labelled that way in both places.
+
 ---
 
 ## What this lab does **not** claim
 
-- It does **not** use GPUDirect-TCPX, TCPXO, RDMA, or SHARP — the 24-GPU NCCL log proves none are active on `asia-east1-c` either. These are the **standard-gVNIC/TCP** numbers for this cluster.
+- It does **not** use GPUDirect-TCPX, TCPXO, RDMA, or SHARP — the 24-GPU NCCL log proves none are active on `asia-east1-c` either. These are the **standard-gVNIC/TCP** numbers for this cluster. What TCPX/TCPXO *would* give is measured elsewhere, on purpose-built clusters: **3.5×** ([lab-18](../lab-18-enable-gpudirect-tcpx/)) and **13.4×** ([lab-22](../lab-22-fabric-diagnostics/)) at 16 GPUs. Those are separate clusters and are never spliced into this curve, for the same reason the `us-central1` point isn't.
 - It does **not** mix clusters in the curve. The `us-central1` 2-node figure is a labeled cross-cluster comparison only.
 - The 8-GPU point is an **intra-node** (NVLink) measurement included as the curve's left anchor; it is not an inter-node number.
 - It reports `busbw` from a PyTorch/NCCL all-reduce (same NCCL, same formula as nccl-tests), per lab-06's rationale — not the `all_reduce_perf` binary.

@@ -449,7 +449,19 @@ Performance is typically similar; report the **in-place** numbers for production
 - **Small messages (≤4 KB):** Latency-bound; `algbw` will be low (<1 GB/s), and `time` is the key metric (~25–30 µs per step for NVLink).
 
 **Multi-node (inter-node network):**
-- **A3 High (GPUDirect-TCPX, gVNIC):** Expect `busbw` of **80–120 GB/s** for large messages (depends on network congestion and NCCL tuning).
+- **A3 High, single-gVNIC / `NET/Socket` (the default):** **23.70 GB/s** busbw at 512 MB, 16 GPUs
+  — *measured* ([lab-12](../../labs/lab-12-scaling-sweep/)). This is what you get on a cluster
+  that was not built for GPUDirect, and it is not an error state — no log line complains.
+- **A3 High, GPUDirect-TCPX enabled (4 rails):** **83.27 GB/s** busbw peak @ 2 GB, **73.19 GB/s**
+  at 512 MB, 16 GPUs — *measured* ([lab-18](../../labs/lab-18-enable-gpudirect-tcpx/)), untuned
+  (no NUMA/rail pinning), so treat it as a reproducible **floor**.
+- **A3 Mega, GPUDirect-TCPXO / FasTrak (8 rails):** **317.84 GB/s** busbw, 16 GPUs — *measured*
+  ([lab-22](../../labs/lab-22-fabric-diagnostics/)), also untuned.
+
+> **Do not quote a range you have not measured.** This entry previously carried an "expect
+> 80–120 GB/s" guess for A3 High. The real figure depends almost entirely on **whether the
+> fabric is enabled at all** — a 3.5× swing that no error message announces — so a benchmark
+> number is only meaningful next to the run's NCCL transport line.
 - **A3 Ultra (RoCE, CX-7 400 Gb/s):** Expect `busbw` approaching **180–220 GB/s** for large messages (400 Gb/s ≈ 50 GB/s per NIC × 8 NICs × ring factor).
 
 Compare your results against these baselines in lab-04 (single-node) and lab-06 (multi-node).

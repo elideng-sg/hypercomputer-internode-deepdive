@@ -25,7 +25,7 @@ The dataset is **learnable** (`y = X·w* + b* + noise`), so the loss **genuinely
 1. **Data + code from GCS.** Each worker mounts `gs://…-lab-data-asiaeast1` in-pod; it reads its training shards from `/data/train/train_*.npz` **and** its training code from `/data/code/train_pipeline.py` (staged by `run_pipeline.sh`). Nothing is baked into the image.
 2. **Distributed training (the loss curve).** A JobSet gang of 2 pods × 8 local ranks = **WORLD_SIZE=16** runs DDP on the learnable data; rank 0 logs loss + throughput (`training_log.txt`). Loss must fall.
 3. **Checkpoints to GCS (the write path).** Rank 0 `torch.save`s the state-dict back through the mount every `CKPT_EVERY` steps (`checkpoints_in_gcs.txt`) — verified as real objects in the bucket.
-4. **Metrics on GMP (the cross-check).** `DCGM_FI_PROF_GR_ENGINE_ACTIVE` across both training nodes, straight off Google Managed Prometheus (`dcgm_training_active.txt`) — the same pipeline as [lab-17](../lab-17-perf-monitoring/) / [lab-19](../lab-19-storage-data-path/) — proves the GPUs were busy for the whole run, not just at the start.
+4. **Metrics on GMP (the cross-check).** `DCGM_FI_PROF_GR_ENGINE_ACTIVE` across both training nodes, straight off Google Managed Prometheus (`dcgm_training_active.txt`) — the same pipeline as [lab-17](../lab-17-perf-monitoring-day2-ops/) / [lab-19](../lab-19-storage-data-path/) — proves the GPUs were busy for the whole run, not just at the start.
 
 ---
 
@@ -157,7 +157,7 @@ A **sustained plateau**, not a startup blip — the managed pipeline sees the sa
 ## Gotchas hit building this lab
 
 In the cross-lab index [reference/lab-build-gotchas.md](../../reference/lab-build-gotchas.md):
-- **G22** — a **too-short run is invisible to GMP**: the first pass finished in 33s, shorter than GMP's ~30s scrape, so DCGM caught only the tail (mostly zeros). Fix: size the run to **several minutes** (STEPS=4000, ~166s) so the managed pipeline sees a real plateau — the same "GMP scrapes ~30s" lesson as [doc-20](../../docs/part5-operations-diagnostics/20-perf-monitoring-day2.md).
+- **G22** — a **too-short run is invisible to GMP**: the first pass finished in 33s, shorter than GMP's ~30s scrape, so DCGM caught only the tail (mostly zeros). Fix: size the run to **several minutes** (STEPS=4000, ~166s) so the managed pipeline sees a real plateau — the same "GMP scrapes ~30s" lesson as [doc-20](../../docs/part5-operations-diagnostics/20-performance-monitoring-day2-ops.md).
 - **G23** — engine-active **~0.4, not ~1.0**, on a healthy multi-node DDP job: the 1 GiB gradient all-reduce over single-gVNIC interleaves comms with compute. Not a bug — read it alongside the fabric ([lab-18](../lab-18-enable-gpudirect-tcpx/)), don't mistake a comms-bound gang for an idle GPU.
 
 ## Cleanup

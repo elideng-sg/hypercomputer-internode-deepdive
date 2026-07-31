@@ -88,12 +88,29 @@ NCCL INFO Using network IB
 ```
 → Mellanox ConnectX (e.g., CX-7) NIC detected; NCCL is using **GPUDirect-RDMA over RoCE**. Data flows GPU → NIC without host CPU involvement.
 
-**Pattern 3: FastSocket / TCPX (A3 High/Mega with DaemonSet installed)**
+**Pattern 3: GPUDirect-TCPX (A3 High, plugin DaemonSet installed)** — *measured, lab-18*
 ```
-NCCL INFO NET/FastSocket : Using [0]eth0:10.128.0.23<0> [GPU direct]
-NCCL INFO Using network FastSocket
+NCCL INFO Using network GPUDirectTCPX_v7
+NCCL INFO NET/GPUDirectTCPX : ...            <- 920 lines across 16 ranks
+grep -c 'NET/Socket' -> 0                     <- the number that matters
 ```
-→ NCCL detected the **FastSocket** (TCPX/TCPXO) library. Data flows GPU → gVNIC via GPUDirect TCPX (kernel bypass, zero-copy).
+→ NCCL loaded the **GPUDirect-TCPX** plugin over the 4 dedicated GPU NICs (`eth1–eth4`). The
+**payload still travels over host TCP sockets**; what GPUDirect removes is the *host memory*
+bounce — the NIC DMAs to/from GPU HBM via dmabuf. Do **not** describe TCPX as "kernel bypass";
+that is TCPXO/FasTrak (Pattern 4), and the distinction decides whether NIC counters can see
+your traffic (§`ethtool` below).
+
+**Pattern 4: GPUDirect-TCPXO / FasTrak (A3 Mega)** — *measured, lab-22*
+```
+NCCL INFO Using network FasTrak
+NCCL INFO Initializing network FasTrak, version: 1.0.17
+```
+→ The FasTrak plugin over 8 GPU NICs, with a **userspace datapath**: this one genuinely bypasses
+the kernel network stack.
+
+> **`FastSocket` is a different, older thing.** GKE's NCCL Fast Socket is a TCP optimisation, not
+> GPUDirect. If you see `NET/FastSocket` on an A3 High node you expected to be on TCPX, that is a
+> **finding, not a success** — the GPUDirect plugin did not load.
 
 #### Topology discovery
 
@@ -126,7 +143,9 @@ NCCL INFO Using 32 channels, 2 tree(s), 2 collnet graph(s)
 
 | Log pattern | Interpretation | Action |
 | :--- | :--- | :--- |
-| `Using network Socket` on A3 High after TCPX DaemonSet install | TCPX library not loaded or path misconfigured | Verify DaemonSet installed `libnccl-net.so` to `/var/lib/tcpx`, check `LD_LIBRARY_PATH` includes it |
+| `Using network Socket` on A3 High after TCPX DaemonSet install | TCPX library not loaded, path wrong, or the rail list is unset | Verify `libnccl-net.so` is in **`/usr/local/nvidia/lib64/`** (measured location), that `LD_LIBRARY_PATH` includes it, and that `NCCL_GPUDIRECTTCPX_SOCKET_IFNAME` names real NICs — TCPX ships **no** env-profile script to generate that list (G28) |
+| DaemonSet `0 ready` but plugin actually installed | the idle `pause` sidecar's image 404s while the `initContainer` already `Completed` | Check **which container** is stuck before touching `nodeSelector` labels (G27/G30); the fabric may already be working |
+| `ioctl get dma_buf frags: Inappropriate ioctl for device` → `gpu_tx_reg_mr failed -5` | plugin `:latest` is a 2023 build incompatible with an R580 driver | Pin `:v3.1.12`; note `NCCL_USE_DMA_BUF` is the real control (the `NCCL_GPUDIRECTTCPX_USE_DMABUF` spelling is silently ignored) — G29 |
 | `NET/IB : No device found` on A3 Ultra | Mellanox drivers/libs missing | Verify `ibstat` shows active ports, install `libibverbs`, `librdmacm` |
 | `Channel 00/32 : 0 8` but bandwidth lower than expected | Correct transport selected, but physical link degraded | Check `ethtool -S`, RoCE counters, or `perftest` results (see sections 4, 5) |
 | No inter-node channels created (only intra-node GPUs listed) | Network unreachable or firewall blocking | Verify pod IPs routable, `nc -zv <peer-ip> 41000` succeeds |
@@ -226,15 +245,26 @@ ls /sys/class/infiniband/mlx5_0/device/
 # Should include 'nvidia-peermem' symlink or reference
 ```
 
-**A3 High/Mega (TCPX/gVNIC):**
+**A3 High/Mega (TCPX/gVNIC)** — paths below are the **measured** ones (lab-18), not the ones the
+older GKE recipes suggest:
 ```bash
-# Verify TCPX library present
-ls -l /var/lib/tcpx/libnccl-net.so
-# Expected: symlink to libnccl-net.so (installed by DaemonSet)
+# Verify the plugin library the DaemonSet actually installed
+ls -l /usr/local/nvidia/lib64/libnccl-net.so
+# measured: -rwxr-xr-x 1 root root 14348008 ... libnccl-net.so   (plugin v3.1.12)
 
-# Check LD_LIBRARY_PATH includes TCPX path
-echo $LD_LIBRARY_PATH | grep tcpx
+# Check LD_LIBRARY_PATH includes it
+echo "$LD_LIBRARY_PATH" | tr ':' '\n' | grep -i nvidia
+
+# The rails themselves (4 on A3 High, 8 on A3 Mega) — sysfs, since CUDA images lack iproute2
+for i in /sys/class/net/eth*; do echo "$(basename $i) mtu=$(cat $i/mtu)"; done
+# measured: eth0 mtu=1460 · eth1-4 mtu=8244
+
+# TIER CHECK: TCPXO ships an env profile, TCPX does NOT (G28)
+ls /usr/local/nvidia/lib64/*env* 2>/dev/null | wc -l    # 0 on TCPX is CORRECT
 ```
+
+> **`/var/lib/tcpx` is not where the library lands** on the current installer — earlier drafts of
+> this reference said it did. Check `/usr/local/nvidia/lib64/`.
 
 **Smoking-gun absence:** If NCCL logs show `NET/Socket` after you've installed TCPX or configured RDMA, GPUDirect is not active. Check DaemonSet logs, driver versions, and the verification steps above.
 
@@ -246,7 +276,7 @@ echo $LD_LIBRARY_PATH | grep tcpx
 
 **`perftest`** is a suite of **RDMA performance microbenchmarks** that measure raw bandwidth and latency over **InfiniBand or RoCE** transports, bypassing higher-level protocols (NCCL, MPI). Used to verify the physical fabric is delivering expected throughput and to detect cabling, congestion, or configuration issues.
 
-**Applicability:** `[RDMA families only]` — A3 Ultra (H200 + CX-7 RoCE), A4 (B200 + CX-7 RoCE). **NOT applicable to A3 High/Mega** (gVNIC + TCPX is not RDMA; use `iperf3` or `nccl-tests` over TCPX instead).
+**Applicability:** `[RDMA families only]` — A3 Ultra (H200 + CX-7 RoCE), A4 (B200 + CX-7 RoCE). **NOT applicable to A3 High/Mega** (gVNIC + TCPX/TCPXO is not RDMA — there is no `ibv_devinfo`, no `mlx5` device, and `NET/IB : No device found` is the *expected* line). Use an NCCL all-reduce over the fabric instead, as lab-18/lab-22 do.
 
 **Common tools in the suite:**
 - `ib_write_bw` — RDMA Write bandwidth test (one-sided, most common).
@@ -567,7 +597,7 @@ diff /tmp/mlxlink-before.txt /tmp/mlxlink-after.txt | grep -E 'error|downed|unco
 
 ## 7. Applicability Summary — Tool × Machine Family Matrix
 
-| Tool | A3 High (gVNIC + TCPX) | A3 Mega (gVNIC + TCPXO) | A3 Ultra (CX-7 + RoCE) | A4 (CX-7 + RoCE) |
+| Tool | A3 High (gVNIC + TCPX — netdev counters **usable**) | A3 Mega (gVNIC + TCPXO — netdev counters **blind**) | A3 Ultra (CX-7 + RoCE) | A4 (CX-7 + RoCE) |
 | :--- | :---: | :---: | :---: | :---: |
 | **NCCL debug logs** (`NCCL_DEBUG=INFO`) | ✅ | ✅ | ✅ | ✅ |
 | **NCCL topology dump** (`NCCL_TOPO_DUMP_FILE`) | ✅ | ✅ | ✅ | ✅ |
@@ -600,11 +630,14 @@ diff /tmp/mlxlink-before.txt /tmp/mlxlink-after.txt | grep -E 'error|downed|unco
    lspci | grep -i network
    ```
 
-2. **Check for TCPX/FastSocket DaemonSet (A3 High/Mega):**
+2. **Check for the GPUDirect plugin DaemonSet (A3 High/Mega):**
    ```bash
-   kubectl get ds -n kube-system | grep -E 'tcpx|fastsocket'
-   ls -l /var/lib/tcpx/
+   kubectl get ds -n kube-system | grep -E 'tcpx|tcpxo|fastsocket'
+   ls -l /usr/local/nvidia/lib64/libnccl-net.so     # in-Pod: where it really lands
    ```
+   If the DaemonSet shows `0 ready`, find out **which container** is stuck before blaming labels —
+   a dead `pause` sidecar leaves the plugin correctly installed (G27/G30). Better: run
+   `scripts/verify_gpu_fabric.sh`, which now discriminates the two cases.
 
 3. **Check for RDMA devices (A3 Ultra/A4):**
    ```bash
@@ -630,8 +663,10 @@ diff /tmp/mlxlink-before.txt /tmp/mlxlink-after.txt | grep -E 'error|downed|unco
 2. Capture `ethtool -S` and `mlxlink` snapshots before/after a `nccl-tests` run (sections 5, 6).
 3. Check for drops, errors, ECN marks, FEC uncorrectable blocks.
 
-**For A3 High/Mega (gVNIC + TCPX):**
-1. Run `nccl-tests` with TCPX enabled, capture NCCL logs.
+**For A3 High/Mega (gVNIC + TCPX)** — done for real in [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/):
+the before/after is **23.70 → 83.27 GB/s** busbw at 16 GPUs (**3.5×**), with `GPUDirectTCPX_v7`
+and zero `NET/Socket` lines. Steps:
+1. Run the all-reduce with TCPX enabled, capture NCCL logs.
 2. Capture `ethtool -S eth0` before/after, check for drops/errors.
 3. Compare bus bandwidth (`nccl-tests` busbw output) with and without TCPX to quantify speedup.
 
@@ -661,7 +696,7 @@ flowchart TD
 
 | Symptom | Root cause candidates | Tools to use |
 | :--- | :--- | :--- |
-| NCCL selects Socket instead of TCPX/RDMA | DaemonSet not installed, lib path wrong | NCCL logs, `ls /var/lib/tcpx/`, `LD_LIBRARY_PATH` |
+| NCCL selects Socket instead of TCPX/RDMA | DaemonSet not installed, lib path wrong, rail list unset | NCCL logs, `ls /usr/local/nvidia/lib64/`, `LD_LIBRARY_PATH`, `env \| grep NCCL_GPUDIRECTTCPX` |
 | Low inter-node bandwidth (< 50% expected) | Physical link degraded, congestion, wrong transport | `perftest`, `ethtool -S`, `mlxlink`, NCCL logs |
 | NCCL AllReduce stalls (hangs) | Firewall blocking, routing broken, NIC down | NCCL logs (look for "Connection refused"), `ping`, `nc -zv`, `ibstat` |
 | High latency, pause frames, ECN marks | Network congestion (oversubscribed, no ECN tuning) | `ethtool -S` (RoCE counters), `mlxlink`, switch logs (if accessible) |

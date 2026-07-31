@@ -4,7 +4,7 @@
 
 - **A. The saturation knee** — sweep client concurrency against a real GPU model server (ResNet-50 + server-side dynamic batching). Throughput rises with load, then plateaus while tail latency explodes. This is the curve an autoscaler watches.
 - **B. Horizontal throughput scaling** — run the same inference on 1→8 GPUs. Aggregate throughput scales **~linearly**, so N replicas ≈ N× QPS. *This is the thing a single GPU cannot show*, and the reason replica autoscaling is the right answer to load.
-- **C. The GPU signal under load** — `DCGM_FI_PROF_GR_ENGINE_ACTIVE` off GMP, the metric an HPA scales on — read exactly as [lab-17](../lab-17-perf-monitoring/)/[lab-19](../lab-19-storage-data-path/)/[lab-20](../lab-20-training-pipeline/).
+- **C. The GPU signal under load** — `DCGM_FI_PROF_GR_ENGINE_ACTIVE` off GMP, the metric an HPA scales on — read exactly as [lab-17](../lab-17-perf-monitoring-day2-ops/)/[lab-19](../lab-19-storage-data-path/)/[lab-20](../lab-20-training-pipeline/).
 
 The production **autoscale topology** (HPA-on-DCGM, cluster-autoscaler node scale-up, GKE Inference Gateway, Vertex AI) ships as the reference manifest [`manifests/serving/inference-autoscale.yaml`](../../manifests/serving/inference-autoscale.yaml). This is [doc-24](../../docs/part6-architecture-gcp-integration/24-inference-serving-autoscale.md) made concrete.
 

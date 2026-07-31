@@ -1,0 +1,52 @@
+# lab-18 / G30: checker bug #4 — negative controls for layer 6 ("NCCL plugin DS")
+#
+# Layer 6 used to print ONE canned cause for "0 ready" — a nodeSelector/accelerator
+# mismatch. That is only one of two possibilities, and it was the WRONG one for the
+# failure actually hit on this cluster (G27: the `pause` sidecar 404s). The fixed layer
+# probes whether Pods exist before blaming the scheduler. Both branches exercised below
+# against the LIVE cluster by injecting each fault, then reverting.
+# captured 2026-07-31T05:52:31Z  cluster=hypercomputer-a3-tcpx  asia-east1-c
+
+===============================================================================
+CONTROL A — Pods SCHEDULED but a container wedged  (the G27 shape)
+  injected: kubectl -n kube-system set image ds/nccl-tcpx-installer \
+              pause=gcr.io/google-containers/pause:3.9     # what the GKE docs show
+===============================================================================
+  NAME                        READY   STATUS             RESTARTS   AGE
+  nccl-tcpx-installer-b9smn   0/1     ImagePullBackOff   0          2m45s
+  nccl-tcpx-installer-lvmdl   0/1     ImagePullBackOff   0          2m46s
+  (initContainer nccl-tcpx-installer has Completed on both — plugin IS on the node)
+
+  checker output:
+   [FAIL] 6. NCCL plugin DS        2 Pod(s) scheduled but 0 ready — a CONTAINER is stuck, not the scheduler
+   tier=TCPX  pass=5  fail=1  warn=1
+    1) The installer DaemonSet's Pods ARE scheduled (so the nodeSelector is fine) but the DaemonSet is not Ready — a container is wedged: nccl-tcpx-installer-b9smn pause=ErrImagePull;nccl-tcpx-installer-lvmdl pause=ErrImagePull;. NOTE: if the initContainer already Completed, the plugin libraries are ALREADY installed in /home/kubernetes/bin/nvidia/lib64 and NCCL may work despite this red row — the classic case is the 'pause' sidecar in ImagePullBackOff because the GKE-documented gcr.io/google-containers/pause:3.9 path 404s (G27); pin gke.gcr.io/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830 instead. Do NOT start by editing labels.
+
+===============================================================================
+CONTROL B — NO Pods scheduled at all  (a genuine nodeSelector mismatch)
+  injected: nodeSelector cloud.google.com/gke-accelerator=nvidia-h100-mega-80gb
+            on an A3 HIGH cluster (nodes are labelled nvidia-h100-80gb)
+===============================================================================
+  NAME                  DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                            AGE
+  nccl-tcpx-installer   0         0         0       0            0           cloud.google.com/gke-accelerator=nvidia-h100-mega-80gb   2d23h
+  Pods: 0 (none — DESIRED is 0, so the DaemonSet controller creates nothing)
+
+  checker output:
+   [FAIL] 6. NCCL plugin DS        present but NO Pods scheduled while 2 GPU node(s) exist
+   tier=TCPX  pass=5  fail=1  warn=1
+    1) The NCCL plugin installer DaemonSet has no Pods on the GPU nodes. Check its nodeSelector matches the node's cloud.google.com/gke-accelerator EXACTLY (nvidia-h100-80gb for A3 High vs nvidia-h100-mega-80gb for A3 Mega) and that it tolerates the nodes' taints — a mismatch means it never schedules and NCCL silently uses sockets.
+
+===============================================================================
+VERDICT
+===============================================================================
+The two controls now produce DIFFERENT rows and DIFFERENT remediations:
+  A (container wedged)  -> "N Pod(s) scheduled but 0 ready — a CONTAINER is stuck,
+                            not the scheduler" + names the container and its reason,
+                            and warns the plugin may already be installed.
+  B (nothing scheduled) -> "present but NO Pods scheduled while N GPU node(s) exist"
+                            + the nodeSelector/taint guidance (correct HERE, and only here).
+Before the fix BOTH printed B's message. On this cluster the true fault was A, so the
+checker sent us to inspect labels while a 404ing sidecar image was the actual cause —
+the DaemonSet had been not-Ready for 2d22h.
+
+Both faults were reverted after capture; the cluster ends 2/2 Ready, pass=6 fail=0.

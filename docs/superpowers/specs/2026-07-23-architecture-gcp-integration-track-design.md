@@ -99,7 +99,7 @@ VERIFICATION.md                        (append: TCPX provisioning + before/after
 
 ## 5. Provisioning & capture plan
 
-**TCPX workstream (lab-18), staged & reversible:**
+**TCPX workstream (lab-18) — DELIVERED 2026-07-31, reversible.** All five steps below were executed; step 4's `after` is measured (`Using network GPUDirectTCPX_v7`, 0× `NET/Socket`, **83.27 GB/s** busbw on 16×H100). Step 2 needed a **new cluster** — multi-networking requires Dataplane V2 and both are create-time-only (**G17**) — and step 3 needed the plugin pinned to `:v3.1.12` (**G29**) and the `pause` image re-pinned (**G27**). The original plan text follows:
 1. Create 4 GPU VPCs + subnets (jumbo MTU) — or reuse if present.
 2. Create the A3 High node pool with `--additional-node-network` ×4 (+ pod networks); apply `Network`/`GKENetworkParamSet`.
 3. Install `nccl-tcpx-installer`; verify DaemonSet Ready and NIC resources on nodes.

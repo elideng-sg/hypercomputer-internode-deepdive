@@ -49,7 +49,7 @@ flowchart LR
       N2["node 2<br/>ranks 16-23 (NVLink)"]
     end
   end
-  FAB["single-gVNIC eth0 / VPC TCP<br/>no TCPX · no RDMA"]
+  FAB["single-gVNIC eth0 / VPC TCP<br/>no TCPX · no RDMA<br/>(TCPX measured separately: lab-18, 3.5×)"]
   CLI -->|"sweep 8 / 16 / 24 GPUs"| POOL
   N0 --- FAB
   N1 --- FAB
@@ -218,7 +218,7 @@ What only three points can show:
 
 3. **Strong scaling is worse than weak.** Fixing the global batch (strong) shrinks each GPU's compute while the comms grows, so there is even less compute to hide the all-reduce behind: 6.8% at 2 nodes, 2.7% at 3. The comms-bound regime is laid bare.
 
-> **Honest framing.** These are deliberately comms-bound numbers: a communication-heavy model on a plain-TCP fabric with small per-step compute, chosen to *isolate* the fabric's effect on scaling. Production training overlaps comms with compute, uses larger batches, and — crucially — a faster fabric (TCPX/RDMA) that lifts 12a's busbw ceiling. The absolute efficiencies would improve; the **shape** (a descending curve driven by inter-node bandwidth) is the transferable lesson, and it is exactly what a third node makes measurable.
+> **Honest framing.** These are deliberately comms-bound numbers: a communication-heavy model on a plain-TCP fabric with small per-step compute, chosen to *isolate* the fabric's effect on scaling. Production training overlaps comms with compute, uses larger batches, and — crucially — a faster fabric that lifts 12a's busbw ceiling: that lift is now **measured**, not hypothetical, at **3.5×** for TCPX ([lab-18](../labs/lab-18-enable-gpudirect-tcpx/)) and **13.4×** for TCPXO ([lab-22](../labs/lab-22-fabric-diagnostics/)) on the same benchmark and GPU model. The absolute efficiencies would improve accordingly; the **shape** (a descending curve driven by inter-node bandwidth) is the transferable lesson, and it is exactly what a third node makes measurable. Note what a faster fabric does *not* do: it raises the curve, it does not flatten it — the ring still gains a serial hop per node.
 
 *(Captured in `assets/lab-12/train_{weak,strong}_scaling.csv` and `train_*_{ddp,fsdp}_*gpu.txt`; run via `labs/lab-12-scaling-sweep/run_training.sh`.)*
 

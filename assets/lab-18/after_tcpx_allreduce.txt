@@ -1,0 +1,41 @@
+# lab-18 AFTER: 2-node / 16-GPU all-reduce over an ENABLED GPUDirect-TCPX fabric
+# captured 2026-07-31T05:36:28Z
+# cluster=hypercomputer-a3-tcpx zone=asia-east1-c  2x a3-highgpu-8g (H100-80GB)
+# nodes: gke-hypercomputer-a3-a3-tcpx-flex-poo-c217556e-lkw4 (rank0), ...-6lvn (rank1)
+# plugin=nccl-plugin-gpudirecttcpx-dev:v3.1.12  rxdm=tcpgpudmarxd-dev:v2.0.15
+# driver=580.159.04 (NVIDIA open kernel module)  GKE=1.35.6-gke.1250000
+# harness=labs/lab-06-2node-nccl-collectives/allreduce_bench.py (same as lab-06/lab-12)
+# NCCL_ALGO=Ring NCCL_PROTO=Simple  BENCH_ITERS=20 BENCH_WARMUP=5  4 GPU NICs eth1-4 MTU 8244
+# NOTE: untuned — TX/RX bindings set but ranks not NUMA-pinned; treat as a floor.
+
+#       size        count    time_ms   algbw_GBps   busbw_GBps
+          8B            2      0.384         0.00         0.00
+         16B            4      0.387         0.00         0.00
+         32B            8      0.424         0.00         0.00
+         64B           16      0.386         0.00         0.00
+        128B           32      0.391         0.00         0.00
+        256B           64      0.383         0.00         0.00
+        512B          128      0.376         0.00         0.00
+         1KB          256      0.384         0.00         0.01
+         2KB          512      0.639         0.00         0.01
+         4KB         1024      0.834         0.00         0.01
+         8KB         2048      0.798         0.01         0.02
+        16KB         4096      0.622         0.03         0.05
+        32KB         8192      0.549         0.06         0.11
+        64KB        16384      0.958         0.07         0.13
+       128KB        32768      1.238         0.11         0.20
+       256KB        65536      1.421         0.18         0.35
+       512KB       131072      1.524         0.34         0.64
+         1MB       262144      1.593         0.66         1.23
+         2MB       524288      1.654         1.27         2.38
+         4MB      1048576      1.655         2.53         4.75
+         8MB      2097152      1.755         4.78         8.96
+        16MB      4194304      1.832         9.16        17.17
+        32MB      8388608      2.212        15.17        28.44
+        64MB     16777216      2.538        26.45        49.59
+       128MB     33554432      3.986        33.68        63.14
+       256MB     67108864      6.967        38.53        72.25
+       512MB    134217728     13.754        39.03        73.19
+         1GB    268435456     26.493        40.53        75.99
+         2GB    536870912     48.356        44.41        83.27
+# done

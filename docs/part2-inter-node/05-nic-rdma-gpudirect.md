@@ -114,7 +114,7 @@ Allocatable:
   nvidia.com/gpu:  8
 ```
 
-If GPUDirect-TCPX were enabled, the node would advertise an extra extended resource (e.g. `networking.gke.io/aperture-devices` or per-rail NIC resources) that pods claim to attach to a GPU-NIC. Its **absence** is the machine-checkable proof that no GPUDirect path is wired.
+If GPUDirect-TCPX were enabled, the node would carry the multi-network plumbing that a Pod attaches to via the `networking.gke.io/interfaces` annotation — 4 extra NICs at MTU 8244 backed by `Network`/`GKENetworkParamSet` CRDs. Its **absence** is the machine-checkable proof that no GPUDirect path is wired. (A tier detail worth knowing: `/dev/aperture_devices` is a **TCPXO** requirement; on a *working* TCPX node it is legitimately absent — verified in lab-18 — so don't use it as a TCPX health check.)
 
 ### 3. The NCCL network-plugin DaemonSets exist but schedule zero pods — `assets/lab-05/net-daemonsets.txt`
 
@@ -175,16 +175,20 @@ See [reference/nccl-tunables.md](../../reference/nccl-tunables.md) for the full 
 
 ---
 
-## Optional: what enabling GPUDirect-TCPX would change (not enabled here)
+## What enabling GPUDirect-TCPX changes — **measured**, on a purpose-built cluster (not this one)
 
-On a properly-provisioned A3 High cluster (created with `--enable-gvnic` plus the GPU-NIC network stack, or via the `gpudirect-tcpx` GKE feature), you would:
+This cluster is single-gVNIC and cannot be upgraded in place (Dataplane V2 + multi-networking are create-time-only), so [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) built a second cluster and measured the delta. On a properly-provisioned A3 High cluster you would:
 
 1. Create the node pool with **five NICs** (1 host + 4 GPU rails) and the TCPX network stack.
 2. Deploy the **`nccl-tcpx-installer` DaemonSet**, which lands `libnccl-net.so` and the NIC binaries on each node.
 3. See a new **extended resource** appear in `kubectl describe node` (the GPU-NIC devices), which GPU pods must request.
 4. Launch workloads with the `NCCL_GPUDIRECTTCPX_*` env set to the rail interfaces.
 
-NCCL would then print `NET/GPUDirectTCPX` and the inter-node busbw would climb from ~28 GB/s toward the multi-hundred-GB/s regime the four rails allow. **This cluster is not provisioned that way** (single gVNIC, no rails, installer dormant), so the delta is described, not measured — this lab does not modify the DWS-held node pool to force it.
+NCCL then prints `Using network GPUDirectTCPX_v7` and the inter-node busbw climbs from **23.70 GB/s** to **83.27 GB/s** at 16 GPUs — **3.5×**, measured with the same harness on 2 × `a3-highgpu-8g`, with all 4 rails carrying traffic within 0.05% of each other and **zero** `NET/Socket` lines.
+
+> **Calibrate your expectations to that number, not to a datasheet.** An earlier version of this section predicted "the multi-hundred-GB/s regime the four rails allow" — that regime belongs to **TCPXO/FasTrak on A3 Mega with 8 rails** (317.84 GB/s, [lab-22](../../labs/lab-22-fabric-diagnostics/)), not to A3 High. Four TCPX rails deliver ~83 GB/s untuned. Tuning (NUMA/rail pinning, per-size chunking) would raise it, but not by a factor of four.
+
+**This cluster is still not provisioned that way** (single gVNIC, no rails, installer dormant) and the DWS-held pool is never modified to force it — the measurement lives on the sibling TCPX cluster instead.
 
 ---
 
