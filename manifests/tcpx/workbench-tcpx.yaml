@@ -1,18 +1,54 @@
 # manifests/tcpx/workbench-tcpx.yaml
-# A TCPX-enabled NCCL workbench Pod (one per node; run 2 for the inter-node all-reduce).
-# The three things that make it "TCPX" and not gVNIC:
-#   1. the `networking.gke.io/interfaces` annotation attaching the 4 GPU Networks
-#   2. the `tcpx-daemon` sidecar (the receive-datapath manager) sharing the Pod netns
-#   3. the NCCL_* env selecting the GPUDirectTCPX plugin + the 4 NIC IF names
-# Contrast: the gVNIC baseline (labs/lab-06) has none of these and NCCL logs `NET/Socket`.
 #
-# STAGED: validated as YAML; runs live only on the TCPX cluster once the pool + plugin are up.
+# A working 2-rank GPUDirect-TCPX workbench for A3 High. This is the EXACT Pod spec that
+# produced this guide's measured TCPX result — see the PROVENANCE block appended at the
+# bottom of this file after the live capture (versions, MTU, transport, busbw).
+#
+# Evidence: assets/lab-18/after_tcpx_allreduce.txt,
+#           assets/lab-18/after_tcpx_transport.txt,
+#           assets/lab-18/after_tcpx_inpod_fabric.txt
+#
+# PREREQUISITES — apply BOTH, or NCCL silently falls back to sockets:
+#   kubectl apply -f manifests/tcpx/network-crds.yaml
+#   kubectl apply -f manifests/tcpx/nccl-tcpx-installer.yaml
+#
+# HOW THIS DIFFERS FROM THE TCPXO WORKBENCH (the A3 Mega sibling) — read before copying:
+#
+# 1. FOUR GPU NICs, not eight. a3-highgpu-8g exposes 4 (eth1-eth4 on gpu-net-0..3);
+#    a3-megagpu-8g exposes 8. Every NIC list, --num_nics flag and IFNAME here is 4-wide.
+#
+# 2. NO NRI DEVICE INJECTOR, and no /dev/aperture_devices. TCPX's rxdm takes the GPUs via
+#    `privileged: true` + the `a3vm` preset; the dmabuf-importer/aperture machinery — and
+#    therefore the whole §4.10 "Failed to create dmabuf importer context" fail-open
+#    signature — is TCPXO-only. Do not port the tcpxo-daemon device annotation here.
+#
+# 3. THE NIC LIST IS HAND-WRITTEN, and that is not a style choice. TCPXO ships
+#    `nccl-env-profile.sh`, which auto-discovers the rails (lab-22 §5 makes sourcing it a
+#    rule). The TCPX plugin ships NO such profile — `ls /usr/local/nvidia/lib64/*env*`
+#    comes back empty — so NCCL_GPUDIRECTTCPX_SOCKET_IFNAME must be set explicitly. The
+#    lab-22 rule does not generalise to this tier. See G28.
+#
+# 4. TX/RX CPU BINDINGS are required and machine-shape-specific. The values below are the
+#    GKE-published a3-highgpu-8g map; they are what NUMA-pin each rail's TX/RX threads.
+#
+# 5. NO `nodeName` — same reason as TCPXO. Pinning bypasses the scheduler, so kubelet
+#    REJECTS the Pod with `UnexpectedAdmissionError ... Requested: 8, Available: 0`
+#    instead of queueing it. nodeSelector + podAntiAffinity gives one rank per node AND
+#    lets the Pod sit Pending in line — which is what makes a gap-free handover from a
+#    capacity holder possible (labs/lab-18 §Run).
+#
+# The bench container idles (`sleep infinity`) on purpose: capture NIC lists, dmesg and
+# NCCL logs while the node is ALIVE. On a Flex-start pool the node — and all its
+# evidence — disappears when the Pod ends.
+# ---------------------------------------------------------------------------
 apiVersion: v1
 kind: Pod
 metadata:
-  name: tcpx-workbench-0
+  name: tcpx-wb-0
+  labels: {app: tcpx-workbench}
   annotations:
-    # attach the 4 GPU networks defined in network-crds.yaml
+    networking.gke.io/default-interface: 'eth0'
+    # 4 GPU networks (vs TCPXO's 8) — names must match network-crds.yaml
     networking.gke.io/interfaces: |
       [
         {"interfaceName":"eth0","network":"default"},
@@ -24,87 +60,117 @@ metadata:
 spec:
   nodeSelector:
     cloud.google.com/gke-accelerator: nvidia-h100-80gb
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels: {app: tcpx-workbench}
+        topologyKey: kubernetes.io/hostname
   restartPolicy: Never
+  tolerations:
+  - operator: Exists
   volumes:
-    - name: libraries
-      hostPath:
-        path: /home/kubernetes/bin/nvidia/lib64
-    - name: tcpx-socket
-      emptyDir: {}
-    - name: shared-memory
-      emptyDir:
-        medium: Memory
-        sizeLimit: 1Gi
+  - name: nvidia
+    hostPath: {path: /home/kubernetes/bin/nvidia/lib64}
+  - name: tcpx-socket
+    emptyDir: {}
+  - name: shared-memory
+    emptyDir: {medium: Memory, sizeLimit: 1Gi}
+  - name: workdir
+    emptyDir: {}
   containers:
-    # --- the receive-datapath sidecar (GKE-published; re-pin at run time) ---
-    - name: tcpx-daemon
-      image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/tcpgpudmarxd-dev:latest
-      securityContext:
-        privileged: true
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          /tcpgpudmarxd/build/app/tcpgpudmarxd \
-            --gpu_nic_preset a3vm --gpu_shmem_type fd --uds_path /run/tcpx --setup_param "--verbose 128 2 0"
-      volumeMounts:
-        - name: tcpx-socket
-          mountPath: /run/tcpx
-        - name: libraries
-          mountPath: /usr/local/nvidia/lib64
-      env:
-        - name: LD_LIBRARY_PATH
-          value: /usr/local/nvidia/lib64
-    # --- the NCCL workload ---
-    - name: nccl-bench
-      image: us-central1-docker.pkg.dev/hdlab-elideng/lab/nccl-tests:latest   # reuse the lab image
-      securityContext:
-        capabilities:
-          add: ["IPC_LOCK"]
-      resources:
-        limits:
-          nvidia.com/gpu: 8
-      volumeMounts:
-        - name: tcpx-socket
-          mountPath: /run/tcpx
-        - name: libraries
-          mountPath: /usr/local/nvidia/lib64
-        - name: shared-memory
-          mountPath: /dev/shm
-      env:
-        # --- the TCPX plugin selection (the essence of the "after") ---
-        - name: LD_LIBRARY_PATH
-          value: /usr/local/nvidia/lib64
-        - name: NCCL_GPUDIRECTTCPX_UNIX_CLIENT_PREFIX
-          value: /run/tcpx
-        - name: NCCL_SOCKET_IFNAME
-          value: eth0
-        - name: NCCL_GPUDIRECTTCPX_CTRL_DEV
-          value: eth0
-        - name: NCCL_GPUDIRECTTCPX_SOCKET_IFNAME
-          value: eth1,eth2,eth3,eth4                 # the 4 GPU NICs
-        - name: NCCL_GPUDIRECTTCPX_TX_BINDINGS
-          value: "eth1:8-21,112-125;eth2:8-21,112-125;eth3:60-73,164-177;eth4:60-73,164-177"
-        - name: NCCL_GPUDIRECTTCPX_RX_BINDINGS
-          value: "eth1:22-35,126-139;eth2:22-35,126-139;eth3:74-87,178-191;eth4:74-87,178-191"
-        - name: NCCL_GPUDIRECTTCPX_FORCE_ACK
-          value: "0"
-        - name: NCCL_CROSS_NIC
-          value: "0"
-        - name: NCCL_ALGO
-          value: Ring
-        - name: NCCL_PROTO
-          value: Simple
-        - name: NCCL_NSOCKS_PERTHREAD
-          value: "4"
-        - name: NCCL_SOCKET_NTHREADS
-          value: "1"
-        - name: NCCL_DEBUG
-          value: INFO
-        - name: NCCL_DEBUG_SUBSYS
-          value: INIT,NET,GRAPH,ENV
-      command: ["/bin/bash", "-c"]
-      args:
-        - |
-          # Placeholder: rendezvous + all_reduce_perf across the 2 TCPX pods.
-          # The real run is driven by labs/lab-18-enable-gpudirect-tcpx/run_tcpx_beforeafter.sh
-          sleep infinity
+  # --- the receive-datapath manager (shares the Pod netns; TCPX's rxdm) ---
+  - name: tcpx-daemon
+    image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/tcpgpudmarxd-dev:v2.0.15
+    imagePullPolicy: Always
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      set -ex
+      /tcpgpudmarxd/build/app/tcpgpudmarxd \
+        --gpu_nic_preset a3vm --gpu_shmem_type fd \
+        --uds_path /run/tcpx --setup_param "--verbose 128 2 0"
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - {name: tcpx-socket, mountPath: /run/tcpx}
+    - {name: nvidia, mountPath: /usr/local/nvidia/lib64}
+    env:
+    - {name: LD_LIBRARY_PATH, value: /usr/local/nvidia/lib64}
+  # --- the NCCL workload ---
+  - name: bench
+    image: nvcr.io/nvidia/pytorch:24.10-py3
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      capabilities: {add: ["IPC_LOCK"]}
+    resources:
+      limits: {nvidia.com/gpu: 8}
+    volumeMounts:
+    - {name: nvidia, mountPath: /usr/local/nvidia/lib64}
+    - {name: tcpx-socket, mountPath: /run/tcpx}
+    - {name: shared-memory, mountPath: /dev/shm}
+    - {name: workdir, mountPath: /work}
+    env:
+    - {name: LD_LIBRARY_PATH, value: /usr/local/nvidia/lib64}
+    - {name: NCCL_LIB_DIR, value: /usr/local/nvidia/lib64}
+    # --- the TCPX plugin selection (the essence of the "after") ---
+    - {name: NCCL_GPUDIRECTTCPX_UNIX_CLIENT_PREFIX, value: /run/tcpx}
+    - {name: NCCL_SOCKET_IFNAME, value: eth0}
+    - {name: NCCL_GPUDIRECTTCPX_CTRL_DEV, value: eth0}
+    - {name: NCCL_GPUDIRECTTCPX_SOCKET_IFNAME, value: "eth1,eth2,eth3,eth4"}
+    - {name: NCCL_GPUDIRECTTCPX_TX_BINDINGS,
+       value: "eth1:8-21,112-125;eth2:8-21,112-125;eth3:60-73,164-177;eth4:60-73,164-177"}
+    - {name: NCCL_GPUDIRECTTCPX_RX_BINDINGS,
+       value: "eth1:22-35,126-139;eth2:22-35,126-139;eth3:74-87,178-191;eth4:74-87,178-191"}
+    - {name: NCCL_GPUDIRECTTCPX_FORCE_ACK, value: "0"}
+    - {name: NCCL_CROSS_NIC, value: "0"}
+    - {name: NCCL_ALGO, value: Ring}
+    - {name: NCCL_PROTO, value: Simple}
+    - {name: NCCL_NSOCKS_PERTHREAD, value: "4"}
+    - {name: NCCL_SOCKET_NTHREADS, value: "1"}
+    - {name: NCCL_DYNAMIC_CHUNK_SIZE, value: "524288"}
+    - {name: NCCL_P2P_NET_CHUNKSIZE, value: "524288"}
+    - {name: NCCL_P2P_PCI_CHUNKSIZE, value: "524288"}
+    - {name: NCCL_P2P_NVL_CHUNKSIZE, value: "1048576"}
+    - {name: NCCL_BUFFSIZE, value: "8388608"}
+    # or the transport line is NEVER logged (lab-22 §4)
+    - {name: NCCL_DEBUG, value: INFO}
+    - {name: NCCL_DEBUG_SUBSYS, value: "INIT,NET,ENV"}
+    command: ["/bin/bash","-c","sleep infinity"]
+---
+# ===========================================================================
+# PROVENANCE — the run this file is a record of
+# ===========================================================================
+# Applied live on cluster hypercomputer-a3-tcpx (asia-east1-c) on 2026-07-31 as two Pods,
+# tcpx-wb-0 and tcpx-wb-1 (rank 1 is this same spec with the name changed; podAntiAffinity
+# puts them on different nodes). Environment as measured, not as assumed:
+#
+#   nodes    2 x a3-highgpu-8g (H100-80GB), Flex-start pool a3-tcpx-flex-pool
+#            gke-...-c217556e-lkw4 (rank 0, 10.4.2.13) / ...-6lvn (rank 1, 10.4.1.13)
+#   GKE      1.35.6-gke.1250000
+#   driver   580.159.04 (NVIDIA open kernel module)
+#   plugin   nccl-plugin-gpudirecttcpx-dev:v3.1.12   <- NOT :latest; see G29
+#   rxdm     tcpgpudmarxd-dev:v2.0.15
+#   NCCL     libnccl.so.2.19.4, libnccl-net.so 14348008 bytes
+#   fabric   4 GPU rails eth1-4 @ MTU 8244, IPs 192.168.{0,1,2,3}.35; eth0 @ MTU 1460
+#
+# Launched from inside the bench container on each rank:
+#   torchrun --nproc_per_node=8 --nnodes=2 --node_rank=$R \
+#     --master_addr=10.4.2.13 --master_port=29600 allreduce_bench.py
+#   (harness: labs/lab-06-2node-nccl-collectives/allreduce_bench.py — the SAME script as
+#    lab-06 and lab-12, so the numbers are comparable across the whole guide)
+#   BENCH_MAX_EXP=31 BENCH_ITERS=20 BENCH_WARMUP=5
+#
+# RESULT — 16 GPUs, ring all-reduce:
+#   peak busbw 83.27 GB/s @ 2 GB (algbw 44.41 GB/s, 48.356 ms)
+#   transport  "Using network GPUDirectTCPX_v7"; 920 x NET/GPUDirectTCPX; 0 x NET/Socket
+#   rails      all 4 balanced (264 refs each; ~50.4 GB tx per rail, spread <0.05%)
+#
+#   In context: gVNIC 23.7 GB/s (lab-12) -> TCPX 83.27 (3.5x) -> TCPXO 317.84 (3.8x again).
+#   UNTUNED: TX/RX bindings are set but ranks are not NUMA-pinned. Treat 83.27 as a FLOOR
+#   for this shape, not as A3 High's ceiling.
+#
+# The Pods were deleted after capture and the GPUs handed straight back to the capacity
+# holder Deployment (gpu-holder-tcpx, replicas=2) — scale the holder UP first so its Pods
+# are already Pending, then delete these; the handover is then gap-free on a Flex pool.
+# ===========================================================================

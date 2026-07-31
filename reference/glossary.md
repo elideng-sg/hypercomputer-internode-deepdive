@@ -46,7 +46,17 @@ This glossary defines key terms used throughout the guide. Terms are listed alph
 
 **SuperNIC:** NVIDIA's next-generation high-performance network adapter (e.g., BlueField-3 SuperNIC) combining RDMA-capable NIC functionality with programmable DPU offload capabilities.
 
-**TCPX / TCPXO (GPUDirect-TCPX / TCPXO):** GCP's proprietary GPU networking technologies that enable GPUDirect-like direct data paths between GPUs and gVNIC (TCPX) or with additional fabric optimizations (TCPXO), bypassing CPU for inter-node GPU communication on A3 machine types.
+**TCPX / TCPXO (GPUDirect-TCPX / TCPXO):** GCP's GPU networking stacks for A3, both requiring a
+cluster created with Dataplane V2 + multi-networking. **TCPX** (A3 High, `a3-highgpu-8g`) gives
+NCCL **4 dedicated GPU NICs** at MTU 8244 and DMAs payload straight into GPU HBM via dmabuf — but
+the transport is still **host TCP sockets**, so kernel NIC counters *do* see the traffic
+(*measured: 83.27 GB/s busbw @ 16 GPU, lab-18*). **TCPXO / FasTrak** (A3 Mega, `a3-megagpu-8g`)
+uses **8 NICs** and replaces the transport with a **userspace datapath**, so it is genuinely
+kernel-bypass and netdev counters read ~zero under full load (*measured: 317.84 GB/s, lab-22*).
+They are not interchangeable: different plugin images, different NCCL env families
+(`NCCL_GPUDIRECTTCPX_*` vs `NCCL_FASTRAK_*`), different transport lines
+(`NET/GPUDirectTCPX` vs `NET/FasTrak`), and different observability. Both fail **open** — a
+misconfigured fabric silently falls back to `NET/Socket` (~23.7 GB/s) with no error anywhere.
 
 **Tree (collective algorithm):** A collective communication algorithm where GPUs are logically arranged in a tree structure and data is aggregated/broadcast hierarchically, efficient for latency-sensitive scenarios and small message sizes.
 

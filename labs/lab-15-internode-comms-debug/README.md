@@ -119,7 +119,7 @@ NCCL INFO NET/Socket: Using 4 threads and 1 sockets per thread
 
 Read top to bottom, this is the entire fabric story of the job:
 
-- **`NET/IB : No device found` → `Using network Socket`.** NCCL looked for an InfiniBand/RoCE HCA, found none, and fell back to **TCP sockets over `eth0`**. This is the single-gVNIC / plain-TCP fabric — *not* GPUDirect-TCPX — confirmed again by **`GPU Direct RDMA Disabled`**. If you ever wonder "am I actually on the fast fabric?", this is the line that answers it. (Enabling TCPX is [lab-18](../lab-18-gpudirect-tcpx/)'s job.)
+- **`NET/IB : No device found` → `Using network Socket`.** NCCL looked for an InfiniBand/RoCE HCA, found none, and fell back to **TCP sockets over `eth0`**. This is the single-gVNIC / plain-TCP fabric — *not* GPUDirect-TCPX — confirmed again by **`GPU Direct RDMA Disabled`**. If you ever wonder "am I actually on the fast fabric?", this is the line that answers it — and it is the *only* line that does; throughput alone can't, because the fallback is silent. (Enabling TCPX and re-reading this line is [lab-18](../lab-18-enable-gpudirect-tcpx/)'s job: it reads `Using network GPUDirectTCPX_v7` instead, at **3.5×** the bandwidth.)
 - **`nNodes 3 localRanks 8`.** NCCL correctly sees 3 nodes × 8 local GPUs — the topology it will optimize the rings/trees for.
 - **`Channel 00/16` + `Ring`/`Trees`.** It built **16 channels** and both ring and tree schedules; intra-node hops ride NVLink (`NVL` in the GRAPH lines), and the **inter-node** hop is the telling one: `… [receive] via NET/Socket/0` — every cross-node byte goes over a TCP socket. That `via NET/Socket` is the exact string that tells you *where the inter-node bottleneck lives.*
 
@@ -196,7 +196,7 @@ graph TD
 
 ## What this lab does **not** claim
 
-- It does **not** use GPUDirect-TCPX/RDMA — the healthy baseline confirms the plain-TCP/`NET/Socket` fabric (`GPU Direct RDMA Disabled`, `NET/IB : No device found`). Reading that transport line *is* the point; enabling TCPX and re-reading it is [lab-18](../lab-18-gpudirect-tcpx/).
+- It does **not** use GPUDirect-TCPX/RDMA — the healthy baseline confirms the plain-TCP/`NET/Socket` fabric (`GPU Direct RDMA Disabled`, `NET/IB : No device found`). Reading that transport line *is* the point; enabling TCPX and re-reading it is [lab-18](../lab-18-enable-gpudirect-tcpx/).
 - The straggler is a **job-level `time.sleep`**, not a hardware slowdown. It faithfully reproduces the *timing signature* of a real straggler (thermal throttle, a slow disk read, a contended NIC), but it is not itself any of those root causes — it is the **shape** of the failure, injected safely.
 - Fault A uses a **non-existent** interface for a clean, fast, deterministic init failure. A wrong-but-existing interface (management NIC, wrong subnet) black-holes into the **hang** signature instead — same first-check (`NCCL_DEBUG=INFO`, the chosen iface), different timing.
 - No node is drained, cordoned, or deleted; the `gpu-holder` is verified back at 3/3 after the run (Flex-safe).

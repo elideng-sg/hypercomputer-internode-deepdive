@@ -95,7 +95,7 @@ gke860e357b7c9  speed=10000   mtu=1460                  <- pod veth
 docker0 / lo
 ```
 
-One NIC, `gve` driver, 200 Gbit/s, **MTU 1460** (not the 8244 jumbo used for GPUDirect). A GPUDirect-TCPX-provisioned A3 High node would show **four additional GPU-NIC rails** — absent here.
+One NIC, `gve` driver, 200 Gbit/s, **MTU 1460** (not the 8244 jumbo used for GPUDirect). A GPUDirect-TCPX-provisioned A3 High node shows **four additional GPU-NIC rails** at MTU 8244 — absent here. That is no longer a hypothetical: [lab-18](../lab-18-enable-gpudirect-tcpx/) built exactly such a node and measured `eth1-4` at `mtu=8244` (`192.168.{0,1,2,3}.35`) alongside `eth0` at 1460, carrying **83.27 GB/s** busbw versus this path's **23.70**. So read the absence here as the *cause* of lab-06's `NET/Socket` floor, not as a defect.
 
 ### 2. Only `nvidia.com/gpu` is advertised — `assets/lab-05/allocatable.txt`
 

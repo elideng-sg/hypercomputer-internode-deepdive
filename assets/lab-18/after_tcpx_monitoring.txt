@@ -1,0 +1,62 @@
+# lab-18: DOES TCPX TRAFFIC SHOW UP IN MONITORING?
+# Captured immediately after the successful 16-GPU TCPX all-reduce (see
+# after_tcpx_allreduce.txt: peak 83.27 GB/s busbw @ 2GB), while the Flex nodes were
+# still alive. Two independent observation planes checked: in-pod NIC counters, and
+# managed-DCGM metrics via Cloud Monitoring PromQL.
+# captured 2026-07-31T05:42:58Z  cluster=hypercomputer-a3-tcpx  asia-east1-c
+
+===============================================================================
+PLANE 1 — in-pod per-rail NIC byte counters  (/sys/class/net/<if>/statistics)
+===============================================================================
+Read from tcpx-wb-0's `bench` container. Cumulative since Pod start; the only
+significant traffic in that window WAS the benchmark.
+  eth0  tx=       43138222 (    0.04 GB)  rx=       42978118 (    0.04 GB)
+  eth1  tx=    50426662196 (   50.43 GB)  rx=    50756656744 (   50.76 GB)
+  eth2  tx=    50410802866 (   50.41 GB)  rx=    50746479272 (   50.75 GB)
+  eth3  tx=    50403509818 (   50.40 GB)  rx=    50746102590 (   50.75 GB)
+  eth4  tx=    50405522532 (   50.41 GB)  rx=    50749465188 (   50.75 GB)
+  SUM                (  201.65 GB)                   (  203.00 GB)  <- 4 GPU rails
+
+READ THIS: the GPU rails are NOT zero. TCPX traffic IS visible in the ordinary
+netdev byte counters, and the four rails are balanced to within ~0.05% of each
+other -- which makes a plain `cat /sys/class/net/eth*/statistics/tx_bytes` a valid
+per-rail load-balance check on this tier.
+
+  *** This does NOT generalise to TCPXO. *** On A3 Mega the FasTrak datapath
+  bypasses the netdev layer entirely, so these same counters stay ~flat while the
+  fabric is saturated -- which is why lab-22 reaches for DCGM instead. The rule is
+  tier-specific: netdev counters are usable evidence on TCPX, useless on TCPXO.
+  If you carry a TCPXO runbook onto A3 High you will under-trust a working signal;
+  carry a TCPX runbook onto A3 Mega and you will declare a healthy fabric dead.
+
+===============================================================================
+PLANE 2 — managed DCGM (works on BOTH tiers)
+===============================================================================
+This cluster has DCGM in monitoringConfig.componentConfig.enableComponents:
+  SYSTEM_COMPONENTS;STORAGE;HPA;POD;DAEMONSET;DEPLOYMENT;STATEFULSET;CADVISOR;KUBELET;DCGM;JOBSET
+
+PromQL (Cloud Monitoring / GMP), per-GPU PCIe TX during vs after the run:
+  max by (Hostname) (max_over_time(DCGM_FI_PROF_PCIE_TX_BYTES{cluster="hypercomputer-a3-tcpx"}[20m])) / 1e6
+      6lvn -> 1806.59 MB/s   (per-GPU peak, busiest GPU)
+      lkw4 -> 1812.03 MB/s
+  sum by (Hostname) ( same ) / 1e9        <- all 8 GPUs on the node
+      6lvn -> 7.238 GB/s
+      lkw4 -> 7.248 GB/s
+  DCGM_FI_PROF_NVLINK_TX_BYTES, max per GPU / 1e9
+      6lvn -> 6.871 GB/s
+      lkw4 -> 6.894 GB/s     <- intra-node NVLink stage of the ring, as expected
+
+  IDLE FLOOR for the same metric, sampled after the run drained:
+      ~254 KB/s per GPU (254442 / 254494 / ... B/s across all 16 GPUs)
+
+  So the active-vs-idle contrast is ~1.81 GB/s vs ~254 KB/s == roughly 7000x. That
+  is a wide, unambiguous margin: DCGM_FI_PROF_PCIE_TX_BYTES is a dependable
+  "is the fabric actually moving data" signal on TCPX, exactly as it is on TCPXO.
+  Alert on it rather than on NIC counters if you want ONE rule that holds for both
+  A3 High and A3 Mega.
+
+  Caveat on absolute numbers: PCIe TX is sampled per-GPU and reflects the
+  host<->GPU staging of the transfer, not the wire rate. Do not read 7.2 GB/s as
+  the network throughput -- the wire number is the busbw in
+  after_tcpx_allreduce.txt (83.27 GB/s). Use DCGM for LIVENESS and BALANCE
+  (is every GPU/rail pulling its share), and a benchmark for THROUGHPUT.

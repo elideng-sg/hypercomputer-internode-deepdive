@@ -9,11 +9,11 @@ The lab so far cheated: it fed the GPUs from `torch.randn` in memory, so the dat
 **What you'll learn:**
 - The **storage ladder** for GPU training on GCP — Local SSD → GCSFuse → Filestore/Managed Lustre → Hyperdisk ML — and which symptom each fixes
 - Why **GCSFuse + Workload Identity** is the default data path, how it mounts, and where its throughput ceiling bites
-- How to *see* a starved GPU: the **io% vs compute% split** and the **GPU busy-fraction** on the same monitoring pipeline (GMP/DCGM) from [doc-20](../part5-operations-diagnostics/20-perf-monitoring-day2.md)
+- How to *see* a starved GPU: the **io% vs compute% split** and the **GPU busy-fraction** on the same monitoring pipeline (GMP/DCGM) from [doc-20](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md)
 - The **checkpoint** problem — the write half of the data path, and why it's a throughput *and* a topology decision
 - The knobs that actually move the number: **file cache**, **parallel downloads**, **sharding**, and **prefetch**
 
-**Prerequisites:** [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md) (read the signal, don't assume) and [doc-20](../part5-operations-diagnostics/20-perf-monitoring-day2.md) (the GMP/DCGM busy-fraction we cross-check against); helpful: [doc-21](21-gke-network-design.md) (WIF and VPC-native are shared prerequisites).
+**Prerequisites:** [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md) (read the signal, don't assume) and [doc-20](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) (the GMP/DCGM busy-fraction we cross-check against); helpful: [doc-21](21-gke-network-design.md) (WIF and VPC-native are shared prerequisites).
 
 **Instantiated by:** [lab-19](../../labs/lab-19-storage-data-path/) — mount GCS via GCSFuse, measure starved-vs-fed GPU utilization + read throughput + checkpoint write, cross-checked on GMP.
 
@@ -126,7 +126,7 @@ Same GEMM, same H100. Only the data path differs:
 
 The value of this is diagnostic discipline. A low `GR_ENGINE_ACTIVE` on a dashboard has **two** causes that look identical — a throttled GPU (lab-17's silent power cap) and a **starved** GPU — and the fix is opposite (fix the device vs fix the loader). lab-19 shows the storage-bound half; you tell them apart by also reading io% and the storage throughput, not just the GPU metric. This is [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md)'s "read the whole path" applied to data.
 
-> **Cross-check, don't trust one meter.** lab-19 reads the busy-fraction two ways — locally via NVML *inside* the step loop, and via **GMP/DCGM** on the managed pipeline — so the storage story survives the [doc-20](../part5-operations-diagnostics/20-perf-monitoring-day2.md) "one tool lies" test.
+> **Cross-check, don't trust one meter.** lab-19 reads the busy-fraction two ways — locally via NVML *inside* the step loop, and via **GMP/DCGM** on the managed pipeline — so the storage story survives the [doc-20](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) "one tool lies" test.
 
 ---
 
@@ -164,5 +164,5 @@ The order matters: **measure first** (is io% actually high?), then reach for the
 ---
 
 **Next (Part VI) →** [doc-23 end-to-end training pipeline](23-training-pipeline-jobset.md)
-**Builds on →** [doc-16 diagnostic method](../part5-operations-diagnostics/16-diagnostic-method.md) · [doc-20 perf monitoring & day-2 ops](../part5-operations-diagnostics/20-perf-monitoring-day2.md) · [doc-21 GKE network design](21-gke-network-design.md)
+**Builds on →** [doc-16 diagnostic method](../part5-operations-diagnostics/16-diagnostic-method.md) · [doc-20 perf monitoring & day-2 ops](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) · [doc-21 GKE network design](21-gke-network-design.md)
 **Reference →** [reference-arch-cheatsheet.md](../../reference/reference-arch-cheatsheet.md) · [lab-build-gotchas.md](../../reference/lab-build-gotchas.md)

@@ -175,7 +175,7 @@ graph LR
 | Fabric Manager | **not tenant-visible** ✔ measured | admin daemon + logs |
 | Inter-node NIC | **Google gVNIC only** ✔ measured | ConnectX-7 / BlueField-3 SuperNIC |
 | BlueField DPU | **absent** ✔ measured | optional BlueField-3 DPU |
-| Inter-node GPU transport | GPUDirect-TCPX (not enabled here) | Quantum InfiniBand / Spectrum-X RoCE |
+| Inter-node GPU transport | GPUDirect-TCPX — *not enabled on this pool*; measured on a purpose-built cluster in [lab-18](../lab-18-enable-gpudirect-tcpx/) at **83.27 GB/s** (4 rails) ✔ measured | Quantum InfiniBand / Spectrum-X RoCE |
 | In-network reduction | none (on-GPU NCCL) | **SHARP** on Quantum IB |
 | NVLink scale-up | single 8-GPU baseboard | GB200 **NVL72** (A4X-class) |
 | Orchestration | GKE + JobSet + Kueue + DWS | BCM / Run:ai / Slurm |

@@ -1,0 +1,52 @@
+# lab-18: TWO NEW TCPX FAILURE SIGNATURES hit while capturing the AFTER
+# Both are HARD failures (ncclInternalError res=3 at Connect), not fail-open — unlike the
+# TCPXO dmabuf-importer signature in lab-22 §4.10, which exits 0 and looks healthy.
+# Both are caused by ONE root cause: plugin v3.1.9 (`:latest`, built 2023) predates the
+# R580 open kernel module on the node, so its GPU memory-registration paths are broken.
+
+## captured 2026-07-31T05:37:57Z  cluster=hypercomputer-a3-tcpx asia-east1-c
+## node driver:
+  NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  580.159.04  Release Build  (builder@e0bcddf25228)  Wed Jun 17 20:57:45 UTC 2026
+  GCC version:  Selected multilib: .;@m64
+
+===============================================================================
+SIGNATURE A — with dmabuf ENABLED (the default): ioctl not supported
+===============================================================================
+  NCCL INFO NET/GPUDirectTCPX: Registered dmabuf region 0x78ce98200000 of 4915200 Bytes
+  ioctl get dma_buf frags: Inappropriate ioctl for device        <- ENOTTY from the driver
+  tcpxResult_t gpu_tx_reg_mr(...):223 NCCL WARN gpu_tx_reg_mr failed -5
+  TCPXCHECK /nccl-plugin-gpudirecttcpx/src/net_tcpx.cc:793 -> 3
+  proxy.cc:1501 NCCL WARN [Service thread] Error encountered progressing operation=Connect, res=3
+  -> ncclInternalError; all 16 ranks abort during init.
+
+The plugin greps for /proc/driver/nvp2p_dma_buf (string `cfg_nvp2pdmabuf_procfs_prefix`
+in libnccl-net.so). On this node BOTH candidate paths are ABSENT:
+  ABSENT:  /proc/driver/nvp2p_dma_buf
+  ABSENT:  /proc/driver/nvdma
+
+===============================================================================
+SIGNATURE B — with dmabuf DISABLED (NCCL_USE_DMA_BUF=0): p2pdma alignment
+===============================================================================
+  NCCL INFO NET/GPUDirectTCPX : use dmabuf: 0                    <- var took effect
+  tcpxResult_t tcpxRegMr(...):800 NCCL WARN p2pdma api won't work with only RegMr,
+                                            due to alignment issue
+  proxy.cc:1535 NCCL WARN [Proxy Service 5] Failed to execute operation Connect ... retcode 3
+  -> same hard abort. Disabling dmabuf only moves the failure to the legacy p2pdma path.
+
+Note the env-var trap: the plugin-prefixed names do NOT work. Setting
+NCCL_GPUDIRECTTCPX_USE_DMABUF=0 or NCCL_DMABUF_ENABLE=0 is silently ignored — the log
+keeps printing `use dmabuf: 1`. The knob the plugin actually reads (ncclParamUseDmaBuf)
+is the CORE NCCL name: NCCL_USE_DMA_BUF. Confirmed by `strings libnccl-net.so`.
+
+===============================================================================
+THE FIX — re-pin the plugin, do not tune the env
+===============================================================================
+`:latest` on nccl-plugin-gpudirecttcpx-dev resolves to the v3.1.9 line (2023). A much
+newer build exists and is NOT tagged latest:
+  us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:v3.1.12  (2026-05-08)
+  us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:v3.1.11  (2026-02-17)
+  ...vs :latest -> v3.1.9 line (2023) which is what shipped broken here.
+After re-pinning to v3.1.12 the installer logs "Use newly-built net plugin", and with
+dmabuf left at its DEFAULT (enabled) the same 16-GPU run completes with
+`Using network GPUDirectTCPX_v7`, 0 x NET/Socket, and 0 registration errors.
+See after_tcpx_transport.txt / after_tcpx_allreduce.txt.

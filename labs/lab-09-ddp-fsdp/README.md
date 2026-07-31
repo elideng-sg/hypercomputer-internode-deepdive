@@ -89,7 +89,7 @@ xychart-beta
 
 Two honest takeaways, both counterintuitive until you look at the network:
 
-1. **FSDP is *slower* here, not faster.** FSDP shards parameters to **1/16** the per-rank memory (1090.8 M → 68.2 M), but it pays for that with **two** inter-node collectives per step (all-gather on forward, reduce-scatter on backward) instead of DDP's **one** (gradient all-reduce). Over a **28 GB/s TCP** path (lab-06), that extra communication costs ~38% throughput. On a fast fabric (TCPX/RDMA) the gap shrinks or flips.
+1. **FSDP is *slower* here, not faster.** FSDP shards parameters to **1/16** the per-rank memory (1090.8 M → 68.2 M), but it pays for that with **two** inter-node collectives per step (all-gather on forward, reduce-scatter on backward) instead of DDP's **one** (gradient all-reduce). Over a **28 GB/s TCP** path (lab-06), that extra communication costs ~38% throughput. On a fast fabric the gap shrinks or flips — and the size of that effect is now measured, not assumed: the same all-reduce runs **3.5×** faster on GPUDirect-TCPX ([lab-18](../lab-18-enable-gpudirect-tcpx/), 83.27 GB/s) and **13.4×** on TCPXO ([lab-22](../lab-22-fabric-diagnostics/), 317.84 GB/s). FSDP's extra collective is precisely the term those multipliers divide.
 2. **FSDP's value is memory, not speed** — on *this* small model it's a net loss, but it's the only way to train a model whose parameters don't fit in one GPU. The trade is **memory ↔ communication**, and the exchange rate is set by the network. See [doc-09](../../docs/part3-clustering-execution/09-distributed-training-ddp-fsdp.md).
 
 ### 2. The step is dominated by the all-reduce — `assets/lab-09/ddp_profiler_top_ops.txt`

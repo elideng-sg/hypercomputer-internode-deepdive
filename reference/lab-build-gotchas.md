@@ -251,11 +251,11 @@ gcloud container clusters describe "$CLUSTER" --zone "$ZONE" \
 #   ADVANCED_DATAPATH → Dataplane V2 (multi-networking possible)
 #   <empty>           → LEGACY_DATAPATH → single-gVNIC only, TCPX impossible (the lab cluster)
 ```
-Cross-check in-cluster: `kubectl -n kube-system get ds | grep -E 'anetd|cilium'` — absent confirms legacy. **Takeaway:** the inter-node fabric is baked in at cluster creation; enabling TCPX means a **new cluster** (`scripts/provision_tcpx_pool.sh` provisions one reversibly), not an upgrade. This is *why* lab-18's TCPX "after" capture is staged rather than run on the existing cluster.
+Cross-check in-cluster: `kubectl -n kube-system get ds | grep -E 'anetd|cilium'` — absent confirms legacy. **Takeaway:** the inter-node fabric is baked in at cluster creation; enabling TCPX means a **new cluster** (`scripts/provision_tcpx_pool.sh` provisions one reversibly), not an upgrade. This is *why* lab-18's TCPX "after" was captured on a **new** cluster (`hypercomputer-a3-tcpx`) rather than on the existing one — and, once that cluster existed, it measured **83.27 GB/s** against the legacy cluster's 23.70.
 
 ## G18 — A3 High H100 has no on-demand quota here; capacity is Flex-start only (lab-18)
 
-The project has **no on-demand `NVIDIA_H100_GPUS` / A3 quota** in the lab regions (verified against `gcloud compute regions describe` — the metric isn't even present, i.e. limit 0). The existing 3-node A3 pool exists because it was provisioned via **Flex-start** (DWS queued provisioning), which draws on a separate, scarce capacity path. Consequence for lab-18: a *new* 2-node TCPX pool must also come via `--flex-start` and can **queue indefinitely or stock-out** if the region has no A3 capacity at that moment. **Never** free capacity by shrinking the holders ([[always-hold-gpu-after-work]]); retry later or try another A3 zone. This capacity uncertainty, on top of G17, is why the TCPX after-number is honestly marked pending.
+The project has **no on-demand `NVIDIA_H100_GPUS` / A3 quota** in the lab regions (verified against `gcloud compute regions describe` — the metric isn't even present, i.e. limit 0). The existing 3-node A3 pool exists because it was provisioned via **Flex-start** (DWS queued provisioning), which draws on a separate, scarce capacity path. Consequence for lab-18: a *new* 2-node TCPX pool must also come via `--flex-start` and can **queue indefinitely or stock-out** if the region has no A3 capacity at that moment. **Never** free capacity by shrinking the holders ([[always-hold-gpu-after-work]]); retry later or try another A3 zone. This capacity uncertainty, on top of G17, is why the TCPX after-number waited weeks for two A3 High nodes to be alive in the same zone at the same time. It landed 2026-07-31 — and the same scarcity is why the capture had to be **gap-free**: the holder was scaled up *before* the workbench Pods were deleted, so the nodes were never left unheld ([[always-hold-gpu-after-work]]).
 
 ## G19 — GCSFuse CSI driver requires Workload Identity *first* (lab-19)
 
@@ -352,7 +352,7 @@ adds. This is the **fourth** distinct reading of a low/mid engine-active signal 
 throttled (G-lab-17), starved (G21), comms-bound (G23), server-bound (here) — all told apart
 only by reading the rest of the path (latency curve + replica scaling), never the one meter.
 
-## G25 — GPUDirect traffic is **invisible** to every kernel/NIC byte counter (lab-22)
+## G25 — **TCPXO/FasTrak** traffic is invisible to kernel/NIC byte counters — but **TCPX traffic is not** (lab-22, scope-corrected by lab-18)
 
 **Symptom.** During a 16-GPU TCPXO all-reduce sustaining **317 GB/s busbw** at 100% GPU util,
 every GPU NIC reads **zero**: in-pod `/sys/class/net/eth[1-8]/statistics/tx_bytes` shows
@@ -379,6 +379,18 @@ alerted on there (they remain valid on A3 Ultra/A4 RoCE). Full evidence:
 `assets/lab-22/tcpxo_monitoring_validation.txt`; corrected rules in
 [doc-25 §5](../docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md).
 
+> **SCOPE CORRECTION (lab-18, measured 2026-07-31).** This entry's title once said *every*
+> GPUDirect fabric. That is **too broad — it is a TCPXO/FasTrak property, not a GPUDirect
+> one.** On **TCPX** (A3 High) the same in-pod counters DO see the traffic: after the 16-GPU
+> run, `/sys/class/net/eth[1-4]/statistics/tx_bytes` read **~50.4 GB per rail**, balanced to
+> within **0.05%** across the four rails, against a 0.04 GB `eth0`. So on A3 High a plain
+> `cat /sys/class/net/eth*/statistics/tx_bytes` **is** a valid rail-balance and liveness
+> check. Carry the TCPXO rule onto A3 High and you will distrust a working signal; carry the
+> TCPX rule onto A3 Mega and you will declare a healthy fabric dead. `DCGM_FI_PROF_PCIE_TX_BYTES`
+> is the one signal that discriminates on **both** tiers — on TCPX it read **~1.81 GB/s per
+> GPU under load vs ~254 KB/s idle (~7000×)**. Evidence:
+> `assets/lab-18/after_tcpx_monitoring.txt`.
+
 ## G26 — `sum by (node)` over `container_network_*` over-counts ~10× (lab-22)
 
 **Symptom.** GMP reported **235.57 Gbit/s** on a node's `eth0` while the in-pod counter delta
@@ -404,6 +416,123 @@ the rule. GCP *does* define TCPXO-native metrics (`instance/gpu/tcpxo_send_chunk
 exported 0 series here under full load — worth requesting from a TAM before settling for the
 PCIe proxy.
 
+## G27 — the GKE-documented `pause:3.9` image 404s, and the DaemonSet never goes Ready (lab-18)
+
+**Symptom.** `nccl-tcpx-installer` sat at **0/2 Ready for 2 d 22 h**. The `initContainer`
+had *succeeded* — the plugin libraries were already in
+`/home/kubernetes/bin/nvidia/lib64` on both nodes — but the Pod was stuck in
+`ImagePullBackOff` on its `pause` sidecar, so the DaemonSet reported not-Ready and every
+readiness gate built on it stayed red.
+
+**Root cause.** The GKE TCPX doc's manifest ends with
+`image: gcr.io/google-containers/pause:3.9`. That registry path **does not exist** — a
+direct registry-v2 probe returns **404**, while the digest the *TCPXO* installer uses,
+`gke.gcr.io/pause:3.8@sha256:880e63f9…`, returns **200**. Note `gcloud container images
+describe` can't check this (it rejects non-project registries: "Image name should start with
+\*.gcr.io/project_id/image_path") — probe the registry API with a bearer token instead.
+
+**Fix.** Pin the sidecar to the digest that resolves:
+`gke.gcr.io/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830`.
+Applied in `manifests/tcpx/nccl-tcpx-installer.yaml`; both Pods went **2/2 Ready** at once.
+
+**Lesson.** A DaemonSet whose *real* work happens in an `initContainer` can be fully
+functional while reporting not-Ready — and the reverse trap is worse: **the plugin was on
+the node the whole time**, so a reader who trusts "DS not Ready ⇒ plugin missing" debugs the
+wrong layer for days. Always check *which container* is failing (`kubectl get pod -o
+jsonpath='{..containerStatuses[*].state}'`), not just the aggregate Ready column. See also
+**G30**, where the guide's own checker made exactly this mistake.
+
+## G28 — TCPX ships **no** `nccl-env-profile.sh`, so lab-22 §5's "always source the vendor profile" rule does not generalise (lab-18)
+
+**Symptom.** Following lab-22's rule — *never hand-write the NIC list; source the vendor's
+`nccl-env-profile.sh`* — there is nothing to source on A3 High.
+`ls /usr/local/nvidia/lib64/*env*` in the workbench Pod returns **0 matches**.
+
+**Root cause.** The profile script is shipped by the **TCPXO** plugin image (A3 Mega), not
+the TCPX one. The TCPX installer lays down `libnccl-net.so` + `libnccl.so.2.19.4` and
+nothing else.
+
+**Fix.** On TCPX, `NCCL_GPUDIRECTTCPX_SOCKET_IFNAME=eth1,eth2,eth3,eth4` and the TX/RX
+binding maps must be set **explicitly** in the Pod spec (see
+`manifests/tcpx/workbench-tcpx.yaml`, which does so with a comment saying why). The bindings
+are machine-shape-specific; use the GKE-published `a3-highgpu-8g` map.
+
+**Lesson.** A per-tier rule stated as a universal one *fails silently in the direction of
+looking correct* — a reader who "sources the profile" on TCPX gets an empty no-op, no NIC
+list, and a socket fallback that still exits 0. Every "always do X" in a fabric runbook
+needs its tier written next to it. Evidence: `assets/lab-18/after_tcpx_inpod_fabric.txt`.
+
+## G29 — the TCPX plugin's `:latest` tag is a 2023 build that is incompatible with R580 drivers — and the newer fix is invisible to `tags/list` (lab-18)
+
+**Symptom.** With the plugin pinned to `:latest`, the 16-GPU all-reduce **aborted during
+init** — not a silent socket fallback, a hard `ncclInternalError`:
+
+```
+NCCL INFO NET/GPUDirectTCPX: Registered dmabuf region 0x78ce98200000 of 4915200 Bytes
+ioctl get dma_buf frags: Inappropriate ioctl for device      <- ENOTTY from the driver
+tcpxResult_t gpu_tx_reg_mr(...):223 NCCL WARN gpu_tx_reg_mr failed -5
+proxy.cc:1501 NCCL WARN [Service thread] Error encountered progressing operation=Connect, res=3
+```
+
+**Root cause.** `:latest` resolves to the **v3.1.9 line (built 2023)**. It registers GPU
+memory through a procfs interface — it greps for `/proc/driver/nvp2p_dma_buf` — that **does
+not exist** under the node's **580.159.04 NVIDIA open kernel module** (nor does
+`/proc/driver/nvdma`). The plugin loads fine (`GPUDirectTCPX enable: 1`, 8 cuDevices) and
+only fails at memory registration, which is why it looks like a fabric/firewall problem.
+
+**Two traps on the way to the fix.** (1) **Wrong env-var name, twice.**
+`NCCL_GPUDIRECTTCPX_USE_DMABUF=0` and `NCCL_DMABUF_ENABLE=0` are both **silently ignored**
+— the log keeps printing `use dmabuf: 1`. `strings libnccl-net.so` shows the knob is the
+*core* NCCL name, **`NCCL_USE_DMA_BUF`**. (2) Setting it correctly doesn't help anyway: the
+`reg_mr` errors go to zero and a new hard failure appears — `p2pdma api won't work with only
+RegMr, due to alignment issue` — same `Connect ... retcode 3`. Disabling dmabuf just moves
+the failure onto the legacy path.
+
+**Fix — re-pin the plugin, do not tune the env.** A much newer build exists and is **not**
+tagged `latest`: **v3.1.12 (2026-05-08)** (also v3.1.11, 2026-02-17). Critically, the
+registry's `tags/list` endpoint **shows only up to v3.1.9** — the newer tags are invisible
+there. Find them by creation time instead:
+
+```bash
+gcloud artifacts docker images list \
+  us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev \
+  --include-tags --sort-by=~CREATE_TIME
+```
+
+With v3.1.12 and dmabuf left at its **default (enabled)**, the same run completes clean:
+`Using network GPUDirectTCPX_v7`, **0** registration errors, 83.27 GB/s busbw.
+
+**Lesson.** `:latest` on a vendor plugin is not a promise of recency, and a registry's tag
+listing is not a complete inventory. When a GPUDirect plugin fails at *memory registration*
+specifically, suspect a **plugin-vs-driver vintage mismatch** before firewalls, MTU or
+CRDs — and note this failure is **loud**, the opposite of lab-22's fail-open dmabuf-importer
+signature (§4.10). Both signatures side by side:
+`assets/lab-18/tcpx_failure_dmabuf_regmr.txt`.
+
+## G30 — the guide's own fabric checker blamed the wrong layer: an unpullable sidecar reported as a nodeSelector mismatch (lab-18)
+
+**Symptom.** `scripts/verify_gpu_fabric.sh` failed layer 6 with a message pointing at a
+**nodeSelector/label mismatch**, while the actual cause was **G27** — the installer's
+`pause` sidecar could not be pulled. The suggested remediation would not have fixed
+anything.
+
+**Root cause.** The layer-6 check tests only whether the DaemonSet's *desired* and *ready*
+counts differ, then prints the single most common explanation for that gap. It never
+inspects `containerStatuses`, so it cannot tell "no Pod was scheduled" (a real selector
+problem) apart from "the Pod is scheduled and its initContainer succeeded, but a sidecar is
+in `ImagePullBackOff`".
+
+**Fix.** Layer 6 now distinguishes the two: if Pods exist on the target nodes, report the
+failing container's name and waiting reason instead of guessing at labels. This is the
+**fourth** distinct defect found by pointing the checker at deliberately broken clusters
+(checker bugs 1–3 are logged in `VERIFICATION.md`).
+
+**Lesson.** A diagnostic that maps one symptom to one canned cause is a diagnostic that will
+confidently misdirect. Every check that infers a root cause from an aggregate counter needs
+either a discriminating second probe or a hedged message. Diagnostics deserve the same
+adversarial testing as the thing they diagnose — ours only produced correct output after
+being run against clusters that were broken in ways it hadn't anticipated.
+
 ---
 
-*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 staged (TCPX blocked on Dataplane V2 + A3 Flex capacity), labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology. lab-22 live TCPXO fabric + diagnostics: 317.84 GB/s measured (13.4×), checker validated against broken *and* working clusters, monitoring validated against live GMP in both fabric states.)*
+*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 **captured live** on a purpose-built Dataplane-V2 cluster — TCPX before/after 23.70 → **83.27 GB/s** (3.5×), which also produced G27–G30 and narrowed G25's scope; labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology. lab-22 live TCPXO fabric + diagnostics: 317.84 GB/s measured (13.4×), checker validated against broken *and* working clusters, monitoring validated against live GMP in both fabric states.)*

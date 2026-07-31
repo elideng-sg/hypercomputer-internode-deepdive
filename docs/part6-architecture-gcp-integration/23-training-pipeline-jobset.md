@@ -13,7 +13,7 @@ The lab so far cheated twice: it fed the GPUs from `torch.randn` (no data path) 
 - How to read the run on the **managed pipeline** — a sustained `DCGM_FI_PROF_GR_ENGINE_ACTIVE` plateau — and why a healthy multi-node job can plateau **below** saturation
 - The honest lesson that at 16 GPUs the **fabric is already a first-order term** — the bridge back to [doc-21](21-gke-network-design.md) / lab-18
 
-**Prerequisites:** [doc-22](22-storage-and-data-path.md) (the GCSFuse data path this job reads/writes through) and the gang concepts from Part IV; helpful: [doc-20](../part5-operations-diagnostics/20-perf-monitoring-day2.md) (the GMP/DCGM pipeline) and [doc-21](21-gke-network-design.md) (the fabric the all-reduce rides).
+**Prerequisites:** [doc-22](22-storage-and-data-path.md) (the GCSFuse data path this job reads/writes through) and the gang concepts from Part IV; helpful: [doc-20](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) (the GMP/DCGM pipeline) and [doc-21](21-gke-network-design.md) (the fabric the all-reduce rides).
 
 **Instantiated by:** [lab-20](../../labs/lab-20-training-pipeline/) — a 2-node/16-GPU JobSet training a learnable DDP model on GCS data, checkpointing to GCS, cross-checked on GMP.
 
@@ -128,7 +128,7 @@ doc-22 measured a checkpoint write in isolation; here it happens **inside the tr
 
 ## Step 4 — Reading the run on the managed pipeline
 
-The same GMP/DCGM pipeline from [doc-20](../part5-operations-diagnostics/20-perf-monitoring-day2.md) confirms the run from the outside. `DCGM_FI_PROF_GR_ENGINE_ACTIVE` across both training nodes over the run window:
+The same GMP/DCGM pipeline from [doc-20](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) confirms the run from the outside. `DCGM_FI_PROF_GR_ENGINE_ACTIVE` across both training nodes over the run window:
 
 | training node | avg engine-active | peak |
 |---|---|---|
@@ -154,5 +154,5 @@ A **sustained plateau** across 15 samples — the managed pipeline sees the same
 ---
 
 **Next (Part VI) →** [doc-24 inference serving & autoscale](24-inference-serving-autoscale.md)
-**Builds on →** [doc-22 storage & the data path](22-storage-and-data-path.md) · [doc-20 perf monitoring & day-2 ops](../part5-operations-diagnostics/20-perf-monitoring-day2.md) · [doc-21 GKE network design](21-gke-network-design.md)
+**Builds on →** [doc-22 storage & the data path](22-storage-and-data-path.md) · [doc-20 perf monitoring & day-2 ops](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) · [doc-21 GKE network design](21-gke-network-design.md)
 **Reference →** [reference-arch-cheatsheet.md](../../reference/reference-arch-cheatsheet.md) · [lab-build-gotchas.md](../../reference/lab-build-gotchas.md)

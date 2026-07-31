@@ -1,0 +1,29 @@
+# lab-18 AFTER: in-pod fabric view (4 GPU NICs at jumbo MTU + rail IPs)
+# captured 2026-07-31T05:37:18Z  pod=tcpx-wb-0  cluster=hypercomputer-a3-tcpx
+# Contrast TCPXO (lab-22): 8 rails + /dev/aperture_devices. TCPX has 4 rails and NO aperture devices.
+
+## NICs and MTU inside the Pod netns (sysfs; the pytorch image has no iproute2):
+  eth0 mtu=1460 mac=3e:04:47:ec:6c:21
+  eth1 mtu=8244 mac=42:01:c0:a8:00:23
+  eth2 mtu=8244 mac=42:01:c0:a8:01:23
+  eth3 mtu=8244 mac=42:01:c0:a8:02:23
+  eth4 mtu=8244 mac=42:01:c0:a8:03:23
+
+## rail IPs (eth1-4 = gpu-net-0..3):
+  eth0 10.4.2.13
+  eth1 192.168.0.35
+  eth2 192.168.1.35
+  eth3 192.168.2.35
+  eth4 192.168.3.35
+
+## NCCL plugin library installed by the DaemonSet (v3.1.12):
+  -rwxr-xr-x  1 root root  14348008 Jul 31 05:32 libnccl-net.so
+  lrwxrwxrwx  1 root root        12 Jul 31 05:32 libnccl.so -> libnccl.so.2
+  lrwxrwxrwx  1 root root        17 Jul 31 05:32 libnccl.so.2 -> libnccl.so.2.19.4
+  -rwxr-xr-x  1 root root  69547696 Jul 31 05:32 libnccl.so.2.19.4
+
+## NO env-profile script on this tier (G28 — TCPXO ships one, TCPX does not):
+  matches: 0
+
+## NO /dev/aperture_devices on this tier (TCPXO-only):
+  ABSENT (expected for TCPX)

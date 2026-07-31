@@ -2,9 +2,12 @@
 # Installs the GPUDirect-TCPX NCCL plugin + the receive-datapath binaries onto each A3 High
 # node, into a hostPath the workload mounts. This is the GKE-published recipe; the installer
 # image tag moves between GKE minor versions — RE-PIN IT at run time from the current GKE docs
-# ("Maximize GPU network bandwidth with GPUDirect-TCPX"). The digest below is a placeholder.
+# ("Maximize GPU network bandwidth with GPUDirect-TCPX").
 #
-# STAGED: validated as YAML; applied live only on the TCPX cluster.
+# APPLIED LIVE on cluster hypercomputer-a3-tcpx (asia-east1-c), 2026-07-31 — this is the
+# exact DaemonSet that produced this guide's measured TCPX result. BOTH image tags below
+# differ from what the GKE docs currently show, each for its own reason (G27, G29). Read
+# the comments before "modernising" either one.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -44,8 +47,18 @@ spec:
             path: /home/kubernetes/bin/nvidia/lib64
       initContainers:
         - name: nccl-tcpx-installer
-          # RE-PIN: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:<current>
-          image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:latest
+          # DO NOT USE `:latest` HERE. On this tier `:latest` still resolves to the v3.1.9
+          # line (built 2023), which is incompatible with the R580 open kernel module that
+          # ships on current GKE A3 High nodes: GPU memory registration fails outright
+          # (`ioctl get dma_buf frags: Inappropriate ioctl for device` -> `gpu_tx_reg_mr
+          # failed -5` -> Connect res=3) and NCCL aborts. It is a HARD failure, not a
+          # silent socket fallback. v3.1.12 (2026-05-08) fixes it. Note that the registry's
+          # `tags/list` endpoint does NOT show v3.1.10+ — find newer builds with
+          #   gcloud artifacts docker images list \
+          #     us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev \
+          #     --include-tags --sort-by=~CREATE_TIME
+          # See G29 and assets/lab-18/tcpx_failure_dmabuf_regmr.txt.
+          image: us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev:v3.1.12
           resources:
             requests:
               cpu: 150m
@@ -65,8 +78,14 @@ spec:
               /scripts/container_entry.sh install --install-nccl
               cp -r /var/lib/tcpx/lib64/. /usr/local/nvidia/lib64
       containers:
+        # The sleeper that keeps the DaemonSet Pod alive after the initContainer has
+        # installed the plugin. Pinned to the SAME digest the TCPXO installer uses
+        # (nccl-tcpxo-installer.yaml): `gcr.io/google-containers/pause:3.9` — which the
+        # GKE TCPX docs still show — 404s on that registry path, so the Pod sits in
+        # ImagePullBackOff forever and the DaemonSet never reports Ready even though the
+        # plugin libraries are already on the node. See G27.
         - name: pause
-          image: gcr.io/google-containers/pause:3.9
+          image: "gke.gcr.io/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830"
           resources:
             requests:
               cpu: 10m

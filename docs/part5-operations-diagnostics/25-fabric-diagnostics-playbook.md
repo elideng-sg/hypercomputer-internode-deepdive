@@ -24,15 +24,17 @@ The only symptom is **throughput**:
 |---|---|---|
 | Intra-node (NVLink/NVSwitch) | **~480 GB/s** | unaffected by fabric misconfiguration — this is why single-node benchmarks look fine |
 | Inter-node, **GPUDirect-TCPXO engaged** | **317.84 GB/s** | measured, 2 × `a3-megagpu-8g` / 16 GPUs, `NET/FasTrak` ([lab-22 §5.1](../../labs/lab-22-fabric-diagnostics/README.md)) |
-| Inter-node, silent TCP fallback | **23.7 GB/s** (also ~28.6 on another cluster) | **≈13.4×** worse than the same hardware with the fabric on; **no error is emitted** |
+| Inter-node, **GPUDirect-TCPX engaged** | **83.27 GB/s** | measured, 2 × `a3-highgpu-8g` / 16 GPUs, `GPUDirectTCPX_v7` ([lab-18](../../labs/lab-18-enable-gpudirect-tcpx/)) |
+| Inter-node, silent TCP fallback | **23.7 GB/s** (also ~28.6 on another cluster) | **≈13.4×** worse on A3 Mega, **≈3.5×** worse on A3 High; **no error is emitted** |
 
-Both numbers come from the **same benchmark on the same GPU model**. The only difference is
-whether the eight layers below are all in place.
+All three numbers come from the **same benchmark on the same GPU model**. The only difference
+is whether the nine layers below are all in place — and note the cost of a silent fallback
+is **tier-dependent**: quote 13.4× for A3 Mega and 3.5× for A3 High, never one for the other.
 
 > **Consequence for support:** "the job completed successfully" is *not* evidence that the
 > fabric is healthy, and "there are no errors in the logs" is *not* evidence either. A
-> silent **13×** regression on scarce H100 capacity is the single most expensive failure mode
-> on this platform. It must be checked explicitly, every time.
+> silent **13×** regression (A3 Mega; **3.5×** on A3 High) on scarce H100 capacity is the
+> single most expensive failure mode on this platform. It must be checked explicitly, every time.
 >
 > Put in customer terms: a 10-hour distributed training run on a silently-degraded fabric is
 > not 10% slower. Its collective phases are running at ~7% of the bandwidth they should have.
@@ -49,7 +51,7 @@ CLUSTER=<cluster> ZONE=<zone> NAMESPACE=<ns> POD=<pod> scripts/verify_gpu_fabric
 
 Exit codes: `0` healthy for its tier · `1` degraded (silent fallback likely) · `2` cannot determine.
 
-It checks the eight layers that must **all** hold for GPUDirect to engage, prints a
+It checks the nine layers that must **all** hold for GPUDirect to engage, prints a
 PASS/FAIL table, and orders the probable root causes. Real output from this project's
 production A3 Mega cluster:
 
@@ -112,7 +114,7 @@ nothing if you have never seen the script fail.
 
 ---
 
-## 2. The eight layers, and what each one costs you
+## 2. The nine layers, and what each one costs you
 
 Order matters: layers 1–2 are **create-time-only**, so if they fail, nothing downstream is
 worth investigating until a new cluster exists.
@@ -130,7 +132,7 @@ worth investigating until a new cluster exists.
 | 8 | **NCCL's actual transport choice** | *this is the verdict* | — |
 
 Layer **6c** was added after a bring-up that passed layers 1–7 and still could not move a
-byte (§4.6). If you only remember one addition to this playbook, remember that layer 6
+byte (§4.10). If you only remember one addition to this playbook, remember that layer 6
 ("plugin DaemonSet is Ready") and layer 6c ("the devices the plugin needs actually exist")
 are **different layers** and fail independently.
 
@@ -142,8 +144,8 @@ fall back to sockets (wrong env family, missing rxdm sidecar). Never close a tic
 
 | Machine | Tier | GPU NICs | Plugin | NCCL env family | Good transport line |
 |---|---|---|---|---|---|
-| `a3-highgpu-8g` | TCPX | 4 | `nccl-plugin-gpudirecttcpx` | `NCCL_GPUDIRECTTCPX_*` | `NET/GPUDirectTCPX` |
-| `a3-megagpu-8g` | TCPXO | 8 | `nccl-plugin-gpudirecttcpx-dev` (see §4.1) | `NCCL_FASTRAK_*` | `NET/FasTrak` |
+| `a3-highgpu-8g` | TCPX | 4 | `gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev` — pin `:v3.1.12`, **never `:latest`** (§4.13) | `NCCL_GPUDIRECTTCPX_*` | `NET/GPUDirectTCPX_v7` |
+| `a3-megagpu-8g` | TCPXO | 8 | `gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev` — pin per driver (§4.1) | `NCCL_FASTRAK_*` | `NET/FasTrak` |
 | `a3-ultragpu-8g`, `a4-highgpu-8g`, `a4x-highgpu-4g` | RDMA/RoCE | 8 | native (no installer) | `NCCL_IB_*` | `NET/IB` |
 
 ---
@@ -218,10 +220,19 @@ kubectl exec -n <ns> <pod> -- sh -c 'for i in /sys/class/net/eth*; do echo "$i $
 #   eth0 1460   eth1..eth8 8244
 ```
 
-The env block must come from **sourcing the vendor's `nccl-env-profile.sh`**, which discovers
-the interfaces on the node it runs on. A hand-written `NCCL_FASTRAK_IFNAME` is a latent bug —
-correct until the machine shape changes. (`ip` is often absent from CUDA images; read
-`/sys/class/net/` instead of reaching for `ip link`.)
+On **TCPXO**, the env block must come from **sourcing the vendor's `nccl-env-profile.sh`**,
+which discovers the interfaces on the node it runs on. A hand-written `NCCL_FASTRAK_IFNAME`
+is a latent bug — correct until the machine shape changes. (`ip` is often absent from CUDA
+images; read `/sys/class/net/` instead of reaching for `ip link`.)
+
+> **Tier caveat (measured 2026-07-31, lab-18).** That rule is **TCPXO-only**. The **TCPX**
+> plugin ships **no** `nccl-env-profile.sh` at all — `ls /usr/local/nvidia/lib64/*env*`
+> returns **0 matches** on a working A3 High node. On TCPX you *must* write the rail list by
+> hand (`NCCL_GPUDIRECTTCPX_SOCKET_IFNAME=eth1,eth2,eth3,eth4`), so the mitigation there is a
+> **post-hoc check against the node annotation** rather than a sourced profile — compare your
+> list to `networking.gke.io/nic-info` and to `/sys/class/net/` inside the Pod. Do not tell an
+> A3 High customer to "source the profile"; there isn't one. (**G28**;
+> [`assets/lab-18/after_tcpx_inpod_fabric.txt`](../../assets/lab-18/after_tcpx_inpod_fabric.txt).)
 
 > **Do not triage by counting "error" lines.** A healthy TCPXO run on this platform produced
 > **63** lines matching `-i 'error|abort'` and every one was benign: 47 `abort` + 16 `Abort`
@@ -295,6 +306,24 @@ means the DaemonSet never schedules and the plugin is never installed.
 > DaemonSet has nowhere to land while capacity is pending. `verify_gpu_fabric.sh`
 > deliberately reports `WARN` (not `FAIL`) for this, so support is not sent chasing a
 > non-bug on every stocked-out Flex cluster.
+
+> **⚠ `DESIRED 0` and `0 ready` are two different bugs — check which one you have first.**
+> This entry only covers `DESIRED 0` (**nothing scheduled** ⇒ selector). If Pods **are**
+> scheduled but not ready, the scheduler and the label are *fine* and a **container** is
+> wedged — most often §4.12's dead `pause` image. Reaching for labels first is how this was
+> misdiagnosed live (**G30**, checker bug #4):
+>
+> ```bash
+> kubectl get pods -n kube-system -l name=nccl-tcpx-installer \
+>   -o custom-columns='POD:.metadata.name,READY:.status.containerStatuses[*].ready,WAITING:.status.containerStatuses[*].state.waiting.reason'
+> ```
+>
+> Pods listed ⇒ container problem. Nothing listed ⇒ selector problem. And note the sting in
+> the tail: **if the `initContainer` already `Completed`, the plugin libraries are already
+> installed on the node** and the fabric may work perfectly while the DaemonSet reads
+> `0 ready`. Layer 6 of `verify_gpu_fabric.sh` now makes this distinction for you and says
+> which of the two it is; validated against both faults injected live
+> ([`assets/lab-18/checker_bug4_layer6_controls.txt`](../../assets/lab-18/checker_bug4_layer6_controls.txt)).
 
 ### 4.3 Plugin installed, but `GPU Direct RDMA Disabled` — missing rxdm sidecar
 
@@ -492,6 +521,93 @@ device-plugin fault. It is neither — it is a Pod-spec bug, and it is 100% repr
 one-rank-per-node). This also makes handovers gap-free: the new Pods queue *before* the
 incumbent releases its GPUs.
 
+### 4.12 Installer `0 ready` from the **documented** `pause` image — **OBSERVED 2026-07-31**
+
+**Signature.** The TCPX installer DaemonSet reads `2 desired / 2 scheduled / 0 ready`, and the
+stuck container is not the plugin at all:
+
+```
+nccl-tcpx-installer-xxxxx   0/1   Running
+  init:nccl-tcpx-installer   Completed          <-- the plugin DID install
+  pause                      ImagePullBackOff   <-- this is what is 0/1
+  Failed to pull image "gcr.io/google-containers/pause:3.9": not found
+```
+
+**Mechanism.** The image the GKE TCPX documentation names for the installer's idle sidecar,
+`gcr.io/google-containers/pause:3.9`, **does not exist in that registry**. The DaemonSet
+therefore never reaches Ready — but its `initContainer` has already run to completion, so
+`libnccl-net.so` **is** on the node and **the fabric works**. The not-Ready DaemonSet is a
+red herring pointing at a healthy fabric.
+
+**Why support cares.** Two traps at once: (a) it looks like §4.2's label bug and invites
+pointless `nodeSelector` edits (**G30**); (b) it looks fatal but isn't — telling a customer
+"your plugin failed to install" is wrong.
+
+**Fix.** Pin a `pause` image that exists, by digest:
+
+```yaml
+- name: pause
+  image: gke.gcr.io/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830
+```
+
+> **Do not try to pre-check this with `gcloud container images describe`.** Against a registry
+> outside your own project it fails on *permissions* before it ever reports existence, so a
+> 404 and an access denial are indistinguishable. Test the pull, or use
+> `gcloud artifacts docker images list --include-tags`.
+
+Reference: [`manifests/tcpx/nccl-tcpx-installer.yaml`](../../manifests/tcpx/nccl-tcpx-installer.yaml)
+(**G27**).
+
+### 4.13 TCPX plugin `:latest` vs an R580 driver — **OBSERVED 2026-07-31** · aborts NCCL
+
+**This is the most expensive trap on the TCPX tier**, and unlike §4.10 it fails *closed* —
+which is the only good news about it.
+
+**Signature.** Layers 1–7 all green, the plugin loads, and then every rank dies at memory
+registration:
+
+```
+NET/GPUDirectTCPX : ioctl get dma_buf frags: Inappropriate ioctl for device
+NET/GPUDirectTCPX : gpu_tx_reg_mr failed -5
+Error encountered progressing operation=Connect, res=3
+```
+
+**Mechanism.** `nccl-plugin-gpudirecttcpx-dev:latest` resolves to a **2023 build** whose
+dmabuf registration path predates the R580 driver's interface. The plugin asks the driver for
+dma_buf frags through an ioctl the installed driver no longer implements, and `ENOTTY` comes
+back as `-5` at `gpu_tx_reg_mr`.
+
+**Two traps sit inside the workaround.** Disabling dmabuf does not rescue it:
+
+```
+NET/GPUDirectTCPX : p2pdma api won't work with only RegMr, due to alignment issue
+```
+
+and the variable that actually controls this is core NCCL's **`NCCL_USE_DMA_BUF`** — the
+plausible-looking `NCCL_GPUDIRECTTCPX_USE_DMABUF` is **silently ignored**, so you can "turn it
+off" and watch nothing change. Note also that `/proc/driver/nvp2p_dma_buf` and
+`/proc/driver/nvdma` are **both absent** on a working node; their absence is not the fault.
+
+**Fix.** Pin **`:v3.1.12`** (or `:v3.1.11`) — the tag carrying the R580-compatible
+registration path. **The fix tag is invisible to the registry's `tags/list` endpoint**, so
+enumerate through Artifact Registry instead:
+
+```bash
+gcloud artifacts docker images list \
+  us-docker.pkg.dev/gce-ai-infra/gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev \
+  --include-tags --sort-by=~CREATE_TIME
+```
+
+With `:v3.1.12` the same Pod pair reached `Using network GPUDirectTCPX_v7` and
+**83.27 GB/s busbw** on 16 GPUs. Full signature:
+[`assets/lab-18/tcpx_failure_dmabuf_regmr.txt`](../../assets/lab-18/tcpx_failure_dmabuf_regmr.txt)
+(**G29**).
+
+> **The general lesson across §4.1, §4.12 and §4.13:** on this platform **every** GPUDirect
+> image tag is a version-pairing decision against the node's driver, and **`:latest` is never
+> the answer** — on TCPXO it does not resolve at all (§4.1), on TCPX it resolves to something
+> that breaks (§4.13). Read the driver label first, then pin by tag.
+
 ---
 
 ## 5. Monitoring — catching silent fallback before a human notices
@@ -508,7 +624,13 @@ all-reduce, and again with the same job forced onto the socket path**. Raw numbe
 > is §5.2. Keep reading for why, because the reason generalises to every kernel-bypass
 > datapath you will ever monitor.
 
-### 5.1 The counter that cannot see your fabric
+### 5.1 The counter that cannot see your fabric — *on TCPXO*
+
+> **Scope, fixed by measurement (2026-07-31).** This section originally generalised from
+> TCPXO to "GPUDirect" and to "RDMA fabrics generally". **That was too broad.** The blindness
+> below is a property of the **FasTrak/TCPXO kernel-bypass datapath**, not of GPUDirect as a
+> family. On **GPUDirect-TCPX (A3 High)** the very same counters *do* see the traffic — see
+> **§5.1a**. Read both before you write a rule, and always write the **tier** next to it.
 
 Under a sustained FasTrak all-reduce — 100% GPU util, ~283 iterations/s of a 2 GB buffer,
 317 GB/s bus bandwidth — the GPU NICs report this:
@@ -522,7 +644,7 @@ hypervisor, same instant:
   compute_googleapis_com:instance_network_sent_bytes_count  =  0.001 Gbit/s
 ```
 
-Four packets per second, on eight rails, while ~1.1 TB/s crosses them. **GPUDirect is a
+Four packets per second, on eight rails, while ~1.1 TB/s crosses them. **TCPXO/FasTrak is a
 kernel-bypass datapath**: the rxdm sidecar drives the NIC from userspace and DMAs straight
 into GPU HBM via dmabuf, so payload bytes never touch the kernel network stack that
 populates `netdev` counters. What is left is ARP and link housekeeping. `eth1-8` do not
@@ -531,11 +653,49 @@ counter to fall back to.
 
 Two consequences, and both are load-bearing:
 
-1. **Never alert on the absence of bytes on a GPU NIC.** On TCPXO/TCPX and on RDMA fabrics
-   generally, low NIC byte counts are what *health* looks like.
+1. **Never alert on the absence of bytes on a GPU NIC — on TCPXO.** There, low NIC byte
+   counts are what *health* looks like. (Same for RDMA, DPDK and SPDK. **Not** for TCPX.)
 2. **The rail-imbalance ratio in this section's earlier form is 0/0 on TCPXO.** It remains
-   valid on tiers whose datapath still touches `netdev`, so it is kept below with an
-   explicit applicability note rather than deleted.
+   valid on tiers whose datapath still touches `netdev` — A3 Ultra/A4 RoCE **and A3
+   High/TCPX** — so it is kept below with an explicit applicability note rather than deleted.
+
+### 5.1a …and the same counter *does* see a TCPX fabric (A3 High)
+
+The counterexample that forces the scoping above. After the 16-GPU GPUDirect-TCPX all-reduce
+of [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) — `Using network GPUDirectTCPX_v7`, 0 ×
+`NET/Socket`, 83.27 GB/s busbw — the in-pod counters read:
+
+```
+in-pod /sys/class/net/ethN/statistics, cumulative over the run (pod tcpx-wb-0):
+  eth0    tx    0.04 GB     (control plane only)
+  eth1   tx   50.43 GB   rx   50.76 GB
+  eth2   tx   50.41 GB   rx   50.75 GB      <- 4 rails, spread < 0.05%
+  eth3   tx   50.40 GB   rx   50.75 GB
+  eth4   tx   50.41 GB   rx   50.75 GB
+```
+
+Not four packets per second — **~50 GB per rail**, and evenly spread. So on **A3 High**:
+
+- A plain `cat /sys/class/net/eth*/statistics/tx_bytes` **is** a valid liveness *and*
+  rail-balance check, and the §5.1 rail-imbalance PromQL **does** work.
+- The "GPU util high **and** GPU-NIC bytes ~0" shape is a genuine **fault** signal here —
+  the exact opposite of its meaning one tier up.
+
+**Why the two tiers differ.** Both are "GPUDirect", but TCPX still moves payload through TCP
+sockets on the host stack (that is the *TCP* in the name) with the NIC DMA-ing into GPU
+memory; TCPXO/FasTrak replaces the transport wholesale with a userspace datapath. The name
+shared between them predicts nothing about their observability — which is the transferable
+lesson: **verify per tier; never inherit a fabric monitoring rule across tiers.**
+
+The one signal that behaves consistently on **both** tiers is `DCGM_FI_PROF_PCIE_TX_BYTES`
+(§5.2) — on TCPX it read **~1.81 GB/s per GPU under load vs ~254 KB/s idle (~7000×)**,
+`NVLINK_TX` ~6.87 GB/s for the intra-node ring stage. If you want *one* rule that holds
+across A3 High and A3 Mega, build it on PCIe, not on NIC bytes. Evidence:
+[`assets/lab-18/after_tcpx_monitoring.txt`](../../assets/lab-18/after_tcpx_monitoring.txt).
+
+> **Do not read PCIe TX as the wire rate.** It measures host↔GPU staging; 7.24 GB/s summed
+> per node coexists with 83.27 GB/s of busbw. Use DCGM for **liveness and balance**, a
+> benchmark for **throughput**.
 
 Three further metric names this document previously cited **do not exist** on GKE managed
 collection (each returns 0 series): `node_network_*` (no node-exporter — use
@@ -566,8 +726,9 @@ max by (node, interface) (
 max by (node, interface) (rate(kubernetes_io:pod_network_sent_bytes_count[5m]))
 
 # Rail imbalance: max NIC / mean NIC, sustained > 2 = traffic concentrating on one rail
-# (§4.7). VALID on A3 Ultra/A4 RoCE and on a TCPX socket path; on TCPXO all rails read
-# zero even when healthy, so this is 0/0 there and MUST NOT be alerted on.
+# (§4.7). VALID on A3 Ultra/A4 RoCE and on A3 High/GPUDirect-TCPX (measured: 4 rails within
+# 0.05% under load, §5.1a). On TCPXO all rails read zero even when healthy, so this is 0/0
+# there and MUST NOT be alerted on. NOTE: eth[1-8] below -> eth[1-4] on A3 High.
 max by (node) (rate(container_network_receive_bytes_total{interface=~"eth[1-8]"}[5m]))
   /
 avg by (node) (rate(container_network_receive_bytes_total{interface=~"eth[1-8]"}[5m]))
@@ -603,7 +764,8 @@ GPU util high  +  PCIe TX low   +  eth0 high     =>  SILENT FALLBACK
   # GPUs are working hard but almost nothing is crossing PCIe toward the NICs => the
   # collective is not using GPUDirect. Measured separation: 1327 Gbit/s healthy vs
   # 29.7 Gbit/s on the socket path, so 200e9 sits ~6.6x below healthy and ~6.7x above
-  # fallback. Do NOT substitute a NIC byte counter here: on a healthy TCPXO fabric
+  # fallback. Do NOT substitute a NIC byte counter here on TCPXO (on TCPX you could —
+  # §5.1a — but PCIe is the one form that works on both): on a healthy TCPXO fabric
   # eth1-8 read zero, so a NIC-based rule fires permanently on working clusters.
   # Label is `Hostname` (DCGM's own), not `instance`.
   expr: |
@@ -648,7 +810,7 @@ Verified series counts on this cluster (10 GPU nodes, 80 GPUs):
 
 | Metric | Series | Reads on |
 |---|---|---|
-| `DCGM_FI_PROF_PCIE_TX_BYTES` / `_RX_BYTES` | 80 | **the fabric-activity signal.** The only counter that sees GPUDirect traffic at all (§5.2) |
+| `DCGM_FI_PROF_PCIE_TX_BYTES` / `_RX_BYTES` | 80 | **the fabric-activity signal.** The only counter that sees **TCPXO** traffic at all, and the only one that works on **both** tiers (§5.2, §5.1a). On TCPX, NIC counters also work |
 | `DCGM_FI_DEV_GPU_UTIL` | 80 | GPU busy. Necessary but never sufficient — 100% on both sides of the 44× cliff |
 | `kube_daemonset_status_number_ready` | 3 | plugin installer health (§4.1/§4.2) |
 | `container_network_*` / `kubernetes_io:pod_network_*` | 1442 / 404 | per-interface bytes, carries an `interface` label. Useful for `eth0` (fallback tell), useless for `eth1-8` |
@@ -711,7 +873,9 @@ before sending outside your organisation.
   |     exit 1 + layer 1/2 FAIL  -> create-time gate missing. NEW CLUSTER REQUIRED (§4.8). Say so now.
   |     exit 1 + layer 4/7 FAIL  -> pool built without GPU NICs. RECREATE THE POOL.
   |     exit 1 + layer 3 FAIL    -> kubectl apply the Network/ParamSet CRDs. Cheap fix.
-  |     exit 1 + layer 6 FAIL    -> installer image or accelerator label (§4.1, §4.2).
+  |     exit 1 + layer 6 FAIL    -> READ THE ROW: "NO Pods scheduled" = accelerator label (§4.2);
+  |                                  "Pod(s) scheduled but 0 ready" = a container is stuck, and the
+  |                                  plugin may ALREADY be installed (§4.1, G27) — do not edit labels.
   |     exit 1 + layer 6c FAIL   -> hand-rolled installer; /dev/dmabuf_import_helper missing (§4.10).
   |     exit 0                   -> config is right; go to 2. DO NOT STOP HERE.
   |
@@ -729,7 +893,9 @@ before sending outside your organisation.
         GPU Direct RDMA Disabled  -> rxdm sidecar missing from the WORKLOAD pod (§4.3).
         NET/FasTrak | TCPX | IB    -> fabric is fine. Look ABOVE it: data loading, NCCL_ALGO, topology.
                                       If throughput ~1/N of expected, check rail balance (§4.7).
-                                      Reference: 317.84 GB/s busbw, 16 GPU, 2x a3-megagpu-8g (§0).
+                                      Reference (§0), 16 GPU, untuned floors — match the TIER:
+                                        a3-megagpu-8g / FasTrak : 317.84 GB/s
+                                        a3-highgpu-8g / TCPX    :  83.27 GB/s
   |
   4. Still unresolved -> NAMESPACE=.. POD=.. scripts/collect_fabric_bundle.sh, attach tarball, paste SUMMARY.txt.
 ```
@@ -744,16 +910,17 @@ Honest self-assessment, because support will encounter these exact clusters:
 |---|---|---|---|
 | `hypercomputer-a3-asiaeast1` | `a3-highgpu-8g` | TCPX | ❌ single-gVNIC — no Dataplane V2. **Create-time; unfixable in place.** |
 | `hypercomputer-a3-asiasoutheast1` | `a3-megagpu-8g` | TCPXO | ❌ single-gVNIC — no Dataplane V2. Runs real workloads at the socket-fallback floor. |
-| `hypercomputer-a3-tcpx` | `a3-highgpu-8g` | TCPX | ✅ gates cleared: DPv2 + multi-networking + 4 GPU nets + CRDs live. Capacity-gated; **no throughput figure claimed**. |
+| `hypercomputer-a3-tcpx` | `a3-highgpu-8g` | TCPX | ✅ **fully proven end-to-end**: 4 GPU nets, 5 NICs on-node, `Using network GPUDirectTCPX_v7`, 0 × `NET/Socket`, **83.27 GB/s busbw @ 16 GPU**. |
 | `hypercomputer-a3-tcpxo` | `a3-megagpu-8g` | TCPXO | ✅ **fully proven end-to-end**: 8 GPU nets, 9 NICs on-node, layer 6c devices present, `NET/FasTrak`, **317.84 GB/s busbw @ 16 GPU**. |
 
 The two production clusters are the reason this playbook exists: they were built before
 the create-time gates were understood, they have never emitted a single error about it,
 and the cost is a permanent **≈13×** inter-node penalty that only an explicit check reveals.
 The last row is the control that makes that number real — same GPU model, same benchmark,
-same region, **317.84 GB/s vs 23.7 GB/s**, and the only difference is the eight layers.
+same region, **317.84 GB/s vs 23.7 GB/s**, and the only difference is the nine layers.
 
-> **What is still not proven here.** The TCPX (A3 High) row has never carried traffic — its
-> gates are verified, its bandwidth is not. And 317.84 GB/s was measured **without** NUMA/rail
-> CPU pinning (the run logged `CPU affinity ... not a subset`), so treat it as a floor for a
-> healthy fabric, not a target to certify hardware against.
+> **What is and isn't claimed here.** Both healthy rows are now measured end-to-end. Neither
+> is **tuned**: 317.84 GB/s was measured without NUMA/rail CPU pinning (the run logged
+> `CPU affinity ... not a subset`), and 83.27 GB/s likewise had TX/RX bindings set but ranks
+> unpinned. Treat both as **floors for a healthy fabric**, not targets to certify hardware
+> against. What remains genuinely unproven: a *tuned* figure on either tier.

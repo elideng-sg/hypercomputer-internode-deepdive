@@ -4,7 +4,7 @@
 
 Part VI opens the guide's second applied track: **architecture & GCP integration** — the *design* skill, the horizontal axis to Parts I–V's vertical stack. And the first design decision, the one that sets the ceiling on every distributed job, is the **inter-node fabric**.
 
-Parts II–III measured that fabric honestly and found a cliff: NCCL all-reduce falls from **~480 GB/s** inside a node (NVLink) to **~28.6 GB/s** across nodes (lab-06), and *down a curve* — **465 → 23.7 → 14.95 GB/s** at 1/2/3 nodes (lab-12). That floor is **not physics**. It is the consequence of an architecture choice made — usually by default — at cluster-creation time: the nodes talk over a **single gVNIC / TCP** path, and NCCL logs `NET/Socket`, `GPU Direct RDMA Disabled`. This document is about making that choice **deliberately**: single-gVNIC vs GPUDirect-TCPX vs TCPXO vs RDMA, what each costs to stand up, and what each buys — tied to the [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) before/after that measures the cliff closing.
+Parts II–III measured that fabric honestly and found a cliff: NCCL all-reduce falls from **~480 GB/s** inside a node (NVLink) to **~28.6 GB/s** across nodes (lab-06), and *down a curve* — **465 → 23.7 → 14.95 GB/s** at 1/2/3 nodes (lab-12). That floor is **not physics**. It is the consequence of an architecture choice made — usually by default — at cluster-creation time: the nodes talk over a **single gVNIC / TCP** path, and NCCL logs `NET/Socket`, `GPU Direct RDMA Disabled`. This document is about making that choice **deliberately**: single-gVNIC vs GPUDirect-TCPX vs TCPXO vs RDMA, what each costs to stand up, and what each buys — tied to the [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) before/after that measures the cliff closing. **As of 2026-07-31 both enabled rungs are measured**, so the ladder below is evidence rather than argument: the same 16-GPU all-reduce runs at **23.7 GB/s** on the default rung, **83.27 GB/s** on TCPX, and **317.84 GB/s** on TCPXO.
 
 **What you'll learn:**
 - The **GPU-fabric ladder** on GCP — single-gVNIC → TCPX → TCPXO → RDMA/RoCE — each mapped to its A3/A4 machine family and its measured-or-referenced bandwidth
@@ -15,13 +15,13 @@ Parts II–III measured that fabric honestly and found a cliff: NCCL all-reduce 
 
 **Prerequisites:** [doc-05](../part2-inter-node/05-nic-rdma-gpudirect.md) (NICs/RDMA/GPUDirect mechanism) and [doc-06](../part2-inter-node/06-nccl-collectives.md) (the measured gVNIC curve this closes); helpful: [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md) (read the transport, don't assume it).
 
-**Instantiated by:** [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) — provision the multi-network TCPX pool and measure gVNIC→TCPX. *(The **before** is captured live; the **after** is pending A3 Flex capacity + a Dataplane-V2 cluster — see Step 2. The design and provisioning are complete and honest; the after-number lands when capacity does.)*
+**Instantiated by:** [lab-18](../../labs/lab-18-enable-gpudirect-tcpx/) — provision the multi-network TCPX pool and measure gVNIC→TCPX. *(**Both halves are now live measurements** — the **after** was captured 2026-07-31 on `hypercomputer-a3-tcpx`, 2 × `a3-highgpu-8g` / 16 × H100: `Using network GPUDirectTCPX_v7`, zero `NET/Socket` lines, **83.27 GB/s busbw**. See Step 2.)*
 
 ---
 
 ## Where this fits (the environment)
 
-*Figure — where this fits: the current lab cluster is **single-gVNIC** (`LEGACY_DATAPATH`), so every inter-node all-reduce rides one `eth0` at the **~28.6 GB/s floor** (red); TCPX (grey) can only live in a **NEW Dataplane-V2 cluster** lab-18 provisions — never an in-place upgrade.*
+*Figure — where this fits: the original lab cluster is **single-gVNIC** (`LEGACY_DATAPATH`), so every inter-node all-reduce rides one `eth0` at the **~28.6 GB/s floor** (red); TCPX (blue = measured) could only be built in a **NEW Dataplane-V2 cluster**, which lab-18 provisioned and then benchmarked at **83.27 GB/s** — never an in-place upgrade.*
 
 ```mermaid
 flowchart LR
@@ -34,16 +34,16 @@ flowchart LR
       N2["node · 8× H100<br/>single gVNIC eth0"]
     end
   end
-  subgraph NEWC["a NEW Dataplane-V2 cluster · lab-18 (pending capacity)"]
-    TPX["TCPX pool<br/>4 GPU VPCs @ MTU 8244"]
+  subgraph NEWC["a NEW Dataplane-V2 cluster · hypercomputer-a3-tcpx · lab-18 (MEASURED)"]
+    TPX["TCPX pool · 2× a3-highgpu-8g<br/>4 GPU VPCs @ MTU 8244<br/>83.27 GB/s busbw · GPUDirectTCPX_v7"]
   end
   N1 <-->|"all-reduce over TCP · ~28.6 GB/s floor<br/>NET/Socket, RDMA disabled"| N2
   CLI -.->|"read the rung"| N1
-  CLI -.->|"provision the fabric"| TPX
+  CLI -->|"provision the fabric, then read it (measured)"| TPX
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
   classDef ctx fill:#e8eaed,stroke:#9aa0a6,color:#202124;
-  class N1,N2 crit; class TPX ctx; class CLI ctx;
+  class N1,N2 crit; class TPX meas; class CLI ctx;
 ```
 
 ---
@@ -55,16 +55,16 @@ Every GCP GPU platform sits on a rung of an inter-node fabric ladder. The rung i
 | Rung | Machine family | Inter-node fabric | Per-node GPU NICs | Where in this guide |
 |---|---|---|---|---|
 | **single-gVNIC / TCP** | any A3 (default) | standard VPC TCP over one gVNIC | 1 (shared w/ host) | **measured** — lab-06/12 (~28.6 GB/s floor) |
-| **GPUDirect-TCPX** | A3 High (`a3-highgpu-8g`) | TCP + GPU-Direct DMA over 4 dedicated NICs | 4 | **lab-18** — fabric **provisioned live** (`hypercomputer-a3-tcpx`); node capacity-gated |
+| **GPUDirect-TCPX** | A3 High (`a3-highgpu-8g`) | TCP + GPU-Direct DMA over 4 dedicated NICs | 4 | **lab-18** — **MEASURED: 83.27 GB/s** busbw @ 16 GPU, `GPUDirectTCPX_v7` (`hypercomputer-a3-tcpx`) |
 | **GPUDirect-TCPXO** | A3 Mega (`a3-megagpu-8g`) | TCPX-optimized over 8 NICs (higher ceiling) | 8 | **lab-22** — **MEASURED: 317.84 GB/s** busbw @ 16 GPU, `NET/FasTrak` (`hypercomputer-a3-tcpxo`) |
 | **GPUDirect-RDMA / RoCE** | A3 Ultra (`a3-ultragpu-8g`), A4 | RoCEv2 over CX-7, `NET/IB` present | 8 (CX-7) | reference-arch (Part IV fabric contrast) |
 
-*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. The red rung is where the original clusters sit (measured). The **TCPXO rung is now measured too**, on a purpose-built cluster — and the gap between the two is 13.4× on identical GPUs. TCPX is provisioned and verified as configured; RDMA/RoCE remains reference.*
+*Figure: the fabric ladder — each rung removes the host/TCP bottleneck of the one below and lifts the inter-node ceiling. The red rung is where the original clusters sit. **All three reachable rungs are now measured**, each on a purpose-built cluster with the same harness: 23.7 → 83.27 → 317.84 GB/s, i.e. **3.5×** for TCPX and **13.4×** for TCPXO over the default. Note the ladder tracks **rail count** (1 → 4 → 8) more than it tracks tier names. RDMA/RoCE remains reference (no A3 Ultra / A4 hardware in this project).*
 
 ```mermaid
 flowchart LR
-  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>23.7–28.6 GB/s — MEASURED"] -->|"≈13.4×"| R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 — PROVISIONED"]
-  R1 --> R2["GPUDirect-TCPXO<br/>A3 Mega · 8 GPU NICs<br/>lab-22 — <b>317.84 GB/s MEASURED</b>"]
+  R0["single-gVNIC / TCP<br/>1 NIC (shared)<br/>23.7–28.6 GB/s — MEASURED"] -->|"≈3.5× (4 rails)"| R1["GPUDirect-TCPX<br/>A3 High · 4 GPU NICs<br/>lab-18 — <b>83.27 GB/s MEASURED</b>"]
+  R1 -->|"≈3.8× further<br/>(≈13.4× vs the floor)"| R2["GPUDirect-TCPXO<br/>A3 Mega · 8 GPU NICs<br/>lab-22 — <b>317.84 GB/s MEASURED</b>"]
   R2 --> R3["GPUDirect-RDMA / RoCE<br/>A3 Ultra / A4 · CX-7<br/>reference"]
   classDef crit fill:#c5221f,stroke:#7a161c,color:#ffffff;
   classDef meas fill:#1a73e8,stroke:#0b57d0,color:#ffffff;
@@ -73,28 +73,34 @@ flowchart LR
   class R0 crit; class R1 meas; class R2 good; class R3 ctx;
 ```
 
-**What the rung is worth, in one line.** Same GPUs, same benchmark, same collective, 16 GPUs
-across 2 nodes: **23.7 GB/s** on the bottom rung, **317.84 GB/s** on the TCPXO rung. The
-ladder is not an optimisation — the bottom rung throws away more than 90% of the fabric.
+**What the rung is worth, in one line.** Same benchmark, same collective, same GPU model, 16
+GPUs across 2 nodes: **23.7 GB/s** on the bottom rung, **83.27 GB/s** on TCPX, **317.84 GB/s**
+on TCPXO. The ladder is not an optimisation — the bottom rung throws away ~72% of an A3 High
+fabric and >90% of an A3 Mega one.
+
+**And the rung you can reach is decided by the machine family you bought**, not by tuning: TCPX
+is not "TCPXO minus a bit". It has half the rails, a different plugin, a different NCCL env
+family, and — as lab-18 found — different *observability* (see Step 2). Quote **3.5×** to an A3
+High customer and **13.4×** to an A3 Mega one; swapping them misstates the cost of a silent
+fallback by ~4×.
 
 **The honesty line (inherited from the whole guide):** claims are graded by what was actually done.
 
 - *Measured*: the single-gVNIC floor (23.7 GB/s at 2 nodes on `asia-east1-c`; ~28.6 GB/s on
-  the original `us-central1` cluster) **and now the TCPXO rung** — **317.84 GB/s** busbw
-  across 16 GPUs on 2 × `a3-megagpu-8g`, with `NET/FasTrak` read off the wire on every rank
-  and **zero** `NET/Socket` lines. Same harness as lab-06/12, so the ratio is apples to
-  apples: **≈13.4×**. Evidence:
+  the original `us-central1` cluster), **the TCPXO rung** — **317.84 GB/s** busbw across 16
+  GPUs on 2 × `a3-megagpu-8g` with `NET/FasTrak` on every rank — **and, since 2026-07-31, the
+  TCPX rung**: **83.27 GB/s** busbw across 16 GPUs on 2 × `a3-highgpu-8g`, with
+  `Using network GPUDirectTCPX_v7`, **920** `NET/GPUDirectTCPX` lines, **zero** `NET/Socket`
+  lines, and all 4 rails carrying traffic evenly. All three use the same lab-06/12 harness, so
+  the ratios are apples to apples: **≈3.5×** and **≈13.4×**. Evidence:
   [`assets/lab-22/tcpxo_allreduce_16gpu.txt`](../../assets/lab-22/tcpxo_allreduce_16gpu.txt),
-  [`tcpxo_transport_fastrak.txt`](../../assets/lab-22/tcpxo_transport_fastrak.txt).
-- *Provisioned and verified as configured*: **TCPX** (`hypercomputer-a3-tcpx`) — clears the
-  create-time gates (Dataplane V2 + multi-networking), has its 4 GPU VPCs,
-  `Network`/`GKENetworkParamSet` CRDs and NCCL plugin applied live, and passes all checkable
-  layers of [`verify_gpu_fabric.sh`](../../scripts/verify_gpu_fabric.sh) — but has never
-  carried traffic.
-- *Not claimed*: a **TCPX (A3 High) bandwidth number**, and a **tuned** TCPXO figure. The
-  317.84 GB/s run logged `CPU affinity ... not a subset` — ranks were not NUMA-pinned to
-  their rails — so it is a healthy-fabric **floor**, not this hardware's ceiling. Do not
-  quote it as a certification target. And note the ordering that made the number meaningful:
+  [`tcpxo_transport_fastrak.txt`](../../assets/lab-22/tcpxo_transport_fastrak.txt),
+  [`assets/lab-18/after_tcpx_allreduce.txt`](../../assets/lab-18/after_tcpx_allreduce.txt),
+  [`after_tcpx_transport.txt`](../../assets/lab-18/after_tcpx_transport.txt).
+- *Not claimed*: a **tuned** figure on either enabled rung. Neither run was NUMA/rail-pinned
+  (the TCPXO run logged `CPU affinity ... not a subset`; the TCPX run set TX/RX bindings but
+  did no per-size tuning), so **both numbers are healthy-fabric floors, not this hardware's
+  ceiling**. Do not quote either as a certification target. And note the ordering that made the number meaningful:
   the same cluster passed layers 1–7 of the checker while its fabric could not move a byte
   (see [doc-25 §4.10](../part5-operations-diagnostics/25-fabric-diagnostics-playbook.md)) —
   "configured" and "engaged" are different questions, and only the workload's own NCCL
@@ -159,10 +165,40 @@ NET/Socket : GPU Direct RDMA Disabled for HCA 0 'eth0'
 ```
 → 2-node 16-GPU busbw **~28.6 GB/s**; the 1/2/3-node curve **465 → 23.7 → 14.95 GB/s**.
 
-The **after** (TCPX) is expected to log `NET/GPUDirectTCPX`, enumerate the 4 GPU NICs, and lift the inter-node busbw materially — the number lab-18 will capture the moment a Dataplane-V2 cluster + A3 Flex capacity exist.
+The **after** (TCPX, captured 2026-07-31 on `hypercomputer-a3-tcpx`) reads as designed — the
+transport line, not the throughput, is the proof:
 
-> ### Honest status (why this doc doesn't quote an "after" number)
-> This project's existing cluster is single-gVNIC and **can't** be upgraded (Step 1), and it has **no on-demand H100 quota** — its A3 nodes came via scarce **Flex-start**. So the TCPX after-capture is **pending capacity**, and the guide's honesty rule forbids quoting a fabric number not read off a live run. What *is* complete: the full, reversible provisioning path and the TCPX workload manifests, validated and ready ([lab-18](../../labs/lab-18-enable-gpudirect-tcpx/), [`assets/lab-18/blocker_dataplane_v2.txt`](../../assets/lab-18/blocker_dataplane_v2.txt)). Design + provisioning is the deliverable; the number is one `provision_tcpx_pool.sh up` away.
+```
+    920  NET/GPUDirectTCPX             <- the plugin, on every rank
+      8  Using network GPUDirectTCPX   <- one per local rank
+      0  NET/Socket                    <- the fallback did NOT happen
+         Using network GPUDirectTCPX_v7
+    264  192.168.0    264  192.168.1   <- all 4 rails carrying traffic, evenly
+    264  192.168.2    264  192.168.3
+```
+→ 2-node 16-GPU busbw **83.27 GB/s** peak (@2 GB), **73.19 GB/s** at 512 MB against the
+gVNIC path's **23.70 GB/s** at the same size: **3.09× like-for-like, 3.51× peak-to-peak**.
+
+> ### What the enabled rung cost to reach (read this before quoting a timeline)
+> The design was complete long before the number was, and not because of capacity alone. Two
+> traps sat between "provisioned" and "engaged", both now catalogued in
+> [doc-25 §4.12–4.13](../part5-operations-diagnostics/25-fabric-diagnostics-playbook.md):
+> the plugin's **`:latest` tag is a 2023 build incompatible with the node's R580 driver** and
+> aborts NCCL at memory registration (**pin `:v3.1.12`** — a tag the registry's `tags/list`
+> does not even show), and the GKE docs' **`pause:3.9` image 404s**, leaving the installer
+> DaemonSet not-Ready *while the plugin is already installed*. Neither is a design flaw in the
+> fabric; both are version-pinning decisions the architecture forces on you. Budget for them.
+>
+> **A design consequence worth carrying forward:** on TCPX the in-pod NIC byte counters **do**
+> see the traffic (~50.4 GB per rail, balanced to within 0.05%), whereas on TCPXO they read
+> **zero** — FasTrak's userspace datapath bypasses the kernel netdev path that TCPX still uses.
+> So *rail-balance monitoring is tier-dependent*: a plain `tx_bytes` read is a valid check on
+> A3 High and a useless one on A3 Mega. This corrected the guide's own earlier generalisation
+> ([`assets/lab-18/after_tcpx_monitoring.txt`](../../assets/lab-18/after_tcpx_monitoring.txt)).
+>
+> The original blocker still stands as the architectural lesson: the pre-existing cluster is
+> single-gVNIC and **cannot** be upgraded (Step 1), which is why this rung needed a **new**
+> cluster ([`assets/lab-18/blocker_dataplane_v2.txt`](../../assets/lab-18/blocker_dataplane_v2.txt)).
 
 ---
 
@@ -182,9 +218,9 @@ The fabric rung is the headline, but a production GPU cluster forces four more d
 ## Key takeaways
 
 - **The inter-node fabric is a create-time architecture decision, not a runtime tunable.** TCPX/TCPXO/RDMA are chosen with the machine family and the cluster's Dataplane-V2 + multi-networking flags — pick the rung before you create the cluster.
-- **The gVNIC floor is a choice.** ~28.6 GB/s (and the 465→23.7→14.95 curve) is what you get by *default*; TCPX exists to close it, at the cost of a multi-network cluster + 4 GPU VPCs + jumbo MTU + the NCCL plugin.
-- **Read the rung on the wire.** `datapathProvider` for the cluster, `NET/Socket` vs `NET/GPUDirectTCPX` in NCCL — never trust the spec sheet over the log.
-- **Honesty holds even for the flagship.** The TCPX before is measured; the after is provisioned-and-pending, not fabricated — the guide would rather ship a complete design with a documented blocker than a made-up bandwidth.
+- **The gVNIC floor is a choice, and now a measured one.** ~28.6 GB/s (and the 465→23.7→14.95 curve) is what you get by *default*; TCPX closes it to **83.27 GB/s** and TCPXO to **317.84 GB/s** — at the cost of a multi-network cluster + 4 (or 8) GPU VPCs + jumbo MTU + the NCCL plugin, all create-time.
+- **Read the rung on the wire.** `datapathProvider` for the cluster, `NET/Socket` vs `NET/GPUDirectTCPX` vs `NET/FasTrak` in NCCL — never trust the spec sheet over the log. "Configured" and "engaged" are different questions, and both enabled clusters here passed configuration checks *before* they could move a byte.
+- **Honesty holds even for the flagship.** Both TCPX halves are now measured on live hardware, and the *untuned* caveat is stated rather than hidden: 83.27 and 317.84 GB/s are floors, not ceilings. The doc carried "provisioned, not measured" for weeks rather than quoting a plausible number — that ordering is the point.
 - **The fabric is only the headline decision.** VPC-native, private + Cloud NAT, Shared VPC, and compact placement / rail alignment are the rest of the GPU network design — and serving inverts the whole optimization target.
 
 ---

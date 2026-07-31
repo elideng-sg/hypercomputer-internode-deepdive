@@ -14,7 +14,7 @@ The through-line is one measured, slightly surprising fact: **a serving latency 
 - The GKE autoscale stack: **HPA on a GPU metric (DCGM)** → **cluster autoscaler** for nodes → **Inference Gateway** for routing — and the **Vertex AI** managed contrast
 - The diagnostic trap: **low GPU utilization + terrible latency means scale the server, not the silicon**
 
-**Prerequisites:** [doc-23](23-training-pipeline-jobset.md) (the training workload this contrasts with) and [doc-20](../part5-operations-diagnostics/20-perf-monitoring-day2.md) (the DCGM/GMP signal the autoscaler reads); helpful: [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md) (read the whole path).
+**Prerequisites:** [doc-23](23-training-pipeline-jobset.md) (the training workload this contrasts with) and [doc-20](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) (the DCGM/GMP signal the autoscaler reads); helpful: [doc-16](../part5-operations-diagnostics/16-diagnostic-method.md) (read the whole path).
 
 **Instantiated by:** [lab-21](../../labs/lab-21-inference-serving/) — a real GPU model server measured for its saturation knee + 1→8-GPU throughput scaling + DCGM under load, with the autoscale/gateway topology as a server-validated reference.
 
@@ -128,5 +128,5 @@ lab-21 ships this as a **server-validated reference** ([`manifests/serving/infer
 ---
 
 **Part VI complete.** ← [doc-21 GKE network design](21-gke-network-design.md) · [doc-22 storage & data path](22-storage-and-data-path.md) · [doc-23 training pipeline](23-training-pipeline-jobset.md)
-**Builds on →** [doc-23 training pipeline](23-training-pipeline-jobset.md) · [doc-20 perf monitoring & day-2 ops](../part5-operations-diagnostics/20-perf-monitoring-day2.md) · [doc-16 diagnostic method](../part5-operations-diagnostics/16-diagnostic-method.md)
+**Builds on →** [doc-23 training pipeline](23-training-pipeline-jobset.md) · [doc-20 perf monitoring & day-2 ops](../part5-operations-diagnostics/20-performance-monitoring-day2-ops.md) · [doc-16 diagnostic method](../part5-operations-diagnostics/16-diagnostic-method.md)
 **Reference →** [reference-arch-cheatsheet.md](../../reference/reference-arch-cheatsheet.md) · [lab-build-gotchas.md](../../reference/lab-build-gotchas.md)

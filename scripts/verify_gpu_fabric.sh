@@ -228,8 +228,31 @@ if [ -n "$DS" ]; then
     # Flex cluster. Distinguish "misconfigured" from "no capacity yet".
     row WARN "6. NCCL plugin DS" "installed, 0 ready — no GPU nodes up yet (Flex capacity pending)"
   else
-    row FAIL "6. NCCL plugin DS" "present but 0 ready while $GPUNODES GPU node(s) exist"
-    cause "The NCCL plugin installer DaemonSet is not running despite GPU nodes being present. Check its nodeSelector matches the node's cloud.google.com/gke-accelerator EXACTLY (nvidia-h100-80gb for A3 High vs nvidia-h100-mega-80gb for A3 Mega) — a mismatch means it never schedules and NCCL silently uses sockets."
+    # DISCRIMINATE before blaming the nodeSelector (checker bug #4, lab-18 / G30).
+    # "0 ready" has two very different causes and the remediations do not overlap:
+    #   (a) no Pod was scheduled at all  -> really is a nodeSelector/taint problem
+    #   (b) Pods ARE scheduled, the initContainer already installed the plugin, but a
+    #       container is stuck (e.g. `pause` in ImagePullBackOff, G27). The plugin is
+    #       ALREADY ON THE NODE; telling the reader to fix labels sends them days astray.
+    DSNS="$(echo "$DS" | awk '{print $1}' | head -1)"
+    DSNAME="$(echo "$DS" | awk '{print $2}' | head -1)"
+    DSPODS="$(kubectl get pods -n "$DSNS" -l "name=$DSNAME" -o name 2>/dev/null | wc -l | tr -d ' ')"
+    [ "${DSPODS:-0}" -eq 0 ] && DSPODS="$(kubectl get pods -n "$DSNS" -o name 2>/dev/null | grep -c "$DSNAME" || true)"
+    if [ "${DSPODS:-0}" -gt 0 ]; then
+      # Name the container that is actually stuck, and its waiting reason.
+      # Emit "<pod> <container>=<waitingReason>" and keep only containers that ARE waiting.
+      # A container with no waiting reason prints a bare "name=" — strip those tokens first,
+      # or an empty init entry at end-of-line hides the real reason next to it.
+      STUCK="$(kubectl get pods -n "$DSNS" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{range .status.containerStatuses[*]}{.name}{"="}{.state.waiting.reason}{" "}{end}{range .status.initContainerStatuses[*]}{"init:"}{.name}{"="}{.state.waiting.reason}{" "}{end}{"\n"}{end}' 2>/dev/null \
+                 | grep "$DSNAME" \
+                 | sed -E 's/[^ \t]+=([ \t]|$)/ /g; s/[ \t]+/ /g; s/^ | $//g' \
+                 | grep '=' | head -2 | tr '\n' ';' || true)"
+      row FAIL "6. NCCL plugin DS" "$DSPODS Pod(s) scheduled but 0 ready — a CONTAINER is stuck, not the scheduler"
+      cause "The installer DaemonSet's Pods ARE scheduled (so the nodeSelector is fine) but the DaemonSet is not Ready — a container is wedged: ${STUCK:-<no waiting reason reported; check kubectl describe>}. NOTE: if the initContainer already Completed, the plugin libraries are ALREADY installed in /home/kubernetes/bin/nvidia/lib64 and NCCL may work despite this red row — the classic case is the 'pause' sidecar in ImagePullBackOff because the GKE-documented gcr.io/google-containers/pause:3.9 path 404s (G27); pin gke.gcr.io/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830 instead. Do NOT start by editing labels."
+    else
+      row FAIL "6. NCCL plugin DS" "present but NO Pods scheduled while $GPUNODES GPU node(s) exist"
+      cause "The NCCL plugin installer DaemonSet has no Pods on the GPU nodes. Check its nodeSelector matches the node's cloud.google.com/gke-accelerator EXACTLY (nvidia-h100-80gb for A3 High vs nvidia-h100-mega-80gb for A3 Mega) and that it tolerates the nodes' taints — a mismatch means it never schedules and NCCL silently uses sockets."
+    fi
   fi
   grep -qi "$PLUGIN_PAT" <<<"$DS" || {
     row WARN "6b. Plugin flavour" "installed plugin does not look like '$PLUGIN_PAT' (expected for $TIER)"

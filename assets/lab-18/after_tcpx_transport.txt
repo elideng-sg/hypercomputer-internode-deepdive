@@ -1,0 +1,38 @@
+# lab-18 AFTER: DECISIVE layer-8 transport read (the whole point of the lab)
+# captured 2026-07-31T05:36:46Z  cluster=hypercomputer-a3-tcpx asia-east1-c
+
+## transport line counts across all 16 ranks (rank0 pod log):
+    920 NET/GPUDirectTCPX
+      8 Using network GPUDirectTCPX
+
+## grep -c NET/Socket  -> the number that matters:
+0
+
+## plugin init banner + NIC discovery:
+[0] NCCL INFO NET/GPUDirectTCPX : GPUDirectTCPX enable: 1
+[0] NCCL INFO NET/GPUDirectTCPX : dynamic chunk size: 524288
+[0] NCCL INFO NET/GPUDirectTCPX : nsocks per thread: 4
+[0] NCCL INFO NET/GPUDirectTCPX : nthreads: 1
+[0] NCCL INFO NET/GPUDirectTCPX : use dmabuf -2 invalid, restore to default.
+[0] NCCL INFO NET/GPUDirectTCPX : use dmabuf: 1
+[0] NCCL INFO NET/GPUDirectTCPX initialization start
+[0] NCCL INFO Using network GPUDirectTCPX_v7
+[1] NCCL INFO NET/GPUDirectTCPX : GPUDirectTCPX enable: 1
+[1] NCCL INFO NET/GPUDirectTCPX : dynamic chunk size: 524288
+[1] NCCL INFO NET/GPUDirectTCPX : nsocks per thread: 4
+[1] NCCL INFO NET/GPUDirectTCPX : nthreads: 1
+
+## the 4 rails actually carrying traffic (flow-steer + connect lines):
+    264 192.168.0
+    264 192.168.1
+    264 192.168.2
+    264 192.168.3
+
+## env as seen by NCCL:
+##   NOT CAPTURED. NCCL_DEBUG_SUBSYS was set to INIT,NET,ENV, but the run's ENV lines
+##   were not in the grep slice saved here, and the Flex Pods were released back to the
+##   capacity holder before the omission was noticed — so this cannot be back-filled
+##   without re-provisioning the nodes. The authoritative env for this exact run is the
+##   Pod spec that produced it: manifests/tcpx/workbench-tcpx.yaml (PROVENANCE block).
+##   The transport evidence above is unaffected: `Using network GPUDirectTCPX_v7`,
+##   920 x NET/GPUDirectTCPX, 0 x NET/Socket.

@@ -478,9 +478,13 @@ Full list: [dcgm-exporter metrics reference](https://github.com/NVIDIA/dcgm-expo
 > fields, or `nvidia-smi nvlink -gt d` in-Pod), and `DCGM_FI_DEV_PCIE_*_THROUGHPUT` (use
 > `DCGM_FI_PROF_PCIE_TX_BYTES` / `_RX_BYTES`). PromQL over a non-existent metric does not
 > error — it silently never fires, so `count(<metric>)` before building a rule on it. The
-> `PROF_PCIE_*` pair matters more than it looks: lab-22 found it is the **only** counter that
-> can see GPUDirect fabric traffic at all, because kernel NIC counters are blind to the
-> kernel-bypass datapath (G25).
+> `PROF_PCIE_*` pair matters more than it looks: it is the **only** counter that sees fabric
+> traffic on **both** GPUDirect tiers, and on **TCPXO it is the only one at all** — FasTrak's
+> userspace datapath leaves kernel NIC counters reading ~zero under full load (lab-22). On
+> **TCPX** the kernel counters *do* work (~50 GB/rail, balanced <0.05% — lab-18), so a plain
+> `tx_bytes` rail-balance check is valid there and useless on A3 Mega. Same query, opposite
+> verdicts per tier — G25. Caveat on both tiers: PCIe TX measures host↔GPU staging, not the
+> wire rate, so use DCGM for **liveness and balance** and a benchmark for **throughput**.
 
 **Forward reference:** Lab-10 demonstrates deploying dcgm-exporter on the GKE A3 cluster, scraping metrics into Prometheus, and using them to debug a stalled NCCL collective.
 
