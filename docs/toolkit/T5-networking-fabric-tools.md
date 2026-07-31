@@ -265,6 +265,8 @@ ls /usr/local/nvidia/lib64/*env* 2>/dev/null | wc -l    # 0 on TCPX is CORRECT
 
 > **`/var/lib/tcpx` is not where the library lands** on the current installer — earlier drafts of
 > this reference said it did. Check `/usr/local/nvidia/lib64/`.
+> Logged as **D3** in [lab-build-gotchas.md](../../reference/lab-build-gotchas.md), alongside **D4**
+> (this reference also used to describe a "FastSocket / TCPX" transport pattern that does not exist).
 
 **Smoking-gun absence:** If NCCL logs show `NET/Socket` after you've installed TCPX or configured RDMA, GPUDirect is not active. Check DaemonSet logs, driver versions, and the verification steps above.
 

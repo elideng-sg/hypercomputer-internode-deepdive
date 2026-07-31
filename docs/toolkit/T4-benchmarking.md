@@ -458,7 +458,8 @@ Performance is typically similar; report the **in-place** numbers for production
 - **A3 Mega, GPUDirect-TCPXO / FasTrak (8 rails):** **317.84 GB/s** busbw, 16 GPUs — *measured*
   ([lab-22](../../labs/lab-22-fabric-diagnostics/)), also untuned.
 
-> **Do not quote a range you have not measured.** This entry previously carried an "expect
+> **Do not quote a range you have not measured.** (Logged as **D5** in
+> [lab-build-gotchas.md](../../reference/lab-build-gotchas.md).) This entry previously carried an "expect
 > 80–120 GB/s" guess for A3 High. The real figure depends almost entirely on **whether the
 > fabric is enabled at all** — a 3.5× swing that no error message announces — so a benchmark
 > number is only meaningful next to the run's NCCL transport line.

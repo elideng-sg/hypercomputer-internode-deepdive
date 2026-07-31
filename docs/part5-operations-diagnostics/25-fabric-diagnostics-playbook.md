@@ -631,6 +631,8 @@ all-reduce, and again with the same job forced onto the socket path**. Raw numbe
 > below is a property of the **FasTrak/TCPXO kernel-bypass datapath**, not of GPUDirect as a
 > family. On **GPUDirect-TCPX (A3 High)** the very same counters *do* see the traffic — see
 > **§5.1a**. Read both before you write a rule, and always write the **tier** next to it.
+> Logged as **D1** in [lab-build-gotchas.md](../../reference/lab-build-gotchas.md) — the same
+> over-generalisation appeared in **G25** and in lab-22 §7.1, and all three are now scoped.
 
 Under a sustained FasTrak all-reduce — 100% GPU util, ~283 iterations/s of a 2 GB buffer,
 317 GB/s bus bandwidth — the GPU NICs report this:

@@ -219,6 +219,11 @@ In the cross-lab index [reference/lab-build-gotchas.md](../../reference/lab-buil
 - **G27** — the GKE-documented **`pause:3.9` image 404s**, so the installer DaemonSet sits at 0 Ready *while the plugin is already on the node*. Pin `gke.gcr.io/pause:3.8@sha256:880e63f9…`.
 - **G28** — **TCPX ships no `nccl-env-profile.sh`.** lab-22 §5's "always source the vendor profile, never hand-write the NIC list" rule is **TCPXO-only**; on TCPX you must set `NCCL_GPUDIRECTTCPX_SOCKET_IFNAME` explicitly.
 - **G29** — the plugin's **`:latest` tag is a 2023 build incompatible with R580 drivers**; it fails *hard* at GPU memory registration (`ioctl get dma_buf frags: Inappropriate ioctl for device` → `gpu_tx_reg_mr failed -5` → `Connect res=3`), and disabling dmabuf only moves the failure. Pin **`:v3.1.12`** — a tag the registry's `tags/list` does not even show.
+- **D1–D6** — this lab also falsified **six claims in the guide's own text** (counter visibility,
+  A3 High rail exposure, the plugin install path, a transport pattern that does not exist, two
+  guessed bandwidth figures, and two internal inconsistencies). They are tabulated as **D1–D6** in
+  [lab-build-gotchas.md](../../reference/lab-build-gotchas.md) — worth reading *before* you trust any
+  single-tier statement in this guide.
 - **G30** — this lab's bring-up exposed **checker bug #4**: `verify_gpu_fabric.sh` blamed a nodeSelector mismatch for what was actually the G27 image pull. Fixed and validated against both injected faults ([`checker_bug4_layer6_controls.txt`](../../assets/lab-18/checker_bug4_layer6_controls.txt)).
 
 ## Cleanup

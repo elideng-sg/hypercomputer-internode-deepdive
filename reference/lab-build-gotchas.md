@@ -4,6 +4,11 @@ Every lab in this guide was built and captured against **live** A3 clusters (us-
 
 Each entry: the **symptom** as it actually appeared, the **root cause**, the **fix**, and **where** it bit us. Signatures are copied from real runs (honesty rule: nothing here is invented). This file is appended to as new labs are built.
 
+> **Two kinds of entry.** **G1–G30** are bugs in *other people's* software and in this repo's
+> harness. **D1–D6** (near the end) are errors **this guide itself shipped**, caught when a later
+> lab measured something the text had already asserted. Both are logged; the second kind is the
+> more useful warning, because it shows where the guide's reasoning — not just its tooling — broke.
+
 > **How to read this alongside the labs.** Each lab README calls out its own headline gotcha inline; this file is the *cross-lab index* so a reader debugging (say) a `set -e` abort or an `ncu` permission error can find every occurrence in one place. See also [tool-cheatsheets.md](tool-cheatsheets.md) (run-vs-named honesty notes) and [doc-16](../docs/part5-operations-diagnostics/16-diagnostic-method.md) (the triage method these lessons instantiate).
 
 ---
@@ -532,6 +537,38 @@ confidently misdirect. Every check that infers a root cause from an aggregate co
 either a discriminating second probe or a hedged message. Diagnostics deserve the same
 adversarial testing as the thing they diagnose — ours only produced correct output after
 being run against clusters that were broken in ways it hadn't anticipated.
+
+---
+
+## D1–D6 — defects found in *this guide's own text*, by measuring what it asserted (lab-18)
+
+Every entry above is a bug in someone else's software. This block is different: these are
+**errors this guide shipped**, found when lab-18 measured a second fabric tier and the new
+numbers contradicted prose written from the first one. They are logged with the same weight as
+the infra gotchas deliberately — a reader who trusted the old text would have been misled, and
+the failure mode (*generalising a measurement from one tier to a family*) is the most likely
+way the rest of this guide is still wrong somewhere.
+
+| # | What the guide said | What is true | Where it was fixed |
+|---|---|---|---|
+| **D1** | "GPUDirect traffic is invisible to NIC byte counters" — stated for **all** GPUDirect | Counter-blindness is a **TCPXO/FasTrak kernel-bypass** property. TCPX keeps the host TCP transport (GPUDirect removes only the host-memory *bounce*), so `netdev` counters see it: ~50.4 GB/rail, balanced <0.05% | **G25** rescoped; [doc-25 §5.1a](../docs/part5-operations-diagnostics/25-fabric-diagnostics-playbook.md) added as the counterexample; lab-22 §7.1 |
+| **D2** | A3 High "does **not** expose multiple rails to NCCL"; "the gVNIC appears as a single 200 Gbps pipe" | **NIC-level rails are tenant-visible and NCCL-striped** (4 rails, 264 refs each, and `NCCL_GPUDIRECTTCPX_SOCKET_IFNAME` is *mandatory tenant input*). Only the **underlay** rail-to-switch topology is opaque | [doc-14](../docs/part4-platform-reference-arch/14-dgx-superpod.md) — both "Contrast with GCP A3" passages + 2 table cells |
+| **D3** | Plugin libraries land in `/var/lib/tcpx` | They land in **`/usr/local/nvidia/lib64`** (the installer copies *out of* `/var/lib/tcpx` inside its own container) | [T5](../docs/toolkit/T5-networking-fabric-tools.md) — 3 places, with the old claim called out |
+| **D4** | A "Pattern 3: FastSocket / TCPX" transport signature | **No such transport.** Fast Socket is a separate, older product; `NET/FastSocket` on an expected-TCPX node is a *finding*, not a success | [T5](../docs/toolkit/T5-networking-fabric-tools.md) — replaced with measured TCPX + FasTrak patterns |
+| **D5** | "Expect `busbw` of **80–120 GB/s**" (T4) and "the multi-hundred-GB/s regime the four rails allow" (doc-05) | Both were **guesses**. Measured: **83.27 GB/s** on 4-rail TCPX; multi-hundred-GB/s belongs to **8-rail TCPXO** (317.84) | [T4](../docs/toolkit/T4-benchmarking.md), [doc-05](../docs/part2-inter-node/05-nic-rdma-gpudirect.md) |
+| **D6** | Internal inconsistencies: the checker described as "eight layers" in some places and "9-layer" in others; two *different* `pause` remedies given for the same fault | The checker emits **nine** layers (1–8 **plus 6c**); the single correct `pause` pin is the 3.8 digest | doc-25 §2, lab-22 README, and the two remedies reconciled |
+
+**Two smaller repo defects fixed in passing** (pre-existing, unrelated to the fabric work):
+doc-25 cross-referenced **§4.6** (MTU) where it meant **§4.10** (the passes-1-7-and-still-dead
+bring-up), and four link targets were stale — `lab-12-multinode-scaling`,
+`lab-18-gpudirect-tcpx`, `lab-17-perf-monitoring`, `20-perf-monitoring-day2`.
+
+**Lesson, and it is the same one as G30.** D1, D2 and D5 are one error repeated: a figure or
+behaviour measured on **one** tier, restated as a property of the **family**. The guide only
+caught them by building the second tier and re-reading its own claims against it — which is
+why the ladder in lab-18 is quoted as *per-tier* numbers (3.5× TCPX, 13.4× TCPXO) and never as
+a single "GPUDirect is N× faster". If you carry one tier's runbook onto the other, you will
+either under-trust a working signal or declare a healthy fabric dead.
 
 ---
 
