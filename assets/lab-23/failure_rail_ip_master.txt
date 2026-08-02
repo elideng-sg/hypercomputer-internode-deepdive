@@ -1,0 +1,32 @@
+[lab-23] context: gke_hdlab-elideng_asia-southeast1-c_hypercomputer-a3-tcpxo
+[lab-23] nodes: gke-hypercomputer-a3-a3-mega-tcpxo-fl-f106ac3b-03hg gke-hypercomputer-a3-a3-mega-tcpxo-fl-f106ac3b-blth gke-hypercomputer-a3-a3-mega-tcpxo-fl-f106ac3b-wcrx
+[lab-23] preflight: installer + device-injector readiness
+[lab-23]   nccl-tcpxo-installer: 3/3 ready
+[lab-23]   device-injector: 3/3 ready
+[lab-23] scaling gpu-holder-tcpxo 3->0 to free all 24 GPUs
+deployment.apps/gpu-holder-tcpxo scaled
+pod/gpu-holder-tcpxo-545f6fdcbb-7n8bd condition met
+pod/gpu-holder-tcpxo-545f6fdcbb-g6c5k condition met
+pod/gpu-holder-tcpxo-545f6fdcbb-g9q78 condition met
+pod/tcpxo-wb-0 created
+pod/tcpxo-wb-1 created
+pod/tcpxo-wb-2 created
+[lab-23] waiting for 3 workbenches (2 containers each) to be Ready...
+pod/tcpxo-wb-0 condition met
+pod/tcpxo-wb-1 condition met
+pod/tcpxo-wb-2 condition met
+[lab-23] layer-8 gate: asserting NET/FasTrak on a 16-GPU probe
+[lab-23] === gate_probe: 2 node(s) / 16 GPUs, master=192.169.0.2 ===
+[launch] node_rank=0 world=16 master=192.169.0.2:29520 nproc=8
+[launch] node_rank=0 done rc=1
+command terminated with exit code 1
+[launch] node_rank=1 world=16 master=192.169.0.2:29520 nproc=8
+[launch] node_rank=1 done rc=1
+command terminated with exit code 1
+cat: /work/w_0.log: No such file or directory
+command terminated with exit code 1
+[lab-23] cleanup: deleting workbenches, restoring gpu-holder-tcpxo to 3
+pod "tcpxo-wb-0" deleted from default namespace
+pod "tcpxo-wb-1" deleted from default namespace
+pod "tcpxo-wb-2" deleted from default namespace
+deployment.apps/gpu-holder-tcpxo scaled

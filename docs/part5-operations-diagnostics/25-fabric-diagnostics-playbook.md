@@ -142,11 +142,39 @@ fall back to sockets (wrong env family, missing rxdm sidecar). Never close a tic
 
 ### Tier expectations
 
-| Machine | Tier | GPU NICs | Plugin | NCCL env family | Good transport line |
-|---|---|---|---|---|---|
-| `a3-highgpu-8g` | TCPX | 4 | `gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev` — pin `:v3.1.12`, **never `:latest`** (§4.13) | `NCCL_GPUDIRECTTCPX_*` | `NET/GPUDirectTCPX_v7` |
-| `a3-megagpu-8g` | TCPXO | 8 | `gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev` — pin per driver (§4.1) | `NCCL_FASTRAK_*` | `NET/FasTrak` |
-| `a3-ultragpu-8g`, `a4-highgpu-8g`, `a4x-highgpu-4g` | RDMA/RoCE | 8 | native (no installer) | `NCCL_IB_*` | `NET/IB` |
+| Machine | Tier | GPU NICs | Plugin | NCCL env family | Good transport line | Env tunable? |
+|---|---|---|---|---|---|---|
+| `a3-highgpu-8g` | TCPX | 4 | `gpudirect-tcpx/nccl-plugin-gpudirecttcpx-dev` — pin `:v3.1.12`, **never `:latest`** (§4.13) | `NCCL_GPUDIRECTTCPX_*` | `NET/GPUDirectTCPX_v7` | **yes — and mandatory**: no env profile ships, so the NIC list and TX/RX bindings must be set by hand (G28) |
+| `a3-megagpu-8g` | TCPXO | 8 | `gpudirect-tcpxo/nccl-plugin-gpudirecttcpx-dev` — pin per driver (§4.1) | `NCCL_FASTRAK_*` | `NET/FasTrak` | **no — 14 vars `POLICY_ENFORCED`**; a mismatch **aborts NCCL init** (§2.1) |
+| `a3-ultragpu-8g`, `a4-highgpu-8g`, `a4x-highgpu-4g` | RDMA/RoCE | 8 | native (no installer) | `NCCL_IB_*` | `NET/IB` | not measured here |
+
+### 2.1 On TCPXO the NCCL environment is enforced, not advisory
+
+The two tiers are **opposites** on this axis, and getting it backwards wastes an escalation in
+each direction. On TCPX you *must* hand-write the env; on TCPXO you must *not touch it*.
+
+TCPXO's plugin loads a **Guest Config Checker** shim that compares the NCCL environment against
+`a3plus_guest_config.textproto` and **refuses to initialize** on any mismatch — before the first
+collective, with a `NCCL WARN` that reads like advice:
+
+```
+NCCL WARN NCCL/NET (shim) mismatch enforced: NCCL_FASTRAK_NUM_FLOWS=4 (expected 2)
+NCCL WARN NCCL/NET (shim) mismatch enforced: NCCL_MIN_NCHANNELS=8 (expected 4)
+```
+
+**14 variables are `POLICY_ENFORCED`** — `NCCL_PROTO`, `NCCL_BUFFSIZE`, `NCCL_MIN_NCHANNELS`,
+`NCCL_CROSS_NIC`, `NCCL_NET_GDR_LEVEL`, all four `*_CHUNKSIZE`, and six `NCCL_FASTRAK_*` — i.e.
+the entire throughput surface. Only `NCCL_TUNER_PLUGIN` and
+`NCCL_FASTRAK_PLUGIN_ACCEPT_TIMEOUT_MS` are `POLICY_RECOMMENDED`.
+
+**Triage consequences:**
+- **A job that dies at init on A3 Mega after someone "tuned NCCL" is this**, not a fabric fault. Grep the rank-0 log for `mismatch enforced` before opening a fabric ticket. It is *not* one of the silent-fallback signatures in §4 — it is loud and it is a crash.
+- **Never recommend an NCCL env change on A3 Mega.** "Try raising `NCCL_MIN_NCHANNELS`" recommends an outage. Read the policy file first.
+- **Do not describe A3 Mega throughput as an "untuned floor."** There is no env sweep available, so the measured numbers *are* the operating point. The `CPU affinity … is not a subset` advisory is real but not addressable this way.
+- **The one exception is `NCCL_ALGO`**, absent from the policy file: `Tree` measured **+8.2%** over the ring default at 24 GPUs ([lab-23](../../labs/lab-23-enabled-scaling-curve/)).
+
+*Evidence: `assets/lab-23/guest_config_enforced.txt`, `failure_shim_enforced_num_flows.txt`,
+`failure_shim_enforced_nchannels.txt`; catalogued as [G34](../../reference/lab-build-gotchas.md).*
 
 ---
 

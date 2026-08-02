@@ -1,0 +1,1607 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1785677499.822232     888 init.cc:112] Current time zone: UTC
+tcpxo-wb-0:888:888 [0] NCCL INFO ENV/Plugin: Could not find: libnccl-env.so
+tcpxo-wb-0:888:888 [0] NCCL INFO NCCL_SOCKET_IFNAME set to eth0
+tcpxo-wb-0:888:888 [0] NCCL INFO cudaDriverVersion 13000
+tcpxo-wb-0:888:888 [0] NCCL INFO NCCL version 2.28.7+cuda13.2
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/Plugin: Loaded net plugin config_checker_shim (v7)
+tcpxo-wb-0:888:888 [0] NCCL INFO Successfully loaded external network plugin /usr/local/nvidia/lib64/libnccl-net.so
+tcpxo-wb-0:888:888 [0] NCCL INFO NCCL/NET (shim) ver. 0.0.1.
+tcpxo-wb-0:888:888 [0] NCCL INFO NCCL/NET (shim) activated shim layers, 'Guest Config Checker'
+
+[2026-08-02 13:31:39] tcpxo-wb-0:888:888 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: NCCL_ALGO=Tree (expected unset)
+
+[2026-08-02 13:31:39] tcpxo-wb-0:888:888 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: NCCL_FASTRAK_LLCM_DEVICE_DIRECTORY=/dev/aperture_devices (expected unset)
+
+[2026-08-02 13:31:39] tcpxo-wb-0:888:888 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: NCCL_LIB_DIR=/usr/local/nvidia/lib64 (expected unset)
+
+[2026-08-02 13:31:39] tcpxo-wb-0:888:888 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: cpu affinity settings not subset, curr=0xffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff (expected 0xffffffff,00000000)
+tcpxo-wb-0:888:888 [0] NCCL INFO NCCL/NET (shim) loading net plugin at libnccl-net_internal.so
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822270169+00:00: Initializing network FasTrak, version: 1.0.17
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822283492+00:00: No environment variable NCCL_FASTRAK_DATA_TRANSFER_SLOWNESS_MS set, using default 300000.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822287511+00:00: NCCL_FASTRAK_ENABLE_HOTPATH_LOGGING set by environment to 0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822290087+00:00: NCCL_FASTRAK_NUM_FLOWS set by environment to 2.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822292362+00:00: No environment variable NCCL_FASTRAK_LOG_CONNECTION_INFO set, using default 0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822294709+00:00: No environment variable NCCL_FASTRAK_SEND_STATS_INTERVAL set, using default 1000000.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822296787+00:00: No environment variable NCCL_FASTRAK_RAIL_ALIGNED set, using default 1.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822298657+00:00: NCCL_FASTRAK_USE_LLCM set by environment to 1.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822300631+00:00: No environment variable NCCL_FASTRAK_PLUGIN_CONNECT_TIMEOUT_MS set, using default 300000.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.82230283+00:00: No environment variable NCCL_FASTRAK_ENABLE set, using default 1.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822304846+00:00: No environment variable NCCL_FASTRAK_DATA_TRANSFER_TIMEOUT_MS set, using default 7200000.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822306732+00:00: No environment variable NCCL_FASTRAK_RXDM_INIT_TIMEOUT set, using default 30.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822308812+00:00: NCCL_FASTRAK_PLUGIN_ACCEPT_TIMEOUT_MS set by environment to 600000.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822310899+00:00: No environment variable NCCL_FASTRAK_CLOSE_SEND_ON_DONE set, using default 0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822312769+00:00: No environment variable NCCL_FASTRAK_CACHE_MR set, using default 1.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822314611+00:00: No environment variable NCCL_FASTRAK_DUMP_COMM_STATS set, using default 1.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822316557+00:00: No environment variable NCCL_FASTRAK_ENABLE_SEND_STATS set, using default 0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822323699+00:00: No environment variable NCCL_FASTRAK_ALLOW_NIC_SUBSET set, using default 0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822325752+00:00: No environment variable NCCL_NET_PLUGIN_TELEMETRY_MODE set, using default 0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822328626+00:00: Using abstract UDS address: rxdm_uds_nic_mapping
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822357361+00:00: RxDM ready
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822857862+00:00: Using interface eth0 as ctrl dev
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822982598+00:00: Using [0]eth1:192.169.0.3<0>[1]eth2:192.169.1.3<0>[2]eth3:192.169.2.3<0>[3]eth4:192.169.3.3<0>[4]eth5:192.169.4.3<0>[5]eth6:192.169.5.3<0>[6]eth7:192.169.6.3<0>[7]eth8:192.169.7.3<0>
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.822986948+00:00: Initialize nccl shim on device:0 during Init.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.828360182+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.828407302+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.828450682+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.828545455+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.82858981+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.828759326+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.828934117+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829077327+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829136449+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829218744+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829263415+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829415754+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829440165+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.8294798+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.829550612+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.82958972+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.82983949+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.82997153+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830008873+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830128991+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.83026071+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830297607+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830455748+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830489837+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.8307213+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830846342+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.830890287+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831160122+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831221986+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831436563+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831500791+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831546699+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831737334+00:00: GetPciAddrToFastrakIdxMap: Found GPUs:
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831740412+00:00: 	FasTrak IDX: [0]. PCI addr: [0000:04:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831743602+00:00: 	FasTrak IDX: [1]. PCI addr: [0000:05:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831746199+00:00: 	FasTrak IDX: [2]. PCI addr: [0000:0b:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.83174799+00:00: 	FasTrak IDX: [3]. PCI addr: [0000:0c:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831749842+00:00: 	FasTrak IDX: [4]. PCI addr: [0000:84:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.83175145+00:00: 	FasTrak IDX: [5]. PCI addr: [0000:85:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831753021+00:00: 	FasTrak IDX: [6]. PCI addr: [0000:8b:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831754643+00:00: 	FasTrak IDX: [7]. PCI addr: [0000:8c:00.0]
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831756864+00:00: NcclShim::Create: GPU PCI addr: 0000:04:00.0, FasTrak idx: 0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831760502+00:00: Using abstract UDS address: rxdm_uds_nic_mapping
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831834828+00:00: Discovered GPU PCI 0000:0b:00.0, closest NIC is eth3 (address 192.169.2.3, index 2)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831842133+00:00: Discovered GPU PCI 0000:84:00.0, closest NIC is eth5 (address 192.169.4.3, index 4)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831845448+00:00: Discovered GPU PCI 0000:0c:00.0, closest NIC is eth4 (address 192.169.3.3, index 3)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831849276+00:00: Discovered GPU PCI 0000:8b:00.0, closest NIC is eth7 (address 192.169.6.3, index 6)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831851553+00:00: Discovered GPU PCI 0000:04:00.0, closest NIC is eth1 (address 192.169.0.3, index 0)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831855068+00:00: Discovered GPU PCI 0000:85:00.0, closest NIC is eth6 (address 192.169.5.3, index 5)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831857514+00:00: Discovered GPU PCI 0000:05:00.0, closest NIC is eth2 (address 192.169.1.3, index 1)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831861596+00:00: Discovered GPU PCI 0000:8c:00.0, closest NIC is eth8 (address 192.169.7.3, index 7)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831865267+00:00: Initialized shim for GPU with CUDA index 0, FasTrak index 0, and pci_path: 0000:04:00.0, the corresponding closest net device is: 0 (eth1)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831869907+00:00: Creating Buf op uds client  on server: rxdm_uds_buf_op:192.169.0.3
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.831872734+00:00: Using abstract UDS address: rxdm_uds_buf_op:192.169.0.3
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.832056255+00:00: Initializing DxsClient (src_addr=192.169.0.3:0, dxs_addr=169.254.169.254:55555, llcm=true)
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.832319845+00:00: Binding to interface: eth1
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.832347437+00:00: DxsClient connected (src_addr=192.169.0.3:40459, socket_fd=130)
+tcpxo-wb-0:888:1448 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.834702695+00:00: SCTP Connected
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.888673911+00:00: DxsClient initialized.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.888702508+00:00: DXS Client initialized on IP addr 192.169.0.3
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.8887076+00:00: Buffer Manager Client initialized on IP addr 192.169.0.3
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.888711387+00:00: GPUViz is disabled
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.888714515+00:00: Plugin initialized for 0000:04:00.0.
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.888716538+00:00: Using 2 total flows
+tcpxo-wb-0:888:888 [0] NCCL INFO Initialized NET plugin FasTrak
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:39.888750293+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO Assigned NET plugin FasTrak to comm
+tcpxo-wb-0:888:888 [0] NCCL INFO Using network FasTrak
+tcpxo-wb-0:888:888 [0] NCCL INFO DMA-BUF is available on GPU device 0
+tcpxo-wb-0:888:888 [0] NCCL INFO ncclCommInitRankConfig comm 0x561356be3650 rank 0 nranks 24 cudaDev 0 nvmlDev 0 busId 4000 commId 0x451ff83eb59486ff - Init START
+tcpxo-wb-0:888:888 [0] NCCL INFO RAS client listening socket at 127.0.0.1<28028>
+tcpxo-wb-0:888:888 [0] NCCL INFO MNNVL busId 0x4000 fabric UUID 0.0 cliqueId 0x0 state 3 healthMask 0x0
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.747986377+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 0 'eth1'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.748178905+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 1 'eth2'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.748321719+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 2 'eth3'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.748559016+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 3 'eth4'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.748711619+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 4 'eth5'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.74896266+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 5 'eth6'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.74908284+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 6 'eth7'
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:40.749252129+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 7 'eth8'
+tcpxo-wb-0:888:888 [0] NCCL INFO NCCL_NET_GDR_LEVEL set by environment to PIX
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO ncclTopoGetCpuAffinity: Affinity for GPU 0 is 0-51,104-155. (GPU affinity = 0-51,104-155 ; CPU affinity = 0-207).
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS multicast support is available on dev 0 (NVLS_NCHANNELS 16)
+tcpxo-wb-0:888:888 [0] NCCL INFO comm 0x561356be3650 rank 0 nRanks 24 nNodes 3 localRanks 8 localRank 0 MNNVL 0
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  0:  0  8 16
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  1:  1  9 17
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  2:  2 10 18
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  3:  3 11 19
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  4:  4 12 20
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  5:  5 13 21
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  6:  6 14 22
+tcpxo-wb-0:888:888 [0] NCCL INFO NVLS Head  7:  7 15 23
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 00/16 :  0  7  6  5  4  3  2  1  8 15 14 13 12 11 10  9 16 23 22 21 20 19 18 17
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 01/16 :  0  9 10 11 12 13 14 15  8 17 18 19 20 21 22 23 16  1  2  3  4  5  6  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 02/16 :  0  7  6  5  4  3 10  9  8 15 14 13 12 11 18 17 16 23 22 21 20 19  2  1
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 03/16 :  0  1  2 11 12 13 14 15  8  9 10 19 20 21 22 23 16 17 18  3  4  5  6  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 04/16 :  0  7  6  5 12 11 10  9  8 15 14 13 20 19 18 17 16 23 22 21  4  3  2  1
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 05/16 :  0  1  2  3  4 13 14 15  8  9 10 11 12 21 22 23 16 17 18 19 20  5  6  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 06/16 :  0  7 14 13 12 11 10  9  8 15 22 21 20 19 18 17 16 23  6  5  4  3  2  1
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 07/16 :  0  1  2  3  4  5  6 15  8  9 10 11 12 13 14 23 16 17 18 19 20 21 22  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 08/16 :  0  7  6  5  4  3  2  1  8 15 14 13 12 11 10  9 16 23 22 21 20 19 18 17
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 09/16 :  0  9 10 11 12 13 14 15  8 17 18 19 20 21 22 23 16  1  2  3  4  5  6  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 10/16 :  0  7  6  5  4  3 10  9  8 15 14 13 12 11 18 17 16 23 22 21 20 19  2  1
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 11/16 :  0  1  2 11 12 13 14 15  8  9 10 19 20 21 22 23 16 17 18  3  4  5  6  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 12/16 :  0  7  6  5 12 11 10  9  8 15 14 13 20 19 18 17 16 23 22 21  4  3  2  1
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 13/16 :  0  1  2  3  4 13 14 15  8  9 10 11 12 21 22 23 16 17 18 19 20  5  6  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 14/16 :  0  7 14 13 12 11 10  9  8 15 22 21 20 19 18 17 16 23  6  5  4  3  2  1
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 15/16 :  0  1  2  3  4  5  6 15  8  9 10 11 12 13 14 23 16 17 18 19 20 21 22  7
+tcpxo-wb-0:888:888 [0] NCCL INFO Trees [0] 1/16/-1->0->-1 [1] 7/-1/-1->0->1 [2] 1/-1/-1->0->7 [3] 7/-1/-1->0->1 [4] 1/-1/-1->0->7 [5] 7/-1/-1->0->1 [6] 1/-1/-1->0->7 [7] -1/-1/-1->0->1 [8] 1/-1/-1->0->8 [9] 7/17/-1->0->1 [10] 1/-1/-1->0->7 [11] 7/-1/-1->0->1 [12] 1/-1/-1->0->7 [13] 7/-1/-1->0->1 [14] 1/-1/-1->0->7 [15] -1/-1/-1->0->1
+tcpxo-wb-0:888:888 [0] NCCL INFO P2P Chunksize set to 524288
+tcpxo-wb-0:888:888 [0] NCCL INFO PROFILER/Plugin: Could not find: libnccl-profiler.so
+tcpxo-wb-0:888:888 [0] NCCL INFO Check P2P Type isAllDirectP2p 1 directMode 0 isAllCudaP2p 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO [Proxy Service] Device 0 CPU core 10
+tcpxo-wb-0:888:1465 [0] NCCL INFO [Proxy Service UDS] Device 0 CPU core 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 0 from local rank 1, transport 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 1 from local rank 5, transport 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 2 from local rank 2, transport 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 3 from local rank 4, transport 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 4 from local rank 3, transport 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 5 from local rank 6, transport 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 6 from local rank 7, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO TUNER/Plugin: Using GcpTunerPlugin_v2 (v2)
+tcpxo-wb-0:888:888 [0] NCCL INFO Successfully loaded external tuner plugin /usr/local/nvidia/lib64/libnccl-tuner.so
+tcpxo-wb-0:888:888 [0] NCCL INFO Using tuner config: '/usr/local/nvidia/lib64/a3plus_tuner_config.textproto'
+tcpxo-wb-0:888:888 [0] NCCL INFO tuner_v2 ver. ... initialized for nNodes:3 nRanks:24
+tcpxo-wb-0:888:888 [0] NCCL INFO threadThresholds 8/8/64 | 192/8/64 | 512 | 512
+tcpxo-wb-0:888:888 [0] NCCL INFO 16 coll channels, 16 collnet channels, 16 nvls channels, 16 p2p channels, 2 p2p channels per peer
+tcpxo-wb-0:888:888 [0] NCCL INFO CC Off, workFifoBytes 1048576
+tcpxo-wb-0:888:888 [0] NCCL INFO ncclCommInitRankConfig comm 0x561356be3650 rank 0 nranks 24 cudaDev 0 nvmlDev 0 busId 4000 commId 0x451ff83eb59486ff - Init COMPLETE
+tcpxo-wb-0:888:888 [0] NCCL INFO Init timings - ncclCommInitRankConfig: rank 0 nranks 24 total 1.75 (kernels 0.37, alloc 0.90, bootstrap 0.00, allgathers 0.09, topo 0.05, graphs 0.08, connections 0.25, rest 0.00)
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 00/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 7 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200052b8
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 01/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 8 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005330
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 02/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 9 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200053a8
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 03/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 10 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005420
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 04/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 11 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005498
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 05/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 12 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005510
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 06/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 13 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005588
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 07/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 14 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005600
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 08/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 15 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005678
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 09/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 16 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200056f0
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 10/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 17 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005768
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 11/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 18 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200057e0
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 12/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 19 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005858
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 13/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 20 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200058d0
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 14/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 21 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005948
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 15/0 : 0[0] -> 1[1] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 22 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200059c0
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.233405203+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 23 from local rank 0, transport 2
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005a38
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.249811314+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.249836837+00:00: Netdev 1 is specified for connection to netdev 0.
+tcpxo-wb-0:888:1474 [0] NCCL INFO [Proxy Progress] Device 0 CPU core 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.250685953+00:00: DXS listen socket ready for flow ID 0, port 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.250695928+00:00: DXS listen socket ready for flow ID 1, port 8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.250698378+00:00: DXS listening on 192.169.0.3 (eth1) for GPU 0000:04:00.0, ctrl listening on 10.20.2.32<60541>
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 09/0 : 17[1] -> 0[0] [receive] via NET/FasTrak/1/GDRDMA
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 01/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 24 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005ab0
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 02/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 25 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005b28
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 03/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 26 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005ba0
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 04/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 27 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005c18
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 05/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 28 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005c90
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 06/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 29 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005d08
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 09/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 30 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005d80
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 10/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 31 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005df8
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 11/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 32 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005e70
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 12/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 33 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005ee8
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 13/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 34 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005f60
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 14/0 : 0[0] -> 7[7] via P2P/CUMEM
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 35 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420005fd8
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.252911809+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 36 from local rank 0, transport 2
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006050
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.253168155+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.253901915+00:00: DXS listen socket ready for flow ID 0, port 18
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.253919874+00:00: DXS listen socket ready for flow ID 1, port 17
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.253922647+00:00: DXS listening on 192.169.0.3 (eth1) for GPU 0000:04:00.0, ctrl listening on 10.20.2.32<45849>
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 00/0 : 16[0] -> 0[0] [receive] via NET/FasTrak/0/GDRDMA
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 1 mode Default
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 37 from local rank 0, transport 2
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200060c8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.254043813+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 08/0 : 0[0] -> 8[0] [send] via NET/FasTrak/0/GDRDMA
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:888:888 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.273290391+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 38 from local rank 0, transport 2
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006140
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.273391571+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.274175479+00:00: DXS listen socket ready for flow ID 0, port 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.274180382+00:00: DXS listen socket ready for flow ID 1, port 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.274182599+00:00: DXS listening on 192.169.0.3 (eth1) for GPU 0000:04:00.0, ctrl listening on 10.20.2.32<41141>
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 08/0 : 8[0] -> 0[0] [receive] via NET/FasTrak/0/GDRDMA
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 1 mode Default
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 39 from local rank 0, transport 2
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200061b8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.274254188+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 00/0 : 0[0] -> 16[0] [send] via NET/FasTrak/0/GDRDMA
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 40 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006230
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 41 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200062a8
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 42 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006320
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 43 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006398
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 44 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006410
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 45 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006488
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 46 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006500
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 47 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006578
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 48 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200065f0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 49 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006668
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 50 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200066e0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 51 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006758
+tcpxo-wb-0:888:888 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 1 (distance 4 <= 4), read 1 mode Default
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy send connection 52 from local rank 0, transport 2
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200067d0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.294310253+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:888:888 [0] NCCL INFO Channel 09/0 : 0[0] -> 17[1] [send] via NET/FasTrak/1/GDRDMA
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 53 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006848
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 54 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200068c0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 55 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006938
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 56 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f24200069b0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 57 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006a28
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 58 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006aa0
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 59 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006b18
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 60 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006b90
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 61 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006c08
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 62 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006c80
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 63 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006cf8
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 64 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006d70
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 65 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006de8
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 66 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006e60
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 67 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006ed8
+tcpxo-wb-0:888:1463 [0] NCCL INFO New proxy recv connection 68 from local rank 0, transport 0
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 0 -> connection 0x7f2420006f50
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 1 -> connection 0x7943b8006c50
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected to proxy localRank 7 -> connection 0x7954ec006cc8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.591065822+00:00: Async accepting for comm:0x7f2420065320 comm_idx:0x1.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.649746052+00:00: Async accepting for comm:0x7f2420066a30 comm_idx:0x2.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.649780334+00:00: DXS flow ID 0 connecting to 192.169.0.4:27 comm_trace_id:0x84100003 comm_idx:0x3 on net_dev:0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.649805454+00:00: DXS flow ID 1 connecting to 192.169.0.4:28 comm_trace_id:0x84100003 comm_idx:0x3 on net_dev:0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.649828186+00:00: DXS flow ID 0 connecting to 192.169.0.2:6 comm_trace_id:0xa3000004 comm_idx:0x4 on net_dev:0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.64983338+00:00: DXS flow ID 1 connecting to 192.169.0.2:5 comm_trace_id:0xa3000004 comm_idx:0x4 on net_dev:0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.649860418+00:00: Async accepting for comm:0x7f242006bd60 comm_idx:0x5.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.654405335+00:00: All DXS flows connected to 192.169.0.2 comm:0x7f242006a300 comm_trace_id:0xa3000004 comm_idx:0x4 on net_dev:0 (Local IP: 192.169.0.3)
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.654410298+00:00: Allocate send dev handle, comm 0x7f242006a300
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.654412854+00:00: Comm 0x7f242006a300, createSendDevComm 0x7f2432dfb4d8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.656394832+00:00: Registering host memory for 0x7f242006a300 data:0x7f2463b20200 size:524288
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.659612657+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f242006a300 with handle:8653318625366214331 for data:0x31d4000000 size:4915200
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.667146451+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f242006a300 with handle:8653318625366215993 for data:0x31d44b0000 size:8388608
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.667184258+00:00: All DXS flows connected to 192.169.0.4 comm:0x7f2420068410 comm_trace_id:0x84100003 comm_idx:0x3 on net_dev:0 (Local IP: 192.169.0.3)
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.667187906+00:00: Allocate send dev handle, comm 0x7f2420068410
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.667190488+00:00: Comm 0x7f2420068410, createSendDevComm 0x7f2432dfb4d8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.675358168+00:00: Registering host memory for 0x7f2420068410 data:0x31d5e00000 size:524288
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.677927608+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420068410 with handle:8653318625366212728 for data:0x31d5000000 size:4915200
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.681145776+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420068410 with handle:8653318625366213559 for data:0x31d54b0000 size:8388608
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.68428547+00:00: All DXS flows accepted for comm:0x7f2420066a30 comm_trace_id:0x0 on gpu_pci:0000:04:00.0 on comm_idx:2.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.684291824+00:00: Allocate recv dev handle for comm:0x7f2420066a30 on gpu_pci:0000:04:00.0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.6842955+00:00: Linearized: comm 0x7f2420066a30, createRecvDevComm 0x7f2432dfb480
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.691885213+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420066a30 with handle:8653318625366214390 for data:0x31d6000000 size:524288
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.697259712+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420066a30 with handle:8653318625366215221 for data:0x31d6080000 size:4915200
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.69834458+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420066a30 with handle:8653318625366216052 for data:0x31d6530000 size:8388608
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.700299796+00:00: All DXS flows accepted for comm:0x7f242006bd60 comm_trace_id:0x0 on gpu_pci:0000:04:00.0 on comm_idx:5.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.700304942+00:00: Allocate recv dev handle for comm:0x7f242006bd60 on gpu_pci:0000:04:00.0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.70030863+00:00: Linearized: comm 0x7f242006bd60, createRecvDevComm 0x7f2432dfb480
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.705849563+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f242006bd60 with handle:8653318625366212787 for data:0x31d7000000 size:524288
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.706934004+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f242006bd60 with handle:8653318625366213618 for data:0x31d7080000 size:4915200
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.70909953+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f242006bd60 with handle:8653318625366214449 for data:0x31d7530000 size:8388608
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.71989239+00:00: Connecting to non-rail-aligned GPU (0 (local) -> 1 (remote)) using eth2
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.719906359+00:00: Creating Buf op uds client  on server: rxdm_uds_buf_op:192.169.1.3
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.719911075+00:00: Using abstract UDS address: rxdm_uds_buf_op:192.169.1.3
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.720157262+00:00: Device doesn't match: 192.169.0.3
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.720237987+00:00: Initializing DxsClient (src_addr=192.169.1.3:0, dxs_addr=169.254.169.254:55555, llcm=true)
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.720578368+00:00: Binding to interface: eth2
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.72060107+00:00: DxsClient connected (src_addr=192.169.1.3:35933, socket_fd=168)
+tcpxo-wb-0:888:1489 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.723036866+00:00: SCTP Connected
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.773955746+00:00: DxsClient initialized.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.7739843+00:00: DXS flow ID 0 connecting to 192.169.1.2:19 comm_trace_id:0xb8a00006 comm_idx:0x6 on net_dev:1
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.774008953+00:00: DXS flow ID 1 connecting to 192.169.1.2:20 comm_trace_id:0xb8a00006 comm_idx:0x6 on net_dev:1
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.778392656+00:00: All DXS flows connected to 192.169.1.2 comm:0x7f242006b8a0 comm_trace_id:0xb8a00006 comm_idx:0x6 on net_dev:1 (Local IP: 192.169.1.3)
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.7783971+00:00: Allocate send dev handle, comm 0x7f242006b8a0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.778400554+00:00: Comm 0x7f242006b8a0, createSendDevComm 0x7f2432dfb4d8
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.780717253+00:00: Registering host memory for 0x7f242006b8a0 data:0x31d5e82000 size:524288
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.783598028+00:00: RegMr[netdev=1] CUDA memory for comm 0x7f242006b8a0 with handle:3985787139683389988 for data:0x31d8000000 size:4915200
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.78466273+00:00: RegMr[netdev=1] CUDA memory for comm 0x7f242006b8a0 with handle:3985787139683389815 for data:0x31d84b0000 size:8388608
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.786604984+00:00: All DXS flows accepted for comm:0x7f2420065320 comm_trace_id:0x0 on gpu_pci:0000:04:00.0 on comm_idx:1.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.78662724+00:00: Allocate recv dev handle for comm:0x7f2420065320 on gpu_pci:0000:04:00.0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.786631584+00:00: Linearized: comm 0x7f2420065320, createRecvDevComm 0x7f2432dfb480
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.796981608+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420065320 with handle:8653318625366215280 for data:0x31d9000000 size:524288
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.800225233+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420065320 with handle:8653318625366216111 for data:0x31d9080000 size:4915200
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:41.802390087+00:00: RegMr[netdev=0] CUDA memory for comm 0x7f2420065320 with handle:8653318625366212846 for data:0x31d9530000 size:8388608
+tcpxo-wb-0:888:888 [0] NCCL INFO Connected all trees
+tcpxo-wb-0:888:1493 [0] NCCL INFO comm 0x561356be3650 rank 0 nRanks 24 cudaDev 0 busId 4000 - Abort START
+tcpxo-wb-0:888:1463 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1493 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:64 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:81 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:868 -> 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO misc/socket.cc:943 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:64 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:81 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:868 -> 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1463 [0] NCCL INFO misc/socket.cc:943 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:64 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:81 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO misc/socket.cc:868 -> 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1463 [0] NCCL INFO misc/socket.cc:943 -> 3
+tcpxo-wb-0:888:1493 [0] NCCL INFO TUNER/Plugin: Closing tuner: 'GcpTunerPlugin_v2'
+tcpxo-wb-0:888:1463 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:888:1463 [0] NCCL INFO misc/socket.cc:943 -> 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.047633189+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420065320 with handle:8653318625366215280 data:0x31d9000000 size:524288.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.04828438+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420065320 with handle:8653318625366216111 data:0x31d9080000 size:4915200.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.049426386+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420065320 with handle:8653318625366212846 data:0x31d9530000 size:8388608.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.051065014+00:00: Closing Recv comm 0x7f2420065320
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.051073214+00:00: COMM STATS:
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_scheduled: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_completed: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_curr: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_peak: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_size_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 10240
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.04858e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 692282
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-10192.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10192.2-12230.6 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12230.6-14676.7 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 14676.7-17612.1 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 17612.1-21134.5 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 21134.5-25361.4 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 25361.4-30433.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 30433.6-36520.3 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 36520.3-43824.4 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 43824.4-52589.3 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 52589.3-63107.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 63107.2-75728.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 75728.6-90874.3 Count: 1020
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 90874.3-130859 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 130859-157031 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 157031-271349 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 271349-325619 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 325619-562670 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 562670-675204 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 675204-972293 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 972293-1.16675e+06 Count: 4480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.16675e+06-2.41938e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 54058
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 5.27817e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 832621
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-51597.8 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 51597.8-61917.4 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 61917.4-74300.8 Count: 64
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 74300.8-89161 Count: 250
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 89161-106993 Count: 272
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 106993-128392 Count: 126
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 128392-154070 Count: 255
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 154070-184884 Count: 355
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 184884-221861 Count: 231
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 221861-266233 Count: 377
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 266233-319480 Count: 398
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 319480-383376 Count: 148
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 383376-460051 Count: 122
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 460051-552061 Count: 184
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 552061-662474 Count: 306
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 662474-794968 Count: 351
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 794968-953962 Count: 1041
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 953962-1.14475e+06 Count: 2093
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.14475e+06-1.37371e+06 Count: 585
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.37371e+06-1.64845e+06 Count: 174
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.64845e+06-1.97814e+06 Count: 67
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.97814e+06-2.37376e+06 Count: 76
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.37376e+06-2.84852e+06 Count: 137
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.84852e+06-3.41822e+06 Count: 113
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.41822e+06-4.10186e+06 Count: 60
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.10186e+06-4.92224e+06 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.92224e+06-5.90668e+06 Count: 4
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.90668e+06-1.02067e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1.09205e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_complete_age_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 78
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.36411e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 52046.9
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-100 Count: 311
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 100-120 Count: 486
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 120-144 Count: 93
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 144-172.8 Count: 31
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 172.8-207.36 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 207.36-248.832 Count: 150
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 248.832-298.598 Count: 623
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 298.598-358.318 Count: 214
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 358.318-429.982 Count: 593
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 429.982-515.978 Count: 507
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 515.978-619.174 Count: 919
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 619.174-743.008 Count: 1187
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 743.008-891.61 Count: 423
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 891.61-1069.93 Count: 166
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1069.93-1283.92 Count: 138
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1283.92-1540.7 Count: 76
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1540.7-1848.84 Count: 49
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1848.84-2218.61 Count: 31
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2218.61-2662.33 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2662.33-3194.8 Count: 33
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3194.8-3833.76 Count: 41
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3833.76-4600.51 Count: 34
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4600.51-5520.61 Count: 43
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5520.61-6624.74 Count: 31
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6624.74-7949.68 Count: 33
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7949.68-9539.62 Count: 35
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9539.62-11447.5 Count: 24
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 11447.5-13737.1 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 13737.1-16484.5 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 16484.5-19781.4 Count: 24
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 19781.4-23737.6 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 23737.6-28485.2 Count: 26
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 28485.2-34182.2 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 34182.2-41018.6 Count: 25
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 41018.6-49222.4 Count: 19
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 49222.4-59066.8 Count: 1328
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_num_iovs_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-2116.47 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_interval_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 739
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 4.65933e+08
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 183742
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1000 Count: 303
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1000-1200 Count: 262
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1200-1440 Count: 399
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1440-1728 Count: 283
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1728-2073.6 Count: 262
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2073.6-2488.32 Count: 131
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2488.32-2985.98 Count: 91
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2985.98-3583.18 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3583.18-4299.82 Count: 27
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4299.82-5159.78 Count: 19
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5159.78-6191.74 Count: 36
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6191.74-7430.08 Count: 83
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7430.08-8916.1 Count: 64
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 8916.1-10699.3 Count: 78
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10699.3-12839.2 Count: 78
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12839.2-15407 Count: 125
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 15407-18488.4 Count: 111
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 18488.4-22186.1 Count: 82
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 22186.1-26623.3 Count: 100
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 26623.3-31948 Count: 140
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 31948-38337.6 Count: 183
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 38337.6-46005.1 Count: 91
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 46005.1-55206.1 Count: 846
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 55206.1-66247.4 Count: 366
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 66247.4-79496.8 Count: 383
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 79496.8-95396.2 Count: 339
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 95396.2-114475 Count: 559
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 114475-137371 Count: 229
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 137371-164845 Count: 336
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 164845-197814 Count: 402
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 197814-237376 Count: 540
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 237376-284852 Count: 382
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 284852-341822 Count: 148
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 341822-410186 Count: 59
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 410186-492224 Count: 36
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 492224-590668 Count: 39
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 590668-708802 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 708802-850562 Count: 18
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 850562-1.02067e+06 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.02067e+06-1.22481e+06 Count: 27
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.22481e+06-1.46977e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.46977e+06-1.76373e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.76373e+06-2.11647e+06 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.11647e+06-2.53977e+06 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.53977e+06-3.04772e+06 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.04772e+06-3.65726e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.65726e+06-4.38871e+06 Count: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.38871e+06-5.26646e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.26646e+06-6.31975e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6.31975e+06-7.5837e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7.5837e+06-9.10044e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9.10044e+06-1.09205e+07 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.054854368+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420066a30 with handle:8653318625366214390 data:0x31d6000000 size:524288.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.055696235+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420066a30 with handle:8653318625366215221 data:0x31d6080000 size:4915200.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.057246811+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420066a30 with handle:8653318625366216052 data:0x31d6530000 size:8388608.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.058279012+00:00: Closing Recv comm 0x7f2420066a30
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.058285878+00:00: COMM STATS:
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_scheduled: 8130
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_completed: 8130
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_curr: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_peak: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_size_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 2048
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.04858e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 666058
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-4096 Count: 190
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4096-4915.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4915.2-5898.24 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5898.24-7077.89 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7077.89-10192.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10192.2-12230.6 Count: 100
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12230.6-14676.7 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 14676.7-17612.1 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 17612.1-21134.5 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 21134.5-25361.4 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 25361.4-30433.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 30433.6-36520.3 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 36520.3-43824.4 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 43824.4-52589.3 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 52589.3-63107.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 63107.2-75728.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 75728.6-90874.3 Count: 1020
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 90874.3-130859 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 130859-157031 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 157031-271349 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 271349-325619 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 325619-562670 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 562670-675204 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 675204-972293 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 972293-1.16675e+06 Count: 4480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.16675e+06-2.41938e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 55290
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 4.91156e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 791003
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-51597.8 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 51597.8-61917.4 Count: 6
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 61917.4-74300.8 Count: 60
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 74300.8-89161 Count: 283
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 89161-106993 Count: 207
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 106993-128392 Count: 169
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 128392-154070 Count: 441
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 154070-184884 Count: 457
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 184884-221861 Count: 265
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 221861-266233 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 266233-319480 Count: 399
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 319480-383376 Count: 213
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 383376-460051 Count: 160
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 460051-552061 Count: 166
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 552061-662474 Count: 363
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 662474-794968 Count: 403
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 794968-953962 Count: 1401
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 953962-1.14475e+06 Count: 1799
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.14475e+06-1.37371e+06 Count: 345
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.37371e+06-1.64845e+06 Count: 166
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.64845e+06-1.97814e+06 Count: 101
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.97814e+06-2.37376e+06 Count: 82
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.37376e+06-2.84852e+06 Count: 135
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.84852e+06-3.41822e+06 Count: 150
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.41822e+06-4.10186e+06 Count: 65
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.10186e+06-4.92224e+06 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.92224e+06-1.02067e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1.09205e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_complete_age_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 80
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.12973e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 46845.3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-100 Count: 914
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 100-120 Count: 1310
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 120-144 Count: 364
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 144-172.8 Count: 67
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 172.8-207.36 Count: 12
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 207.36-248.832 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 248.832-298.598 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 298.598-358.318 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 358.318-429.982 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 429.982-515.978 Count: 249
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 515.978-619.174 Count: 329
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 619.174-743.008 Count: 557
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 743.008-891.61 Count: 678
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 891.61-1069.93 Count: 711
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1069.93-1283.92 Count: 409
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1283.92-1540.7 Count: 154
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1540.7-1848.84 Count: 66
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1848.84-2218.61 Count: 60
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2218.61-2662.33 Count: 44
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2662.33-3194.8 Count: 46
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3194.8-3833.76 Count: 46
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3833.76-4600.51 Count: 36
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4600.51-5520.61 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5520.61-6624.74 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6624.74-7949.68 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7949.68-9539.62 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9539.62-11447.5 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 11447.5-13737.1 Count: 40
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 13737.1-16484.5 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 16484.5-19781.4 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 19781.4-23737.6 Count: 31
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 23737.6-28485.2 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 28485.2-34182.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 34182.2-41018.6 Count: 38
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 41018.6-49222.4 Count: 35
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 49222.4-59066.8 Count: 1423
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_num_iovs_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-2116.47 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_interval_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 729
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 3.477e+08
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 170472
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1000 Count: 78
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1000-1200 Count: 480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1200-1440 Count: 422
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1440-1728 Count: 373
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1728-2073.6 Count: 247
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2073.6-2488.32 Count: 119
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2488.32-2985.98 Count: 43
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2985.98-3583.18 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3583.18-4299.82 Count: 10
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4299.82-5159.78 Count: 26
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5159.78-6191.74 Count: 43
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6191.74-7430.08 Count: 53
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7430.08-8916.1 Count: 51
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 8916.1-10699.3 Count: 80
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10699.3-12839.2 Count: 104
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12839.2-15407 Count: 80
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 15407-18488.4 Count: 105
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 18488.4-22186.1 Count: 120
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 22186.1-26623.3 Count: 92
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 26623.3-31948 Count: 93
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 31948-38337.6 Count: 139
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 38337.6-46005.1 Count: 129
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 46005.1-55206.1 Count: 97
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 55206.1-66247.4 Count: 87
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 66247.4-79496.8 Count: 89
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 79496.8-95396.2 Count: 1815
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 95396.2-114475 Count: 297
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 114475-137371 Count: 501
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 137371-164845 Count: 550
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 164845-197814 Count: 640
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 197814-237376 Count: 530
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 237376-284852 Count: 261
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 284852-341822 Count: 85
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 341822-410186 Count: 41
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 410186-492224 Count: 32
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 492224-590668 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 590668-708802 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 708802-850562 Count: 32
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 850562-1.02067e+06 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.02067e+06-1.22481e+06 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.22481e+06-1.46977e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.46977e+06-1.76373e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.76373e+06-2.11647e+06 Count: 12
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.11647e+06-2.53977e+06 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.53977e+06-3.04772e+06 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.04772e+06-3.65726e+06 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.65726e+06-4.38871e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.38871e+06-5.26646e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.26646e+06-6.31975e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6.31975e+06-7.5837e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7.5837e+06-9.10044e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9.10044e+06-1.09205e+07 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.058438099+00:00: DeregMr host memory for 0x7f2420068410 data:0x31d5e00000 size:524288.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.058442288+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420068410 with handle:8653318625366212728 data:0x31d5000000 size:4915200.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.058953582+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f2420068410 with handle:8653318625366213559 data:0x31d54b0000 size:8388608.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.060128693+00:00: Closing Send comm 0x7f2420068410
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.060135681+00:00: COMM STATS:
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_scheduled: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_completed: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_curr: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_peak: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_size_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 10240
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.04858e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 692282
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-10192.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10192.2-12230.6 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12230.6-14676.7 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 14676.7-17612.1 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 17612.1-21134.5 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 21134.5-25361.4 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 25361.4-30433.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 30433.6-36520.3 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 36520.3-43824.4 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 43824.4-52589.3 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 52589.3-63107.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 63107.2-75728.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 75728.6-90874.3 Count: 1020
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 90874.3-130859 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 130859-157031 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 157031-271349 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 271349-325619 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 325619-562670 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 562670-675204 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 675204-972293 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 972293-1.16675e+06 Count: 4480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.16675e+06-2.41938e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 25059
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.20718e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 258640
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-24883.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 24883.2-29859.8 Count: 222
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 29859.8-35831.8 Count: 273
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 35831.8-42998.2 Count: 381
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 42998.2-51597.8 Count: 497
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 51597.8-61917.4 Count: 315
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 61917.4-74300.8 Count: 317
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 74300.8-89161 Count: 167
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 89161-106993 Count: 132
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 106993-128392 Count: 224
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 128392-154070 Count: 530
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 154070-184884 Count: 711
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 184884-221861 Count: 821
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 221861-266233 Count: 797
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 266233-319480 Count: 683
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 319480-383376 Count: 409
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 383376-460051 Count: 210
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 460051-552061 Count: 216
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 552061-662474 Count: 217
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 662474-794968 Count: 188
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 794968-953962 Count: 153
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 953962-1.14475e+06 Count: 341
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.14475e+06-1.37371e+06 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.37371e+06-1.02067e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1.09205e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_complete_age_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 73
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 642146
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 2765.29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-100 Count: 802
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 100-120 Count: 236
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 120-144 Count: 38
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 144-172.8 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 172.8-207.36 Count: 9
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 207.36-248.832 Count: 586
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 248.832-298.598 Count: 739
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 298.598-358.318 Count: 346
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 358.318-429.982 Count: 1816
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 429.982-515.978 Count: 412
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 515.978-619.174 Count: 161
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 619.174-743.008 Count: 267
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 743.008-891.61 Count: 491
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 891.61-1069.93 Count: 700
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1069.93-1283.92 Count: 441
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1283.92-1540.7 Count: 136
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1540.7-1848.84 Count: 96
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1848.84-2218.61 Count: 65
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2218.61-2662.33 Count: 64
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2662.33-3194.8 Count: 40
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3194.8-3833.76 Count: 34
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3833.76-4600.51 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4600.51-5520.61 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5520.61-6624.74 Count: 17
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6624.74-7949.68 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7949.68-9539.62 Count: 17
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9539.62-11447.5 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 11447.5-13737.1 Count: 12
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 13737.1-16484.5 Count: 18
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 16484.5-19781.4 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 19781.4-23737.6 Count: 12
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 23737.6-28485.2 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 28485.2-34182.2 Count: 15
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 34182.2-41018.6 Count: 15
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 41018.6-49222.4 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 49222.4-59066.8 Count: 87
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_num_iovs_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-2116.47 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_interval_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 1085
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 4.07441e+08
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 176500
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1000 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1000-1200 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1200-1440 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1440-2073.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2073.6-2488.32 Count: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2488.32-2985.98 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2985.98-3583.18 Count: 119
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3583.18-4299.82 Count: 91
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4299.82-5159.78 Count: 104
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5159.78-6191.74 Count: 70
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6191.74-7430.08 Count: 286
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7430.08-8916.1 Count: 264
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 8916.1-10699.3 Count: 171
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10699.3-12839.2 Count: 93
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12839.2-15407 Count: 161
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 15407-18488.4 Count: 296
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 18488.4-22186.1 Count: 185
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 22186.1-26623.3 Count: 83
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 26623.3-31948 Count: 185
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 31948-38337.6 Count: 402
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 38337.6-46005.1 Count: 221
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 46005.1-55206.1 Count: 455
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 55206.1-66247.4 Count: 547
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 66247.4-79496.8 Count: 505
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 79496.8-95396.2 Count: 447
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 95396.2-114475 Count: 557
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 114475-137371 Count: 419
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 137371-164845 Count: 444
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 164845-197814 Count: 408
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 197814-237376 Count: 435
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 237376-284852 Count: 346
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 284852-341822 Count: 211
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 341822-410186 Count: 117
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 410186-492224 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 492224-590668 Count: 43
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 590668-708802 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 708802-850562 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 850562-1.02067e+06 Count: 6
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.02067e+06-1.22481e+06 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.22481e+06-1.46977e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.46977e+06-1.76373e+06 Count: 4
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.76373e+06-2.11647e+06 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.11647e+06-2.53977e+06 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.53977e+06-3.04772e+06 Count: 15
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.04772e+06-3.65726e+06 Count: 6
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.65726e+06-4.38871e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.38871e+06-5.26646e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.26646e+06-6.31975e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6.31975e+06-7.5837e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7.5837e+06-9.10044e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9.10044e+06-1.09205e+07 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.060237303+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f242006bd60 with handle:8653318625366212787 data:0x31d7000000 size:524288.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.06109684+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f242006bd60 with handle:8653318625366213618 data:0x31d7080000 size:4915200.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.06214199+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f242006bd60 with handle:8653318625366214449 data:0x31d7530000 size:8388608.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.063330345+00:00: Closing Recv comm 0x7f242006bd60
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.063336282+00:00: COMM STATS:
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_scheduled: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_completed: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_curr: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_peak: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_size_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 10240
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.04858e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 692282
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-10192.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10192.2-12230.6 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12230.6-14676.7 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 14676.7-17612.1 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 17612.1-21134.5 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 21134.5-25361.4 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 25361.4-30433.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 30433.6-36520.3 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 36520.3-43824.4 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 43824.4-52589.3 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 52589.3-63107.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 63107.2-75728.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 75728.6-90874.3 Count: 1020
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 90874.3-130859 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 130859-157031 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 157031-271349 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 271349-325619 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 325619-562670 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 562670-675204 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 675204-972293 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 972293-1.16675e+06 Count: 4480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.16675e+06-2.41938e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 40144
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 4.69269e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 866781
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-35831.8 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 35831.8-42998.2 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 42998.2-51597.8 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 51597.8-61917.4 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 61917.4-74300.8 Count: 123
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 74300.8-89161 Count: 222
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 89161-106993 Count: 223
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 106993-128392 Count: 166
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 128392-154070 Count: 213
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 154070-184884 Count: 360
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 184884-221861 Count: 261
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 221861-266233 Count: 318
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 266233-319480 Count: 341
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 319480-383376 Count: 150
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 383376-460051 Count: 115
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 460051-552061 Count: 228
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 552061-662474 Count: 335
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 662474-794968 Count: 350
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 794968-953962 Count: 429
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 953962-1.14475e+06 Count: 1931
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.14475e+06-1.37371e+06 Count: 1039
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.37371e+06-1.64845e+06 Count: 439
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.64845e+06-1.97814e+06 Count: 137
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.97814e+06-2.37376e+06 Count: 136
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.37376e+06-2.84852e+06 Count: 143
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.84852e+06-3.41822e+06 Count: 83
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.41822e+06-4.10186e+06 Count: 33
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.10186e+06-4.92224e+06 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.92224e+06-1.02067e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1.09205e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_complete_age_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 79
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 77810
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 844.679
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-100 Count: 435
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 100-120 Count: 604
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 120-144 Count: 119
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 144-172.8 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 172.8-207.36 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 207.36-248.832 Count: 234
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 248.832-298.598 Count: 831
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 298.598-358.318 Count: 211
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 358.318-429.982 Count: 911
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 429.982-515.978 Count: 744
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 515.978-619.174 Count: 1677
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 619.174-743.008 Count: 273
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 743.008-891.61 Count: 253
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 891.61-1069.93 Count: 466
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1069.93-1283.92 Count: 423
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1283.92-1540.7 Count: 151
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1540.7-1848.84 Count: 72
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1848.84-2218.61 Count: 61
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2218.61-2662.33 Count: 50
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2662.33-3194.8 Count: 42
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3194.8-3833.76 Count: 31
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3833.76-4600.51 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4600.51-5520.61 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5520.61-6624.74 Count: 32
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6624.74-7949.68 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7949.68-9539.62 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9539.62-11447.5 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 11447.5-13737.1 Count: 9
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 13737.1-16484.5 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 16484.5-19781.4 Count: 12
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 19781.4-23737.6 Count: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 23737.6-28485.2 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 28485.2-34182.2 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 34182.2-41018.6 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 41018.6-49222.4 Count: 4
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 49222.4-59066.8 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_num_iovs_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-2116.47 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_interval_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 700
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 4.07133e+08
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 176519
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1000 Count: 406
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1000-1200 Count: 405
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1200-1440 Count: 231
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1440-1728 Count: 327
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1728-2073.6 Count: 232
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2073.6-2488.32 Count: 112
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2488.32-2985.98 Count: 46
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2985.98-3583.18 Count: 15
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3583.18-4299.82 Count: 6
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4299.82-5159.78 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5159.78-6191.74 Count: 26
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6191.74-7430.08 Count: 55
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7430.08-8916.1 Count: 56
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 8916.1-10699.3 Count: 61
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10699.3-12839.2 Count: 90
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12839.2-15407 Count: 98
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 15407-18488.4 Count: 101
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 18488.4-22186.1 Count: 101
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 22186.1-26623.3 Count: 120
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 26623.3-31948 Count: 117
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 31948-38337.6 Count: 124
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 38337.6-46005.1 Count: 120
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 46005.1-55206.1 Count: 203
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 55206.1-66247.4 Count: 275
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 66247.4-79496.8 Count: 489
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 79496.8-95396.2 Count: 540
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 95396.2-114475 Count: 606
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 114475-137371 Count: 554
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 137371-164845 Count: 584
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 164845-197814 Count: 592
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 197814-237376 Count: 445
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 237376-284852 Count: 236
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 284852-341822 Count: 135
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 341822-410186 Count: 60
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 410186-492224 Count: 38
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 492224-590668 Count: 38
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 590668-708802 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 708802-850562 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 850562-1.02067e+06 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.02067e+06-1.22481e+06 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.22481e+06-1.46977e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.46977e+06-1.76373e+06 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.76373e+06-2.11647e+06 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.11647e+06-2.53977e+06 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.53977e+06-3.04772e+06 Count: 8
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.04772e+06-3.65726e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.65726e+06-4.38871e+06 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.38871e+06-5.26646e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.26646e+06-6.31975e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6.31975e+06-7.5837e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7.5837e+06-9.10044e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9.10044e+06-1.09205e+07 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.063465265+00:00: DeregMr host memory for 0x7f242006a300 data:0x7f2463b20200 size:524288.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.06346904+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f242006a300 with handle:8653318625366214331 data:0x31d4000000 size:4915200.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.064332153+00:00: DeregMr[netdev=0] CUDA memory for comm 0x7f242006a300 with handle:8653318625366215993 data:0x31d44b0000 size:8388608.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.065662237+00:00: Closing Send comm 0x7f242006a300
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.065668148+00:00: COMM STATS:
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_scheduled: 8130
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_completed: 8130
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_curr: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_peak: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_size_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 2048
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.04858e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 666058
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-4096 Count: 190
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4096-4915.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4915.2-5898.24 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5898.24-7077.89 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7077.89-10192.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10192.2-12230.6 Count: 100
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12230.6-14676.7 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 14676.7-17612.1 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 17612.1-21134.5 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 21134.5-25361.4 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 25361.4-30433.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 30433.6-36520.3 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 36520.3-43824.4 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 43824.4-52589.3 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 52589.3-63107.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 63107.2-75728.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 75728.6-90874.3 Count: 1020
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 90874.3-130859 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 130859-157031 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 157031-271349 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 271349-325619 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 325619-562670 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 562670-675204 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 675204-972293 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 972293-1.16675e+06 Count: 4480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.16675e+06-2.41938e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 34324
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.57151e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 364404
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-29859.8 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 29859.8-35831.8 Count: 159
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 35831.8-42998.2 Count: 420
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 42998.2-51597.8 Count: 485
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 51597.8-61917.4 Count: 487
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 61917.4-74300.8 Count: 390
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 74300.8-89161 Count: 229
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 89161-106993 Count: 303
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 106993-128392 Count: 176
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 128392-154070 Count: 103
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 154070-184884 Count: 126
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 184884-221861 Count: 212
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 221861-266233 Count: 308
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 266233-319480 Count: 317
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 319480-383376 Count: 473
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 383376-460051 Count: 907
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 460051-552061 Count: 1155
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 552061-662474 Count: 811
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 662474-794968 Count: 368
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 794968-953962 Count: 403
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 953962-1.14475e+06 Count: 239
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.14475e+06-1.37371e+06 Count: 54
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.37371e+06-1.64845e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.64845e+06-1.02067e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1.09205e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_complete_age_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 71
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 990918
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 25577.9
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-100 Count: 1084
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 100-120 Count: 261
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 120-144 Count: 53
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 144-172.8 Count: 10
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 172.8-207.36 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 207.36-248.832 Count: 1300
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 248.832-298.598 Count: 1312
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 298.598-358.318 Count: 173
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 358.318-429.982 Count: 69
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 429.982-515.978 Count: 68
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 515.978-619.174 Count: 193
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 619.174-743.008 Count: 295
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 743.008-891.61 Count: 723
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 891.61-1069.93 Count: 683
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1069.93-1283.92 Count: 444
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1283.92-1540.7 Count: 141
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1540.7-1848.84 Count: 65
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1848.84-2218.61 Count: 64
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2218.61-2662.33 Count: 62
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2662.33-3194.8 Count: 54
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3194.8-3833.76 Count: 39
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3833.76-4600.51 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4600.51-5520.61 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5520.61-6624.74 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6624.74-7949.68 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7949.68-9539.62 Count: 15
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9539.62-11447.5 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 11447.5-13737.1 Count: 24
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 13737.1-16484.5 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 16484.5-19781.4 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 19781.4-23737.6 Count: 18
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 23737.6-28485.2 Count: 24
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 28485.2-34182.2 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 34182.2-41018.6 Count: 26
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 41018.6-49222.4 Count: 26
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 49222.4-59066.8 Count: 694
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_num_iovs_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-2116.47 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_interval_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 1352
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 3.50412e+08
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 171070
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1200 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1200-1440 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1440-2073.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2073.6-2488.32 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2488.32-2985.98 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2985.98-3583.18 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3583.18-4299.82 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4299.82-5159.78 Count: 116
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5159.78-6191.74 Count: 128
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6191.74-7430.08 Count: 130
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7430.08-8916.1 Count: 55
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 8916.1-10699.3 Count: 379
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10699.3-12839.2 Count: 424
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12839.2-15407 Count: 69
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 15407-18488.4 Count: 110
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 18488.4-22186.1 Count: 427
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 22186.1-26623.3 Count: 44
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 26623.3-31948 Count: 37
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 31948-38337.6 Count: 397
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 38337.6-46005.1 Count: 84
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 46005.1-55206.1 Count: 54
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 55206.1-66247.4 Count: 285
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 66247.4-79496.8 Count: 107
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 79496.8-95396.2 Count: 2118
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 95396.2-114475 Count: 323
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 114475-137371 Count: 521
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 137371-164845 Count: 574
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 164845-197814 Count: 656
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 197814-237376 Count: 547
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 237376-284852 Count: 244
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 284852-341822 Count: 85
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 341822-410186 Count: 36
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 410186-492224 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 492224-590668 Count: 15
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 590668-708802 Count: 9
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 708802-850562 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 850562-1.02067e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.02067e+06-1.22481e+06 Count: 5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.22481e+06-1.46977e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.46977e+06-1.76373e+06 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.76373e+06-2.11647e+06 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.11647e+06-2.53977e+06 Count: 18
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.53977e+06-3.04772e+06 Count: 25
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.04772e+06-3.65726e+06 Count: 10
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.65726e+06-4.38871e+06 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4.38871e+06-5.26646e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.26646e+06-6.31975e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6.31975e+06-7.5837e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7.5837e+06-9.10044e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9.10044e+06-1.09205e+07 Count: 3
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.066871184+00:00: DeregMr host memory for 0x7f242006b8a0 data:0x31d5e82000 size:524288.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.066881574+00:00: DeregMr[netdev=1] CUDA memory for comm 0x7f242006b8a0 with handle:3985787139683389988 data:0x31d8000000 size:4915200.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.067346144+00:00: DeregMr[netdev=1] CUDA memory for comm 0x7f242006b8a0 with handle:3985787139683389815 data:0x31d84b0000 size:8388608.
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.06899135+00:00: Closing Send comm 0x7f242006b8a0
+tcpxo-wb-0:888:1463 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.069001097+00:00: COMM STATS:
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_scheduled: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_completed: 7820
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_curr: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_backlog_peak: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_size_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 10240
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.04858e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 692282
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-10192.2 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10192.2-12230.6 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12230.6-14676.7 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 14676.7-17612.1 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 17612.1-21134.5 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 21134.5-25361.4 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 25361.4-30433.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 30433.6-36520.3 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 36520.3-43824.4 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 43824.4-52589.3 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 52589.3-63107.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 63107.2-75728.6 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 75728.6-90874.3 Count: 1020
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 90874.3-130859 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 130859-157031 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 157031-271349 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 271349-325619 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 325619-562670 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 562670-675204 Count: 580
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 675204-972293 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 972293-1.16675e+06 Count: 4480
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.16675e+06-2.41938e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 34362
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 2.15235e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 467142
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-29859.8 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 29859.8-35831.8 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 35831.8-42998.2 Count: 374
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 42998.2-51597.8 Count: 404
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 51597.8-61917.4 Count: 536
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 61917.4-74300.8 Count: 368
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 74300.8-89161 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 89161-106993 Count: 243
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 106993-128392 Count: 136
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 128392-154070 Count: 174
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 154070-184884 Count: 157
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 184884-221861 Count: 208
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 221861-266233 Count: 280
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 266233-319480 Count: 363
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 319480-383376 Count: 417
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 383376-460051 Count: 479
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 460051-552061 Count: 490
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 552061-662474 Count: 465
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 662474-794968 Count: 424
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 794968-953962 Count: 596
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 953962-1.14475e+06 Count: 1126
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.14475e+06-1.37371e+06 Count: 216
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.37371e+06-1.64845e+06 Count: 40
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.64845e+06-1.97814e+06 Count: 12
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.97814e+06-2.37376e+06 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.37376e+06-1.02067e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_duration_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1.09205e+07 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_complete_age_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 70
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 1.43715e+06
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 56827.5
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-100 Count: 5335
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 100-120 Count: 608
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 120-144 Count: 155
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 144-172.8 Count: 25
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 172.8-207.36 Count: 10
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 207.36-248.832 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 248.832-298.598 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 298.598-358.318 Count: 10
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 358.318-429.982 Count: 29
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 429.982-515.978 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 515.978-619.174 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 619.174-743.008 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 743.008-891.61 Count: 6
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 891.61-1069.93 Count: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1069.93-1283.92 Count: 9
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1283.92-1540.7 Count: 7
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1540.7-1848.84 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1848.84-2218.61 Count: 27
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2218.61-2662.33 Count: 27
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2662.33-3194.8 Count: 25
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3194.8-3833.76 Count: 34
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3833.76-4600.51 Count: 26
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4600.51-5520.61 Count: 22
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5520.61-6624.74 Count: 19
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6624.74-7949.68 Count: 18
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7949.68-9539.62 Count: 19
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9539.62-11447.5 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 11447.5-13737.1 Count: 19
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 13737.1-16484.5 Count: 21
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 16484.5-19781.4 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 19781.4-23737.6 Count: 25
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 23737.6-28485.2 Count: 20
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 28485.2-34182.2 Count: 24
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 34182.2-41018.6 Count: 28
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 41018.6-49222.4 Count: 27
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 49222.4-59066.8 Count: 1148
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/unpack_num_iovs_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-2116.47 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO request/offload_interval_distribution:
+tcpxo-wb-0:888:1463 [0] NCCL INFO Min: 1600
+tcpxo-wb-0:888:1463 [0] NCCL INFO Max: 3.37392e+08
+tcpxo-wb-0:888:1463 [0] NCCL INFO Avg: 167542
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 0-1440 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1440-1728 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1728-2073.6 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2073.6-2488.32 Count: 4
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2488.32-2985.98 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2985.98-3583.18 Count: 23
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3583.18-4299.82 Count: 70
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 4299.82-5159.78 Count: 96
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5159.78-6191.74 Count: 91
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6191.74-7430.08 Count: 116
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7430.08-8916.1 Count: 106
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 8916.1-10699.3 Count: 323
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 10699.3-12839.2 Count: 289
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 12839.2-15407 Count: 246
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 15407-18488.4 Count: 205
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 18488.4-22186.1 Count: 268
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 22186.1-26623.3 Count: 71
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 26623.3-31948 Count: 180
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 31948-38337.6 Count: 188
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 38337.6-46005.1 Count: 167
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 46005.1-55206.1 Count: 49
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 55206.1-66247.4 Count: 133
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 66247.4-79496.8 Count: 1096
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 79496.8-95396.2 Count: 641
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 95396.2-114475 Count: 826
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 114475-137371 Count: 505
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 137371-164845 Count: 514
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 164845-197814 Count: 518
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 197814-237376 Count: 496
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 237376-284852 Count: 295
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 284852-341822 Count: 106
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 341822-410186 Count: 40
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 410186-492224 Count: 30
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 492224-590668 Count: 14
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 590668-708802 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 708802-850562 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 850562-1.02067e+06 Count: 6
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.02067e+06-1.22481e+06 Count: 2
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.22481e+06-1.46977e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.46977e+06-1.76373e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 1.76373e+06-2.11647e+06 Count: 13
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.11647e+06-2.53977e+06 Count: 24
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 2.53977e+06-3.04772e+06 Count: 16
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.04772e+06-3.65726e+06 Count: 11
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 3.65726e+06-5.26646e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 5.26646e+06-6.31975e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 6.31975e+06-7.5837e+06 Count: 0
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 7.5837e+06-9.10044e+06 Count: 1
+tcpxo-wb-0:888:1463 [0] NCCL INFO Bucket 9.10044e+06-1.09205e+07 Count: 2
+tcpxo-wb-0:888:1493 [0] NCCL INFO comm 0x561356be3650 rank 0 nranks 24 cudaDev 0 busId 4000 - Abort COMPLETE
+tcpxo-wb-0:888:1493 [0] NCCL INFO Unloading plugin libnccl-net.so
+# world_size=24  backend=nccl  warmup=5 iters=15
+#       size        count    time_ms   algbw_GBps   busbw_GBps
+          8B            2      0.143         0.00         0.00
+         16B            4      0.137         0.00         0.00
+         32B            8      0.137         0.00         0.00
+         64B           16      0.136         0.00         0.00
+        128B           32      0.137         0.00         0.00
+        256B           64      0.137         0.00         0.00
+        512B          128      0.136         0.00         0.01
+         1KB          256      0.135         0.01         0.01
+         2KB          512      0.142         0.01         0.03
+         4KB         1024      0.165         0.02         0.05
+         8KB         2048      0.153         0.05         0.10
+        16KB         4096      0.155         0.11         0.20
+        32KB         8192      0.159         0.21         0.40
+        64KB        16384      0.160         0.41         0.79
+       128KB        32768      0.159         0.83         1.58
+       256KB        65536      0.198         1.32         2.54
+       512KB       131072      0.170         3.08         5.91
+         1MB       262144      0.201         5.21         9.98
+         2MB       524288      0.211         9.92        19.02
+         4MB      1048576      0.227        18.47        35.40
+         8MB      2097152      0.280        29.93        57.36
+        16MB      4194304      0.392        42.83        82.09
+        32MB      8388608      0.606        55.34       106.07
+        64MB     16777216      0.915        73.34       140.56
+       128MB     33554432      1.530        87.71       168.11
+       256MB     67108864      3.103        86.52       165.83
+       512MB    134217728      6.441        83.35       159.76
+         1GB    268435456     11.393        94.24       180.63
+         2GB    536870912     20.673       103.88       199.10
+# done
+tcpxo-wb-0:888:888 [0] NCCL INFO ENV/Plugin: Closing env plugin ncclEnvDefault
+tcpxo-wb-0:888:1448 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.706779481+00:00: SCTP handler shutdown signal received
+tcpxo-wb-0:888:1448 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.707900112+00:00: SCTP Closed
+tcpxo-wb-0:888:1448 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.707907714+00:00: Socket closed, handler exiting.
+tcpxo-wb-0:888:1489 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.708802736+00:00: SCTP handler shutdown signal received
+tcpxo-wb-0:888:1489 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.709929263+00:00: SCTP Closed
+tcpxo-wb-0:888:1489 [0] NCCL INFO NET/FasTrak 2026-08-02T13:31:43.709936119+00:00: Socket closed, handler exiting.

@@ -1,0 +1,8 @@
+eth1 10
+eth2 7
+eth3 3
+eth4 3
+eth5 3
+eth6 3
+eth7 3
+eth8 3

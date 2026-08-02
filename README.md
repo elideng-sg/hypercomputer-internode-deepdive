@@ -100,6 +100,7 @@ How a GPU workload is actually **architected and deployed** on GCP — the desig
 | :-- | :--- | :--- |
 | 21 | GKE network design (single-gVNIC vs TCPX vs TCPXO vs RDMA as a decision) | `lab-18` **enable GPUDirect-TCPX** — **complete & measured both ways**: before (single-gVNIC) **23.70 GB/s**, after (TCPX, 4 rails, `GPUDirectTCPX_v7`) **83.27 GB/s** busbw @ 16 GPU = **3.5×**; the TCPXO tier is measured too (**317.84 GB/s**, doc-25 / lab-22) |
 | 25 | **Fabric diagnostics, monitoring & escalation** (the fabric fails *open*) | `lab-22` **GPU fabric diagnostics** — **live & measured**: TCPXO fabric provisioned, verified and benchmarked at **317.84 GB/s busbw / 16 GPU / `NET/FasTrak`** (**≈13.4×** the single-gVNIC path); 9-layer `verify_gpu_fabric.sh` validated against 4 clusters incl. negative controls; **13 failure signatures** catalogued (§4.12–4.13 added from lab-18's TCPX bring-up) |
+| 15 | Scaling shape — *revisited on an enabled fabric* | `lab-23` **the enabled scaling curve** — **live & layer-8 gated**: 8/16/24-GPU all-reduce on TCPXO, **475.34 → 316.93 → 184.03 GB/s** (**12.3×** the gVNIC curve at 24 GPUs) with the 8-GPU rung as an NVLink control and the 16-GPU rung reproducing `lab-22` to 0.3%. Findings: an enabled fabric **lifts the curve but does not flatten it** (−42% on the third node), and TCPXO's NCCL env is **vendor-enforced, not tunable** (G34) |
 | 22 | Storage & the data path (GCSFuse, Parallelstore, Hyperdisk ML; the starved-GPU) | `lab-19` storage & data-path throughput — **live** (starved 11.8% vs fed 100% busy) |
 | 23 | End-to-end training pipeline (data → JobSet → checkpoints → metrics; WIF, Artifact Registry) | `lab-20` e2e training pipeline — **live** (2-node/16-GPU gang, loss 263→0.008, ckpts to GCS) |
 | 24 | Inference serving & MLOps (Inference Gateway, autoscale on DCGM metrics, Vertex AI contrast) | `lab-21` inference serving + autoscale — **live** (knee + 1→8-GPU 7.24× scaling; autoscale topology as reference) |
@@ -123,11 +124,13 @@ negative controls. The cliff is closed on a *third*, purpose-built cluster:
 | :--- | :--- | :--- |
 | Cluster | `hypercomputer-a3-tcpxo` (GKE v1.35) | `hypercomputer-a3-tcpx` (GKE 1.35.6-gke.1250000) |
 | Region / zone | `asia-southeast1-c` | `asia-east1-c` |
-| GPU pool | `tcpxo-flex-pool` — 2 × `a3-megagpu-8g` = **16 × H100 80GB (Mega)** | `a3-tcpx-flex-pool` — 2 × `a3-highgpu-8g` = **16 × H100 80GB (High)** |
+| GPU pool | `a3-mega-tcpxo-flex-pool` — **3** × `a3-megagpu-8g` = **24 × H100 80GB (Mega)** | `a3-tcpx-flex-pool` — 2 × `a3-highgpu-8g` = **16 × H100 80GB (High)** |
 | Fabric | **GPUDirect-TCPXO**: Dataplane V2 + multi-networking, **8** GPU NICs/node, MTU 8244, `NET/FasTrak` | **GPUDirect-TCPX**: Dataplane V2 + multi-networking, **4** GPU NICs/node, MTU 8244, `GPUDirectTCPX_v7` |
-| Measured | **317.84 GB/s** busbw @ 16 GPU — **≈13.4×** the single-gVNIC 2-node path | **83.27 GB/s** busbw @ 16 GPU — **≈3.5×** the single-gVNIC 2-node path |
+| Measured | **317.84 GB/s** busbw @ 16 GPU — **≈13.4×** the single-gVNIC 2-node path; and the full curve **475.34 → 316.93 → 184.03 GB/s** at 8/16/24 GPUs (`lab-23`) | **83.27 GB/s** busbw @ 16 GPU — **≈3.5×** the single-gVNIC 2-node path |
 
-Both are untuned floors (no NUMA/rail pinning), and both needed a **new** cluster: Dataplane V2 + multi-networking are create-time-only flags.
+Both needed a **new** cluster: Dataplane V2 + multi-networking are create-time-only flags.
+
+**On "untuned floors" — this guide said it, and then measured it wrong.** Both figures shipped with a *"the run isn't NUMA/rail-pinned, so this is a floor"* caveat. For **TCPXO that caveat is retracted**: the plugin marks **14 NCCL variables `POLICY_ENFORCED`** and *aborts NCCL init* on any mismatch, so there is no env sweep to run and the numbers are not pessimistic ([G34](reference/lab-build-gotchas.md), `lab-23`). The only knob left outside the policy file is `NCCL_ALGO`, worth **+8.2%**. For **TCPX it still stands** — that tier ships no env profile at all ([G28](reference/lab-build-gotchas.md)) — which is itself the per-tier discipline this guide keeps re-learning.
 
 **Journey:** single GPU → single node (8×NVLink/HGX) → 2 nodes (the ~17× cliff) → **8/16/24-GPU scaling curve** → 16/24-GPU jobs → platform reference architectures → **operate & troubleshoot** → **architect & integrate on GCP**.
 

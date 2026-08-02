@@ -6,13 +6,16 @@ Part II established *the cliff*: the instant a collective's ring leaves a single
 
 This doc adds a **third** node (24 × H100 on `asia-east1-c`) and asks the questions two points cannot answer: as the ring gains a third inter-node hop, does peak busbw *hold* at a floor, or keep *descending*? Does the small-message latency floor keep climbing? Is the ring-vs-tree tradeoff — which doc-06 said "matters far less than the link" at 2 nodes — measurable once tree depth grows? Every number here is read off the live 3-node cluster.
 
+It then asks the question the *whole* curve raises: **is the shape a property of the starved fabric, or of ring all-reduce itself?** Part VI built the fabrics needed to answer that, and lab-23 re-measured all three rungs on live GPUDirect-TCPXO. The answer — the slope survives; only the altitude changes — is the reason this doc has two curves rather than one.
+
 **What you'll learn:**
 - Why the inter-node number is a **descending curve** in node count, not a fixed floor
 - How the **latency floor** grows with every node added to the ring
 - Why the **8/16/24-GPU curve must live on one cluster** — and how to compare across clusters honestly
 - Where **ring vs. tree** and **strong/weak scaling efficiency** become measurable (and where they don't)
+- That an **enabled fabric lifts the curve ~12× but does not flatten it** — and that its NCCL environment is *enforced*, so those numbers are not "untuned floors"
 
-**Hands-on practice:** [lab-12: scaling the cliff](../labs/lab-12-scaling-sweep/) (all-reduce sweep at 8/16/24 GPUs)
+**Hands-on practice:** [lab-12: scaling the cliff](../labs/lab-12-scaling-sweep/) (all-reduce sweep at 8/16/24 GPUs) · [lab-23: the same curve on TCPXO](../labs/lab-23-enabled-scaling-curve/)
 
 **Prerequisites:** the inter-node floor and busbw definition ([doc-06](part2-inter-node/06-nccl-collectives.md)); the intra-node ceiling ([doc-04](part1-single-node/04-intranode-nvlink-nvswitch-hgx.md)); distributed training step structure ([doc-09](part3-clustering-execution/09-distributed-training-ddp-fsdp.md)).
 
@@ -131,6 +134,29 @@ Three findings, none of which a 2-node pool can produce:
 
 ---
 
+## The same curve on an *enabled* fabric: the slope survives (lab-23)
+
+Everything above is measured on a single gVNIC. The obvious next question — does GPUDirect *flatten* this, or just lift it? — needs the same three rungs on a fabric that actually has rails. [lab-23](../labs/lab-23-enabled-scaling-curve/) measured them on live **GPUDirect-TCPXO** (3 × `a3-megagpu-8g`, `asia-southeast1-c`), with the *same* `allreduce_bench.py`, and with every rung gated on a `NET/FasTrak` transport read so a silent fallback could not quietly reproduce the TCP curve:
+
+| GPUs | Nodes | **TCPXO peak busbw** | gVNIC peak | Speedup | Step-to-step |
+| ---: | ---: | ---: | ---: | ---: | :--- |
+| 8 | 1 | **475.34** | 465.43 | 1.02× | — (NVLink both sides) |
+| 16 | 2 | **316.93** | 23.70 | **13.37×** | −33% TCPXO / −95% gVNIC |
+| 24 | 3 | **184.03** | 14.95 | **12.31×** | **−42%** TCPXO / −37% gVNIC |
+
+![enabled vs gVNIC curve](../assets/lab-23/enabled_vs_gvnic_curve.svg)
+
+**The answer is: it lifts, it does not flatten.** Adding the third node costs **42%** of peak busbw on the best fabric A3 offers — *steeper*, in percentage terms, than the TCP fabric's 37%. Finding 1 above ("a descending curve, not a floor") is therefore not an artifact of a starved fabric; it is a property of ring all-reduce serializing through inter-node hops, and **GPUDirect buys altitude, not flatness**. What changes is where the curve sits: 184 GB/s at 24 GPUs against 14.95.
+
+Two further reasons to trust these three rungs against the three above:
+
+- **The 8-GPU rung is a built-in control.** 475.34 vs 465.43 GB/s (2.1% apart) is intra-node NVLink on both sides, with no fabric involved. Two clusters, two zones, two driver stacks, effectively the same number — which is what licenses attributing the 13.4× and 12.3× to the *fabric* rather than to the cluster or the harness.
+- **The 16-GPU rung independently reproduces lab-22.** 316.93 here vs **317.84 GB/s** there — 0.3% apart, five days and a re-provisioned pool apart, via a different runner.
+
+> **The sizing consequence is the point of this section.** A capacity plan built from lab-22's single 16-GPU fabric number would predict ~317 GB/s at 24 GPUs and get 184 — an over-prediction of **~72%**. One inter-node data point does not establish a slope, on *any* fabric tier. That is the same error as [D1/D2/D5](../reference/lab-build-gotchas.md) in a different coordinate system: generalising from one measurement to a family.
+
+---
+
 ## Cross-cluster comparison (labeled, never spliced)
 
 The 2-node point on this curve (16 GPU, **23.70 GB/s** on `asia-east1-c`) is *not* the same as lab-06's 2-node run (**~28.6 GB/s** on `us-central1`). Both are the same fabric class — plain TCP over a single gVNIC, no GPUDirect — but different clusters, possibly different GKE/driver/NCCL builds.
@@ -174,9 +200,22 @@ Two things a 2-node pool cannot surface:
 
 1. **No crossover — tree dominates across the whole range.** The classic story (tree wins small messages, ring wins large ones) does *not* hold here. On a latency-bound TCP fabric, ring's pipeline threads every chunk through **three serial inter-node hops**, while tree's inter-node reduction has depth ~2 and a shallower critical path. That advantage is largest where latency dominates (mid-range, ~11×) and narrows but never reverses as messages grow (still ~1.3× at 1 GiB). The link is *not* the only thing that matters once there are ≥3 nodes — the algorithm's inter-node hop count does too.
 
-2. **NCCL's default leaves bandwidth on the table.** The auto-selected 24-GPU run (§ the curve above, 14.95 GB/s peak) tracks **ring**, not tree — so on this fabric the default all-reduce is ~20–30% slower than an explicit `NCCL_ALGO=Tree` at large sizes. That is an actionable tuning finding that only appears at ≥3 nodes: at 2 nodes there was nothing to tune because both algorithms shared the one hop.
+2. **NCCL's default leaves bandwidth on the table — on *this* fabric.** The auto-selected 24-GPU run (§ the curve above, 14.95 GB/s peak) tracks **ring**, not tree — so here the default all-reduce is ~20–30% slower than an explicit `NCCL_ALGO=Tree` at large sizes. That only appears at ≥3 nodes: at 2 nodes there was nothing to tune because both algorithms shared the one hop. **Do not carry the magnitude to another fabric tier** — see immediately below.
 
 *(Captured in `assets/lab-12/ringtree_{ring,tree}.txt` and `ringtree_crossover.csv`; run via `labs/lab-12-scaling-sweep/run_ringtree.sh`.)*
+
+### …and how much of that survives on a real fabric: 8%, not 11× (lab-23)
+
+The `~11×` above is the kind of number that escapes its context and becomes a tuning rule. lab-23 re-ran the same comparison at 24 GPUs on **TCPXO**:
+
+| 24-GPU config | Algorithm | Peak busbw |
+| :--- | :--- | ---: |
+| default | ring (auto) | 184.03 GB/s |
+| `NCCL_ALGO=Tree` | tree | **199.10 GB/s** |
+
+**Tree still wins — by 8.2%.** The *direction* of the finding holds and is now confirmed on two fabric tiers; the *magnitude* was a property of the starving TCP fabric, not of NCCL's chooser. On a healthy fabric the default is nearly right and the mid-range blowout disappears entirely, because ring's extra serial hops stop being catastrophic once each hop is fast. A reader who carried "NCCL under-picks by ~11×" onto A3 Mega would be wrong by a factor of ~134.
+
+> **And `NCCL_ALGO` is the *only* knob left on TCPXO.** The plugin's Guest Config Checker shim marks **14 NCCL variables `POLICY_ENFORCED`** — `NCCL_PROTO`, `NCCL_BUFFSIZE`, `NCCL_MIN_NCHANNELS`, `NCCL_CROSS_NIC`, all four `*_CHUNKSIZE`, six `NCCL_FASTRAK_*` — and **aborts NCCL init** on any mismatch rather than warning. lab-23 proved this by trying: `NCCL_FASTRAK_NUM_FLOWS=4` and `NCCL_MIN_NCHANNELS=8` each killed the job before the first collective ([G34](../reference/lab-build-gotchas.md)). So on A3 Mega the vendor profile is a **contract, not a baseline to improve on** — which also means the enabled numbers in this doc are *not* pessimistic "untuned floors". There is no env-tuning headroom above them to find.
 
 ## Strong / weak scaling efficiency: the curve reaches training
 
@@ -218,7 +257,7 @@ What only three points can show:
 
 3. **Strong scaling is worse than weak.** Fixing the global batch (strong) shrinks each GPU's compute while the comms grows, so there is even less compute to hide the all-reduce behind: 6.8% at 2 nodes, 2.7% at 3. The comms-bound regime is laid bare.
 
-> **Honest framing.** These are deliberately comms-bound numbers: a communication-heavy model on a plain-TCP fabric with small per-step compute, chosen to *isolate* the fabric's effect on scaling. Production training overlaps comms with compute, uses larger batches, and — crucially — a faster fabric that lifts 12a's busbw ceiling: that lift is now **measured**, not hypothetical, at **3.5×** for TCPX ([lab-18](../labs/lab-18-enable-gpudirect-tcpx/)) and **13.4×** for TCPXO ([lab-22](../labs/lab-22-fabric-diagnostics/)) on the same benchmark and GPU model. The absolute efficiencies would improve accordingly; the **shape** (a descending curve driven by inter-node bandwidth) is the transferable lesson, and it is exactly what a third node makes measurable. Note what a faster fabric does *not* do: it raises the curve, it does not flatten it — the ring still gains a serial hop per node.
+> **Honest framing.** These are deliberately comms-bound numbers: a communication-heavy model on a plain-TCP fabric with small per-step compute, chosen to *isolate* the fabric's effect on scaling. Production training overlaps comms with compute, uses larger batches, and — crucially — a faster fabric that lifts 12a's busbw ceiling: that lift is now **measured**, not hypothetical, at **3.5×** for TCPX ([lab-18](../labs/lab-18-enable-gpudirect-tcpx/)) and **13.4×** for TCPXO ([lab-22](../labs/lab-22-fabric-diagnostics/)) on the same benchmark and GPU model. The absolute efficiencies would improve accordingly; the **shape** (a descending curve driven by inter-node bandwidth) is the transferable lesson, and it is exactly what a third node makes measurable. Note what a faster fabric does *not* do: it raises the curve, it does not flatten it — the ring still gains a serial hop per node. **That last sentence was an inference when it was written, and lab-23 has since measured it**: 316.93 → 184.03 GB/s from 2 to 3 nodes on TCPXO is a 42% fall, against gVNIC's 37%. The claim held, which is worth saying explicitly because [D1/D2/D5](../reference/lab-build-gotchas.md) are three cases where a similar cross-tier inference did not.
 
 *(Captured in `assets/lab-12/train_{weak,strong}_scaling.csv` and `train_*_{ddp,fsdp}_*gpu.txt`; run via `labs/lab-12-scaling-sweep/run_training.sh`.)*
 
@@ -230,11 +269,14 @@ What only three points can show:
 1. The inter-node all-reduce number is a **descending curve** in node count (465 → 23.7 → 14.95 GB/s across 1/2/3 nodes), because a ring serializes through every inter-node hop — not a fixed floor.
 2. The **latency floor grows** with every node (0.040 → 0.175 → 0.325 ms); small-message collectives get monotonically worse with scale.
 3. **busbw normalizes** the ring's traffic growth, so the decline is real per-byte fabric inefficiency.
-4. At **≥3 nodes the algorithm matters again**: forced Tree beats Ring at every message size (~11× mid-range), and NCCL's default (ring-like) leaves ~20–30% unclaimed — invisible at 2 nodes.
+4. At **≥3 nodes the algorithm matters again**: forced Tree beats Ring at every message size (~11× mid-range on TCP), and NCCL's default (ring-like) leaves ~20–30% unclaimed — invisible at 2 nodes. **But the magnitude is fabric-specific: the same comparison on TCPXO is worth 8.2%** (184.03 → 199.10 GB/s), so the direction generalises and the number does not.
 5. **Training efficiency collapses as a curve**: DDP weak-scaling efficiency 100% → 15.5% → 8.2%; FSDP falls faster (extra collectives); strong scaling worse still (2.7% at 24 GPU). The comms curve reaches real throughput.
 6. Node-scaling curves are captured on **one cluster**; the ~28.6 GB/s `us-central1` figure is a labeled cross-cluster comparison, not a curve point. The transport is **read off the wire** at every step — still plain TCP/gVNIC at 24 GPUs.
+7. **An enabled fabric lifts the curve without flattening it** — TCPXO measures 475.34 → 316.93 → **184.03 GB/s** (12.3× the TCP fabric at 24 GPUs), yet loses 42% on the third node. One inter-node data point never establishes a slope: sizing from lab-22's 16-GPU number alone over-predicts 24 GPUs by ~72%.
+8. **On TCPXO there is nothing to tune but the algorithm.** 14 NCCL variables are `POLICY_ENFORCED` by a shim that aborts init on mismatch ([G34](../reference/lab-build-gotchas.md)), so the enabled numbers above are contracts, not untuned floors.
 
 **Next steps:**
 - [lab-12](../labs/lab-12-scaling-sweep/) — reproduce the curve; run the ring/tree and training-efficiency sweeps
+- [lab-23](../labs/lab-23-enabled-scaling-curve/) — the same three rungs on live GPUDirect-TCPXO, layer-8 gated
 - [doc-06](part2-inter-node/06-nccl-collectives.md) — the 2-node cliff this curve extends
 - [doc-09](part3-clustering-execution/09-distributed-training-ddp-fsdp.md) — the collective inside a real training step

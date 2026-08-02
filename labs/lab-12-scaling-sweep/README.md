@@ -179,6 +179,28 @@ Forcing `NCCL_ALGO=Ring` then `Tree` (same `NCCL_PROTO=Simple`, same sweep) at 2
 - **The default under-picks.** 12a's auto-selected 24-GPU peak (14.95 GB/s) tracks **ring** — so on this fabric the default all-reduce is ~20–30% slower than an explicit `NCCL_ALGO=Tree`. An actionable tuning win that only exists at ≥3 nodes.
 - **Forcing confirmed by the divergent curves:** with only `NCCL_ALGO` differing between the two runs, the ~40% peak-busbw gap (14.24 vs 19.87) is itself proof the env var took effect.
 
+> **The `~11×` does not transfer to a real fabric.** [lab-23](../lab-23-enabled-scaling-curve/) ran the
+> same 24-GPU comparison on GPUDirect-TCPXO: ring 184.03 vs Tree **199.10 GB/s** — Tree still wins,
+> by **8.2%**. The *direction* of this finding is now confirmed on two fabric tiers; the *magnitude*
+> was a property of the starving TCP fabric, because ring's extra serial hops stop being
+> catastrophic once each hop is fast. Quote the direction, not the multiplier.
+
+### 4a. The enabled curve — measured in [lab-23](../lab-23-enabled-scaling-curve/)
+
+The obvious question this lab raises is whether the descending shape is the *fabric's* fault or the
+*ring's*. It needed a fabric with rails, which Part VI built; lab-23 re-ran these three rungs on live
+TCPXO with the **same** `allreduce_bench.py`, layer-8 gated on `NET/FasTrak`:
+
+| GPUs | Nodes | TCPXO | this lab (gVNIC) | speedup |
+| ---: | ---: | ---: | ---: | ---: |
+| 8 | 1 | 475.34 | 465.43 | 1.02× |
+| 16 | 2 | 316.93 | 23.70 | **13.37×** |
+| 24 | 3 | **184.03** | 14.95 | **12.31×** |
+
+The 8-GPU rung agreeing to 2.2% (NVLink on both sides, no fabric involved) is what makes the other
+two attributable to the fabric rather than the cluster. And the shape holds: **−42% on the third
+node for TCPXO against −37% here**, so finding 1 above is about ring all-reduce, not about TCP.
+
 ### 5. Training scaling efficiency — `assets/lab-12/train_{weak,strong}_scaling.csv` (12c)
 
 `run_training.sh` reuses lab-09's 1B-param DDP/FSDP model at 8/16/24 GPUs. Efficiency doesn't step down — it **collapses as a curve**:

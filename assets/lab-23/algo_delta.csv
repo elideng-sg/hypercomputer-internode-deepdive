@@ -1,0 +1,3 @@
+config,gpus,algo,peak_busbw_GBps
+default,24,ring(auto),184.03
+NCCL_ALGO=Tree,24,tree,199.10

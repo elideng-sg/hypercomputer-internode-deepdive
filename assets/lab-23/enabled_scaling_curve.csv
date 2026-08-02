@@ -1,0 +1,4 @@
+gpus,nodes,peak_busbw_GBps,latency_floor_ms,gvnic_peak_busbw_GBps,speedup_x
+8,1,475.34,0.043,465.43,1.02
+16,2,316.93,0.123,23.70,13.37
+24,3,184.03,0.138,14.95,12.31
