@@ -206,8 +206,14 @@ invisible to NIC counters" from TCPXO to all GPUDirect fabrics — it is a FasTr
 property, not a GPUDirect one. Details:
 [`after_tcpx_monitoring.txt`](../../assets/lab-18/after_tcpx_monitoring.txt).
 
-**Cross-tie:** the [lab-12](../lab-12-scaling-sweep/) 8/16/24-GPU sweep can now re-run on this
-pool to produce the *enabled* scaling curve.
+**Cross-tie — now closed.** The [lab-12](../lab-12-scaling-sweep/) 8/16/24-GPU sweep has been re-run
+on an enabled fabric by [lab-23](../lab-23-enabled-scaling-curve/) — on **TCPXO** rather than this
+TCPX pool, because only the TCPXO cluster has the third node a 24-GPU rung needs (this pool is 2 ×
+`a3-highgpu-8g`). Enabled curve: 475.34 → 316.93 → **184.03 GB/s**. It also retires this lab's
+"floor, not a ceiling" note for TCPXO specifically: **14 NCCL vars are `POLICY_ENFORCED`** there and
+abort init on mismatch ([G34](../../reference/lab-build-gotchas.md)), so there is no env-tuning
+headroom to find. That does **not** transfer to TCPX, which ships no `nccl-env-profile.sh` at all
+([G28](../../reference/lab-build-gotchas.md)) — so **83.27 GB/s remains an honestly untuned number**.
 
 ---
 

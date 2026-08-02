@@ -538,6 +538,115 @@ either a discriminating second probe or a hedged message. Diagnostics deserve th
 adversarial testing as the thing they diagnose — ours only produced correct output after
 being run against clusters that were broken in ways it hadn't anticipated.
 
+## G31 — `launch_node.sh` hardcodes `/workspace/w_<rank>.log`: stage the harness there or lose every log (lab-23)
+
+**Symptom.** A 24-GPU sweep ran to completion — `rc=0`, no error from any rank — and produced
+**zero** recoverable output. The collector failed with `cat: /work/w_0.log: No such file or
+directory`.
+
+**Root cause.** `labs/lab-06-2node-nccl-collectives/launch_node.sh` refers to
+`/workspace/allreduce_bench.py` (line 15) and writes per-rank logs to `/workspace/w_<rank>.log`
+(line 30) — both **absolute and hardcoded**. lab-23 staged the harness into its pod's `/work`
+emptyDir, so the benchmark itself ran fine (the launcher was given an explicit script path) but
+every rank redirected its output into a directory that does not exist inside that container.
+
+**Fix.** `mkdir -p /workspace` in each pod and `kubectl cp` into `/workspace`, leaving
+`launch_node.sh` **unmodified**. Patching the launcher to honour a `$WORKDIR` would have been
+tidier and was rejected on purpose: it is the same file lab-06 and lab-12 measured with, and
+forking it breaks the apples-to-apples basis for comparing an enabled curve against the gVNIC
+one. When a harness is also a *baseline*, its bugs are cheaper to work around than to fix.
+
+**Lesson.** An exit code of 0 from a distributed launcher means the ranks exited, not that you
+captured anything. A sweep that produces no data rows is a **failed** sweep, not a slow one —
+lab-23 now warns loudly on an empty result set, because the silent version becomes a missing
+row in a curve CSV and reads as "not measured" rather than "broken".
+
+## G32 — on a 9-NIC TCPXO pod, `hostname -I` returns a GPU *rail* address, and rendezvous dies with no fabric error (lab-23)
+
+**Symptom.** Every rank of a multi-node job failed at `torch.distributed` init. Rank 0 waited;
+all other ranks timed out dialing the c10d store. **No NCCL error, no transport error, nothing
+in any fabric log** — because NCCL never initialized. `MASTER_ADDR` had been set to
+`192.169.0.2`.
+
+**Root cause.** A TCPXO workbench has **nine** interfaces: `eth0` (the pod network, MTU 1460)
+plus `eth1`–`eth8` (the GPU rails, MTU 8244). `hostname -I` prints all of them and the
+**rails come first**, so the usual `hostname -I | awk '{print $1}'` idiom yields a rail
+address. The rails sit on isolated per-rail /24s with **no route between nodes** — that is the
+design, not a misconfiguration. Rank 1 was dialing an address that is unreachable from its
+node by construction.
+
+**Fix.** Resolve `eth0` explicitly (see **G33** for how, inside a stock container). The rule:
+on a multi-NIC GPU node the **control plane is `eth0`** and only the NCCL data path rides
+`eth1`–`eth8`. `MASTER_ADDR`, the c10d store, and any coordination socket belong on `eth0`.
+
+**Lesson.** "The pod's IP" is ambiguous the moment a pod has more than one NIC, and the
+ambiguity resolves the *wrong* way by default. This failure signature — a hang or timeout at
+distributed init with a clean fabric — is far more likely a rendezvous bug than a fabric bug on
+these shapes, and looking at NCCL logs first wastes the whole borrow window.
+
+## G33 — neither `ip` nor `ifconfig` exists in `nvcr.io/nvidia/pytorch` (lab-23)
+
+**Symptom.** The obvious fix for G32 — `ip -4 addr show eth0` — fails: `bash: ip: command not
+found`. So does `ifconfig`. (Separately: the holder image has no `bash` at all, so `kubectl
+exec … -- bash -c` fails there and needs `sh`.)
+
+**Root cause.** The NGC PyTorch images ship a deliberately slim userland; `iproute2` and
+`net-tools` are not part of it. Installing either mid-run needs egress and adds a failure mode
+inside a scarce Flex borrow window.
+
+**Fix.** Read the interface address through the kernel directly, using only the Python that is
+guaranteed present:
+
+```bash
+kubectl exec "$POD" -c bench -- python3 -c \
+"import fcntl,socket,struct
+s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+print(socket.inet_ntoa(fcntl.ioctl(s.fileno(),0x8915,struct.pack('256s',b'eth0'))[20:24]))"
+```
+
+`0x8915` is `SIOCGIFADDR`. This is the same lookup `ifconfig` performs.
+
+**Lesson.** Note what was *not* done: a `command -v ip || command -v ifconfig` fallback chain.
+Every branch of it was absent, so the guard would have silently fallen through to
+`hostname -I` — reintroducing **G32** as an intermittent, environment-dependent bug. A
+fallback to a *wrong* answer is worse than a hard failure. Assume nothing about a vendor
+container's userland; prefer the interpreter you already depend on.
+
+## G34 — the TCPXO NCCL environment is **vendor-enforced**: 14 variables abort init on mismatch (lab-23)
+
+**Symptom.** Two textbook tuning attempts killed the job before a single collective ran:
+
+```
+NCCL WARN NCCL/NET (shim) mismatch enforced: NCCL_FASTRAK_NUM_FLOWS=4 (expected 2)
+NCCL WARN NCCL/NET (shim) mismatch enforced: NCCL_MIN_NCHANNELS=8 (expected 4)
+```
+
+**Root cause.** The TCPXO plugin loads a **Guest Config Checker** shim that validates the NCCL
+environment against `a3plus_guest_config.textproto` and **refuses to initialize** on any
+mismatch. **14 variables are marked `POLICY_ENFORCED`** — `NCCL_PROTO`, `NCCL_BUFFSIZE`,
+`NCCL_MIN_NCHANNELS`, `NCCL_CROSS_NIC`, `NCCL_NET_GDR_LEVEL`, all four `*_CHUNKSIZE`, and six
+`NCCL_FASTRAK_*` — which is essentially the entire throughput surface. Only
+`NCCL_TUNER_PLUGIN` and `NCCL_FASTRAK_PLUGIN_ACCEPT_TIMEOUT_MS` are `POLICY_RECOMMENDED`.
+Evidence: `assets/lab-23/guest_config_enforced.txt`, plus the two abort logs
+`failure_shim_enforced_num_flows.txt` and `failure_shim_enforced_nchannels.txt`.
+
+**Fix.** There isn't one, and that is the finding. `nccl-env-profile.sh` is **not a baseline to
+improve on; it is a contract**, and the shim is the enforcement. This retires the "these are
+floors, not ceilings — the run is untuned" disclaimer that lab-18 and lab-22 §5.1 both shipped:
+on TCPXO there is no env-tuning headroom to find, so 317.84 GB/s @16 GPUs and 184.03 @24 are
+not pessimistic. It also reframes the `CPU affinity … is not a subset` advisory — real, but not
+addressable through the NCCL environment.
+
+What *is* left is **`NCCL_ALGO`**, absent from the policy file. lab-23 measured it at 24 GPUs:
+ring (auto) 184.03 vs `NCCL_ALGO=Tree` **199.10 GB/s** — Tree still wins, but by **8.2%**,
+against the **~11×** lab-12 saw on the starving TCP fabric. doc-15's "NCCL's default
+under-picks" was a property of that fabric, not of NCCL's chooser.
+
+**Lesson.** Before recommending an NCCL env change on A3 Mega, read the policy file — an
+escalation that says "try raising `NCCL_MIN_NCHANNELS`" is recommending a crash, not a
+speedup. More generally: when a platform enforces its own tuning, "untuned" stops being a
+caveat you owe the reader and becomes a **fact about the platform** you owe them instead.
+
 ---
 
 ## D1–D6 — defects found in *this guide's own text*, by measuring what it asserted (lab-18)
@@ -572,4 +681,7 @@ either under-trust a working signal or declare a healthy fabric dead.
 
 ---
 
-*(Appended as labs are built. Part V complete through lab-17. Part VI COMPLETE: lab-18 **captured live** on a purpose-built Dataplane-V2 cluster — TCPX before/after 23.70 → **83.27 GB/s** (3.5×), which also produced G27–G30 and narrowed G25's scope; labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology. lab-22 live TCPXO fabric + diagnostics: 317.84 GB/s measured (13.4×), checker validated against broken *and* working clusters, monitoring validated against live GMP in both fabric states.)*
+*(Appended as labs are built. lab-23 closed the enabled scaling curve — 8/16/24 GPUs on live TCPXO,
+475.34 → 316.93 → **184.03 GB/s**, layer-8 gated — and produced G31–G34, of which **G34** retires the
+"untuned floor" disclaimer by proving the TCPXO NCCL env is vendor-enforced rather than tunable.
+Part V complete through lab-17. Part VI COMPLETE: lab-18 **captured live** on a purpose-built Dataplane-V2 cluster — TCPX before/after 23.70 → **83.27 GB/s** (3.5×), which also produced G27–G30 and narrowed G25's scope; labs 19/20/21 captured live and Flex-safe — lab-19 userspace GCSFuse data path, lab-20 2-node/16-GPU JobSet training pipeline (data+code+ckpt on GCS), lab-21 inference serving knee + 1→8-GPU horizontal scaling + reference autoscale topology. lab-22 live TCPXO fabric + diagnostics: 317.84 GB/s measured (13.4×), checker validated against broken *and* working clusters, monitoring validated against live GMP in both fabric states.)*

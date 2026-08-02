@@ -1,0 +1,14 @@
+tcpxo-wb-0:890:890 [0] NCCL INFO ENV/Plugin: Could not find: libnccl-env.so
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL_SOCKET_IFNAME set to eth0
+tcpxo-wb-0:890:890 [0] NCCL INFO cudaDriverVersion 13000
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL version 2.28.7+cuda13.2
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/Plugin: Loaded net plugin config_checker_shim (v7)
+tcpxo-wb-0:890:890 [0] NCCL INFO Successfully loaded external network plugin /usr/local/nvidia/lib64/libnccl-net.so
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) ver. 0.0.1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) activated shim layers, 'Guest Config Checker'
+
+[2026-08-02 13:25:57] tcpxo-wb-0:890:890 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch enforced: NCCL_MIN_NCHANNELS=8 (expected 4)
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) /build/nccl-shim/src/guest_config_checker.cc:132 -> 4
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) /build/nccl-shim/src/guest_config_checker.cc:168 -> 4
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) /build/nccl-shim/src/guest_config_checker.cc:221 -> 4
+tcpxo-wb-0:890:890 [0] NCCL INFO ENV/Plugin: Closing env plugin ncclEnvDefault

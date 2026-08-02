@@ -32,8 +32,19 @@ PASS/FAIL verdict across all nine layers, validate that command against clusters
 > **1327 vs 29.7 Gbit/s**, while GPU util is 100% on both sides. See §7 and
 > [`tcpxo_monitoring_validation.txt`](../../assets/lab-22/tcpxo_monitoring_validation.txt).
 >
-> **Still not claimed:** a *tuned* figure. The run logged `CPU affinity ... not a subset`
-> advisories, so 317.84 GB/s is an untuned **floor**, not this fabric's ceiling.
+> **Retracted 2026-08-02 — there is no "tuned figure" to claim.**
+> This lab shipped 317.84 GB/s as an untuned **floor** because the run logged
+> `CPU affinity ... not a subset` advisories. [lab-23](../lab-23-enabled-scaling-curve/) went
+> looking for the ceiling and found that **14 NCCL variables are `POLICY_ENFORCED`** by the
+> plugin's Guest Config Checker shim, which **aborts NCCL init** rather than warning:
+> `NCCL_FASTRAK_NUM_FLOWS=4` and `NCCL_MIN_NCHANNELS=8` each killed the job
+> ([G34](../../reference/lab-build-gotchas.md)). The vendor profile is a **contract**, not a
+> baseline to improve on — so 317.84 GB/s is simply *the* number for this shape, and the
+> affinity advisory, while real, is not addressable through the NCCL environment. lab-23 also
+> **independently reproduced this measurement at 316.93 GB/s** (0.3%) with a different runner.
+>
+> **Also do not read it as a scaling prediction:** the same fabric measures **184.03 GB/s at
+> 24 GPUs / 3 nodes** — a 42% fall on the third node.
 >
 > **Update 2026-07-31 — the TCPX tier is measured too** ([lab-18](../lab-18-enable-gpudirect-tcpx/)):
 > **83.27 GB/s** busbw on 2 × `a3-highgpu-8g`, `GPUDirectTCPX_v7`, 4 rails, **≈3.5×** the
@@ -568,9 +579,14 @@ Three things to read off it:
 2. **Inter-node is now within ~1.5× of intra-node NVLink** (~480 GB/s), instead of ~20×
    below it. That is the difference between "multi-node is a last resort" and "multi-node
    scales".
-3. **This is a floor, not a ceiling.** The run logged `CPU affinity ... is not a subset`
-   warnings — ranks were not NUMA-pinned to their rails. A tuned run should beat it. Do not
-   quote 317.84 GB/s as this hardware's maximum.
+3. ~~**This is a floor, not a ceiling.**~~ **Corrected 2026-08-02 — it is neither; it is the
+   enforced operating point.** The original claim was that the `CPU affinity ... is not a
+   subset` warnings meant ranks were un-pinned and a tuned run should beat this. But the TCPXO
+   plugin **enforces 14 NCCL variables** and aborts init on any mismatch, so there is no env
+   sweep to run ([G34](../../reference/lab-build-gotchas.md), evidence in `assets/lab-23/`).
+   The one knob outside the policy file is `NCCL_ALGO`, worth **+8.2%** at 24 GPUs. Quote
+   317.84 GB/s as this shape's measured number — not as a maximum to beat, and not as a
+   pessimistic floor either. See [lab-23](../lab-23-enabled-scaling-curve/).
 
 Full table with provenance (plugin/rxdm/driver/GKE versions, MTU, transport):
 [`tcpxo_allreduce_16gpu.txt`](../../assets/lab-22/tcpxo_allreduce_16gpu.txt). In-pod

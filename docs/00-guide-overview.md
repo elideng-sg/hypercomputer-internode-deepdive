@@ -103,7 +103,8 @@ flowchart LR
 
 Key facts verified during execution:
 - **Both general-purpose clusters are single-gVNIC / TCP** — inter-node NCCL traverses the standard gVNIC/VPC TCP path (23.7–28.6 GB/s floor), *not* GPUDirect. No multi-network CRDs, no TCPX/TCPXO/RDMA DaemonSets. Characterizing this actual path is a core Part II thread — and it **cannot be upgraded in place**, because multi-networking requires Dataplane V2 and both are create-time-only cluster flags.
-- **So the GPUDirect rungs were measured on two purpose-built clusters**, not by upgrading these: `hypercomputer-a3-tcpx` (4 GPU NICs, `GPUDirectTCPX_v7`, **83.27 GB/s** busbw @ 16 GPU — `lab-18`) and `hypercomputer-a3-tcpxo` (8 GPU NICs, `NET/FasTrak`, **317.84 GB/s** — `lab-22`). Same benchmark, same GPU model as the floor above, so the ladder reads **23.7 → 83.27 → 317.84 GB/s** at 1 → 4 → 8 rails. Both enabled figures are **untuned floors** (no NUMA/rail pinning).
+- **So the GPUDirect rungs were measured on two purpose-built clusters**, not by upgrading these: `hypercomputer-a3-tcpx` (4 GPU NICs, `GPUDirectTCPX_v7`, **83.27 GB/s** busbw @ 16 GPU — `lab-18`) and `hypercomputer-a3-tcpxo` (8 GPU NICs, `NET/FasTrak`, **317.84 GB/s** — `lab-22`). Same benchmark, same GPU model as the floor above, so the ladder reads **23.7 → 83.27 → 317.84 GB/s** at 1 → 4 → 8 rails.
+- **Two corrections `lab-23` made to the sentence that used to end this bullet** (*"both enabled figures are untuned floors"*): (a) on **TCPXO** it is false — 14 NCCL variables are `POLICY_ENFORCED` and abort init on mismatch, so the vendor profile is a contract and 317.84 GB/s is not pessimistic ([G34](../reference/lab-build-gotchas.md)); on **TCPX** it still holds (no env profile ships at all, [G28](../reference/lab-build-gotchas.md)). (b) None of the three rungs is a *scaling* number — all are 2-node. The enabled curve at 8/16/24 GPUs is **475.34 → 316.93 → 184.03 GB/s** (`lab-23`), so the third node costs **42%** and GPUDirect buys altitude, not flatness.
 - No tenant-visible BlueField DPU, Spectrum-X SuperNIC, or DGX Fabric Manager is present on either cluster (this contrast is explored in Part IV).
 - Flex capacity on the 3-node cluster is scarce and hard to re-grab, so resilience exercises inject faults at the **job/pod level** — no node is ever drained or deleted (the "always hold the GPU" posture).
 
@@ -249,7 +250,7 @@ Each layer of the guide is built on a **three-way spine** that connects conceptu
 
 **Part VI — Architecture & GCP Integration** *(design-first; docs 21–24 + labs 18–21 all live):*
 - Read: `docs/part6-architecture-gcp-integration/21-gke-network-design.md`
-- Practice: `labs/lab-18-enable-gpudirect-tcpx/` (the fabric before/after — **both halves measured**, 23.70 → 83.27 GB/s), `lab-19-storage-data-path/` (starved-vs-fed GPU), `lab-20-training-pipeline/` (2-node/16-GPU JobSet, data+code+ckpt on GCS), `lab-21-inference-serving/` (serving knee + 1→8-GPU scaling) — all live
+- Practice: `labs/lab-18-enable-gpudirect-tcpx/` (the fabric before/after — **both halves measured**, 23.70 → 83.27 GB/s), `lab-19-storage-data-path/` (starved-vs-fed GPU), `lab-20-training-pipeline/` (2-node/16-GPU JobSet, data+code+ckpt on GCS), `lab-21-inference-serving/` (serving knee + 1→8-GPU scaling), `lab-23-enabled-scaling-curve/` (the 8/16/24-GPU curve on TCPXO — **475.34 → 316.93 → 184.03 GB/s**, layer-8 gated) — all live
 - Docs 22–24 cover the storage/data path, the end-to-end pipeline, and inference serving + autoscale
 
 **Cross-cutting toolkit references** are listed in each doc's "Tools in this layer" section and are consolidated under `docs/toolkit/`. Read them when a tool first appears or as needed.

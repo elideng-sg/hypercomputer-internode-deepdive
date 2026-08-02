@@ -1,0 +1,349 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1785676127.705676     890 init.cc:112] Current time zone: UTC
+tcpxo-wb-0:890:890 [0] NCCL INFO ENV/Plugin: Could not find: libnccl-env.so
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL_SOCKET_IFNAME set to eth0
+tcpxo-wb-0:890:890 [0] NCCL INFO cudaDriverVersion 13000
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL version 2.28.7+cuda13.2
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/Plugin: Loaded net plugin config_checker_shim (v7)
+tcpxo-wb-0:890:890 [0] NCCL INFO Successfully loaded external network plugin /usr/local/nvidia/lib64/libnccl-net.so
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) ver. 0.0.1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) activated shim layers, 'Guest Config Checker'
+
+[2026-08-02 13:08:47] tcpxo-wb-0:890:890 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: NCCL_FASTRAK_LLCM_DEVICE_DIRECTORY=/dev/aperture_devices (expected unset)
+
+[2026-08-02 13:08:47] tcpxo-wb-0:890:890 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: NCCL_LIB_DIR=/usr/local/nvidia/lib64 (expected unset)
+
+[2026-08-02 13:08:47] tcpxo-wb-0:890:890 [0] /build/nccl-shim/src/guest_config_checker.cc:101 NCCL WARN NCCL/NET (shim) mismatch recommended: cpu affinity settings not subset, curr=0xffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff,ffffffff (expected 0xffffffff,00000000)
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL/NET (shim) loading net plugin at libnccl-net_internal.so
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705713513+00:00: Initializing network FasTrak, version: 1.0.17
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705726769+00:00: NCCL_FASTRAK_ENABLE_HOTPATH_LOGGING set by environment to 0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705730463+00:00: NCCL_FASTRAK_PLUGIN_ACCEPT_TIMEOUT_MS set by environment to 600000.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705732685+00:00: NCCL_FASTRAK_NUM_FLOWS set by environment to 2.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705735188+00:00: No environment variable NCCL_FASTRAK_ENABLE_SEND_STATS set, using default 0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705737395+00:00: No environment variable NCCL_FASTRAK_CLOSE_SEND_ON_DONE set, using default 0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705739121+00:00: No environment variable NCCL_FASTRAK_RAIL_ALIGNED set, using default 1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705740818+00:00: No environment variable NCCL_NET_PLUGIN_TELEMETRY_MODE set, using default 0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.7057426+00:00: No environment variable NCCL_FASTRAK_DATA_TRANSFER_TIMEOUT_MS set, using default 7200000.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705744909+00:00: No environment variable NCCL_FASTRAK_ENABLE set, using default 1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705746708+00:00: No environment variable NCCL_FASTRAK_DATA_TRANSFER_SLOWNESS_MS set, using default 300000.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705748512+00:00: No environment variable NCCL_FASTRAK_LOG_CONNECTION_INFO set, using default 0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705750265+00:00: No environment variable NCCL_FASTRAK_PLUGIN_CONNECT_TIMEOUT_MS set, using default 300000.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705752316+00:00: No environment variable NCCL_FASTRAK_CACHE_MR set, using default 1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705754166+00:00: NCCL_FASTRAK_USE_LLCM set by environment to 1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705756066+00:00: No environment variable NCCL_FASTRAK_DUMP_COMM_STATS set, using default 1.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705757891+00:00: No environment variable NCCL_FASTRAK_SEND_STATS_INTERVAL set, using default 1000000.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705759661+00:00: No environment variable NCCL_FASTRAK_ALLOW_NIC_SUBSET set, using default 0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705768192+00:00: No environment variable NCCL_FASTRAK_RXDM_INIT_TIMEOUT set, using default 30.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705770978+00:00: Using abstract UDS address: rxdm_uds_nic_mapping
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.705797532+00:00: RxDM ready
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.706211615+00:00: Using interface eth0 as ctrl dev
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.706334302+00:00: Using [0]eth1:192.169.0.3<0>[1]eth2:192.169.1.3<0>[2]eth3:192.169.2.3<0>[3]eth4:192.169.3.3<0>[4]eth5:192.169.4.3<0>[5]eth6:192.169.5.3<0>[6]eth7:192.169.6.3<0>[7]eth8:192.169.7.3<0>
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.706338231+00:00: Initialize nccl shim on device:0 during Init.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.712318838+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.712383111+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.712430084+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.712526197+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.71257154+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.712735171+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.712938007+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713078094+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713137975+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.71322011+00:00: Match: PCI address 0000:0c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713266216+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713421387+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713446126+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713486341+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713554736+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713593837+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713834278+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.713965296+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714003435+00:00: Match: PCI address 0000:0b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714119761+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714249704+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714287884+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714462441+00:00: Match: PCI address 0000:8c:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714499114+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714742244+00:00: Match: PCI address 0000:84:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714873151+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.714909014+00:00: Match: PCI address 0000:8b:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715108298+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715175481+00:00: Match: PCI address 0000:05:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715326095+00:00: Match: PCI address 0000:04:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715392865+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715427441+00:00: Match: PCI address 0000:85:00.0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715559678+00:00: GetPciAddrToFastrakIdxMap: Found GPUs:
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715562515+00:00: 	FasTrak IDX: [0]. PCI addr: [0000:04:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.71556621+00:00: 	FasTrak IDX: [1]. PCI addr: [0000:05:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715568645+00:00: 	FasTrak IDX: [2]. PCI addr: [0000:0b:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715570545+00:00: 	FasTrak IDX: [3]. PCI addr: [0000:0c:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715572498+00:00: 	FasTrak IDX: [4]. PCI addr: [0000:84:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715574204+00:00: 	FasTrak IDX: [5]. PCI addr: [0000:85:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715575871+00:00: 	FasTrak IDX: [6]. PCI addr: [0000:8b:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.71557753+00:00: 	FasTrak IDX: [7]. PCI addr: [0000:8c:00.0]
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715580062+00:00: NcclShim::Create: GPU PCI addr: 0000:04:00.0, FasTrak idx: 0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715583488+00:00: Using abstract UDS address: rxdm_uds_nic_mapping
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715672821+00:00: Discovered GPU PCI 0000:05:00.0, closest NIC is eth2 (address 192.169.1.3, index 1)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715680338+00:00: Discovered GPU PCI 0000:0c:00.0, closest NIC is eth4 (address 192.169.3.3, index 3)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715683007+00:00: Discovered GPU PCI 0000:04:00.0, closest NIC is eth1 (address 192.169.0.3, index 0)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715686664+00:00: Discovered GPU PCI 0000:84:00.0, closest NIC is eth5 (address 192.169.4.3, index 4)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715689578+00:00: Discovered GPU PCI 0000:0b:00.0, closest NIC is eth3 (address 192.169.2.3, index 2)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715693404+00:00: Discovered GPU PCI 0000:8b:00.0, closest NIC is eth7 (address 192.169.6.3, index 6)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715697448+00:00: Discovered GPU PCI 0000:8c:00.0, closest NIC is eth8 (address 192.169.7.3, index 7)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715701304+00:00: Discovered GPU PCI 0000:85:00.0, closest NIC is eth6 (address 192.169.5.3, index 5)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715704977+00:00: Initialized shim for GPU with CUDA index 0, FasTrak index 0, and pci_path: 0000:04:00.0, the corresponding closest net device is: 0 (eth1)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.71570985+00:00: Creating Buf op uds client  on server: rxdm_uds_buf_op:192.169.0.3
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715712745+00:00: Using abstract UDS address: rxdm_uds_buf_op:192.169.0.3
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.715891088+00:00: Initializing DxsClient (src_addr=192.169.0.3:0, dxs_addr=169.254.169.254:55555, llcm=true)
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.716134707+00:00: Binding to interface: eth1
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.716147407+00:00: DxsClient connected (src_addr=192.169.0.3:43254, socket_fd=114)
+tcpxo-wb-0:890:1450 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.718553429+00:00: SCTP Connected
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772343772+00:00: DxsClient initialized.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772356352+00:00: DXS Client initialized on IP addr 192.169.0.3
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772359915+00:00: Buffer Manager Client initialized on IP addr 192.169.0.3
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772363644+00:00: GPUViz is disabled
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772372392+00:00: Plugin initialized for 0000:04:00.0.
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772376472+00:00: Using 2 total flows
+tcpxo-wb-0:890:890 [0] NCCL INFO Initialized NET plugin FasTrak
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:47.772401874+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Assigned NET plugin FasTrak to comm
+tcpxo-wb-0:890:890 [0] NCCL INFO Using network FasTrak
+tcpxo-wb-0:890:890 [0] NCCL INFO DMA-BUF is available on GPU device 0
+tcpxo-wb-0:890:890 [0] NCCL INFO ncclCommInitRankConfig comm 0x5ac8aa4f70e0 rank 0 nranks 8 cudaDev 0 nvmlDev 0 busId 4000 commId 0x65f8dff4c9ac7df5 - Init START
+tcpxo-wb-0:890:890 [0] NCCL INFO RAS client listening socket at 127.0.0.1<28028>
+tcpxo-wb-0:890:890 [0] NCCL INFO MNNVL busId 0x4000 fabric UUID 0.0 cliqueId 0x0 state 3 healthMask 0x0
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.610000486+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 0 'eth1'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.610208966+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 1 'eth2'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.61040668+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 2 'eth3'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.610660826+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 3 'eth4'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.610821077+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 4 'eth5'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.611066291+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 5 'eth6'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.611206672+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 6 'eth7'
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:48.611408628+00:00: props: netDeviceType 0, netDeviceVersion 7
+tcpxo-wb-0:890:890 [0] NCCL INFO NET/FasTrak : GPU Direct RDMA Enabled for HCA 7 'eth8'
+tcpxo-wb-0:890:890 [0] NCCL INFO NCCL_NET_GDR_LEVEL set by environment to PIX
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 0 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 1 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 2 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 3 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 4 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 5 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 6 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 0 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 1 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 2 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 3 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 4 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 5 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 6 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO GPU Direct RDMA Enabled for GPU 7 / HCA 7 (distance 4 <= 4), read 0 mode Default
+tcpxo-wb-0:890:890 [0] NCCL INFO ncclTopoGetCpuAffinity: Affinity for GPU 0 is 0-51,104-155. (GPU affinity = 0-51,104-155 ; CPU affinity = 0-207).
+tcpxo-wb-0:890:890 [0] NCCL INFO NVLS multicast support is available on dev 0 (NVLS_NCHANNELS 16)
+tcpxo-wb-0:890:890 [0] NCCL INFO comm 0x5ac8aa4f70e0 rank 0 nRanks 8 nNodes 1 localRanks 8 localRank 0 MNNVL 0
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 00/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 01/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 02/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 03/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 04/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 05/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 06/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 07/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 08/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 09/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 10/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 11/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 12/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 13/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 14/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 15/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 16/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 17/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 18/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 19/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 20/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 21/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 22/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Channel 23/24 : 0 1 2 3 4 5 6 7
+tcpxo-wb-0:890:890 [0] NCCL INFO Trees [0] 1/-1/-1->0->-1 [1] 1/-1/-1->0->-1 [2] 1/-1/-1->0->-1 [3] 1/-1/-1->0->-1 [4] 1/-1/-1->0->-1 [5] 1/-1/-1->0->-1 [6] 1/-1/-1->0->-1 [7] 1/-1/-1->0->-1 [8] 1/-1/-1->0->-1 [9] 1/-1/-1->0->-1 [10] 1/-1/-1->0->-1 [11] 1/-1/-1->0->-1 [12] 1/-1/-1->0->-1 [13] 1/-1/-1->0->-1 [14] 1/-1/-1->0->-1 [15] 1/-1/-1->0->-1 [16] 1/-1/-1->0->-1 [17] 1/-1/-1->0->-1 [18] 1/-1/-1->0->-1 [19] 1/-1/-1->0->-1 [20] 1/-1/-1->0->-1 [21] 1/-1/-1->0->-1 [22] 1/-1/-1->0->-1 [23] 1/-1/-1->0->-1
+tcpxo-wb-0:890:890 [0] NCCL INFO P2P Chunksize set to 1048576
+tcpxo-wb-0:890:890 [0] NCCL INFO PROFILER/Plugin: Could not find: libnccl-profiler.so
+tcpxo-wb-0:890:890 [0] NCCL INFO Check P2P Type isAllDirectP2p 1 directMode 0 isAllCudaP2p 1
+tcpxo-wb-0:890:1470 [0] NCCL INFO [Proxy Service UDS] Device 0 CPU core 14
+tcpxo-wb-0:890:1467 [0] NCCL INFO [Proxy Service] Device 0 CPU core 117
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 0 from local rank 3, transport 0
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 1 from local rank 7, transport 0
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 2 from local rank 4, transport 0
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 3 from local rank 1, transport 0
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 4 from local rank 2, transport 0
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 5 from local rank 6, transport 0
+tcpxo-wb-0:890:1467 [0] NCCL INFO New proxy send connection 6 from local rank 5, transport 0
+tcpxo-wb-0:890:890 [0] NCCL INFO TUNER/Plugin: Using GcpTunerPlugin_v2 (v2)
+tcpxo-wb-0:890:890 [0] NCCL INFO Successfully loaded external tuner plugin /usr/local/nvidia/lib64/libnccl-tuner.so
+tcpxo-wb-0:890:890 [0] NCCL INFO Using tuner config: '/usr/local/nvidia/lib64/a3plus_tuner_config.textproto'
+tcpxo-wb-0:890:890 [0] NCCL INFO threadThresholds 8/8/64 | 64/8/64 | 512 | 512
+tcpxo-wb-0:890:890 [0] NCCL INFO 24 coll channels, 24 collnet channels, 16 nvls channels, 32 p2p channels, 32 p2p channels per peer
+tcpxo-wb-0:890:890 [0] NCCL INFO CC Off, workFifoBytes 1048576
+tcpxo-wb-0:890:890 [0] NCCL INFO ncclCommInitRankConfig comm 0x5ac8aa4f70e0 rank 0 nranks 8 cudaDev 0 nvmlDev 0 busId 4000 commId 0x65f8dff4c9ac7df5 - Init COMPLETE
+tcpxo-wb-0:890:890 [0] NCCL INFO Init timings - ncclCommInitRankConfig: rank 0 nranks 8 total 1.64 (kernels 0.39, alloc 0.88, bootstrap 0.00, allgathers 0.01, topo 0.05, graphs 0.01, connections 0.27, rest 0.03)
+tcpxo-wb-0:890:890 [0] NCCL INFO NVLS comm 0x5ac8aa4f70e0 headRank 0 nHeads 8 nvlsRanks 8 buffSize 1048576 nvlsPerRankSize 33554432 nvlsTotalSize 268435456
+tcpxo-wb-0:890:1483 [0] NCCL INFO comm 0x5ac8aa4f70e0 rank 0 nRanks 8 cudaDev 0 busId 4000 - Abort START
+tcpxo-wb-0:890:1483 [0] NCCL INFO TUNER/Plugin: Closing tuner: 'GcpTunerPlugin_v2'
+tcpxo-wb-0:890:1467 [0] NCCL INFO socketProgressOpt: abort called
+tcpxo-wb-0:890:1467 [0] NCCL INFO misc/socket.cc:943 -> 3
+tcpxo-wb-0:890:1483 [0] NCCL INFO comm 0x5ac8aa4f70e0 rank 0 nranks 8 cudaDev 0 busId 4000 - Abort COMPLETE
+tcpxo-wb-0:890:1483 [0] NCCL INFO Unloading plugin libnccl-net.so
+# world_size=8  backend=nccl  warmup=5 iters=15
+#       size        count    time_ms   algbw_GBps   busbw_GBps
+          8B            2      0.043         0.00         0.00
+         16B            4      0.027         0.00         0.00
+         32B            8      0.023         0.00         0.00
+         64B           16      0.027         0.00         0.00
+        128B           32      0.024         0.01         0.01
+        256B           64      0.023         0.01         0.02
+        512B          128      0.033         0.02         0.03
+         1KB          256      0.030         0.03         0.06
+         2KB          512      0.023         0.09         0.16
+         4KB         1024      0.027         0.15         0.27
+         8KB         2048      0.023         0.36         0.62
+        16KB         4096      0.024         0.68         1.19
+        32KB         8192      0.027         1.21         2.11
+        64KB        16384      0.025         2.60         4.55
+       128KB        32768      0.027         4.78         8.36
+       256KB        65536      0.027         9.64        16.87
+       512KB       131072      0.029        18.15        31.76
+         1MB       262144      0.033        31.99        55.98
+         2MB       524288      0.040        52.14        91.25
+         4MB      1048576      0.053        78.78       137.86
+         8MB      2097152      0.076       109.81       192.17
+        16MB      4194304      0.119       141.32       247.31
+        32MB      8388608      0.200       167.57       293.25
+        64MB     16777216      0.325       206.44       361.28
+       128MB     33554432      0.585       229.41       401.47
+       256MB     67108864      1.111       241.51       422.65
+       512MB    134217728      2.144       250.45       438.28
+         1GB    268435456      4.011       267.73       468.53
+         2GB    536870912      7.906       271.62       475.34
+# done
+tcpxo-wb-0:890:890 [0] NCCL INFO ENV/Plugin: Closing env plugin ncclEnvDefault
+tcpxo-wb-0:890:1450 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:50.22211302+00:00: SCTP handler shutdown signal received
+tcpxo-wb-0:890:1450 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:50.222171044+00:00: SCTP Closed
+tcpxo-wb-0:890:1450 [0] NCCL INFO NET/FasTrak 2026-08-02T13:08:50.222176419+00:00: Socket closed, handler exiting.
